@@ -11,7 +11,7 @@ No edits to this document may occur without express approval from project leader
 
 # **Section I. Purpose & North Star**
 
-Provide a universal operating framework for designing, planning, building, testing, deploying, securing, and maintaining modern software systems.
+Provide a universal, modular operating framework for designing, planning, building, testing, deploying, securing, and maintaining modern software systems.
 This constitution ensures:
 
 * High-velocity delivery **without compromising correctness, security, or reliability**
