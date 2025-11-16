@@ -128,7 +128,7 @@ Author can inspect a run directory and reconstruct exactly how results were prod
 
 ### Functional Requirements
 
-- **FR-001**: System MUST load OHLCV for a symbol and date range from a pluggable data source (yfinance baseline; Schwab later) and validate presence of required columns.
+- **FR-001**: System MUST load OHLCV for a symbol and date range from a pluggable data source (yfinance baseline; Schwab later), automatically downloading on-demand if not present in local cache, and validate presence of required columns. Local cache SHALL use Parquet format per DM-004 and be stored under `data/historical/{interval}/{symbol}.parquet`. On cache miss, system SHALL fetch from configured data source, validate, write to cache, then proceed with run.
 - **FR-002**: System MUST fit Laplacian (double-exponential) returns as the default heavy-tailed model and generate N Monte Carlo paths of length T from that fit; additional models (e.g., Student-T) MAY be provided as alternatives.
 - **FR-003**: System MUST run a stock strategy over generated paths, producing per-path equity curves and summary metrics (mean/median P&L, drawdown, VaR/CVaR, Sharpe/Sortino).
 - **FR-004**: System MUST run an option strategy over the same paths using an option pricer (Black-Scholes with configurable IV) and produce analogous metrics.
@@ -390,8 +390,22 @@ class BlackScholesPricer:
   - Data load → Schema validation → Distribution fit → MC generation → Strategy eval → Metrics aggregation → Artifact write.
   - Blocking dependencies MUST prevent out-of-order execution (enforced via function call DAG).
 
-- **FR-070**: System MUST check for data/feature directory pre-existence:
-  - CLI commands MUST verify `data/historical/{interval}/` and `data/features/{interval}/` exist or raise `DirectoryNotFoundError: Required directory {path} not found. Run data ingestion first.`
+- **FR-070**: System MUST ensure data/feature directory structure exists:
+  - CLI commands MUST create `data/historical/{interval}/` and `data/features/{interval}/` directories if they do not exist (with appropriate permissions).
+  - On first run, emit `INFO: Created data directory structure at {path}.`
+
+- **FR-085**: System MUST implement cache staleness detection and refresh:
+  - Cached Parquet files SHALL include metadata: `{"symbol": "AAPL", "interval": "1d", "start": "2020-01-01", "end": "2025-11-15", "source": "yfinance", "fetched_at": "2025-11-15T10:30:00Z", "last_close": 150.25}`.
+  - On cache hit, check if requested date range exceeds cached range; if so, fetch incremental data and append.
+  - **Corporate action detection**: Before incremental append, fetch overlapping bar (cached end date) from data source. If `abs(cached_close - fresh_close) / cached_close > 0.01` (1% divergence), assume corporate action (split/dividend adjustment) occurred and trigger full refresh with `WARNING: Historical prices adjusted (likely split/dividend). Full refresh required.`
+  - Configurable staleness threshold (default: 1 day for daily data, 1 hour for intraday); re-fetch if `now() - fetched_at > staleness_threshold`.
+  - User MAY provide `--force_refresh` flag to bypass cache entirely and fetch full history (useful after known corporate actions).
+  - Emit `INFO: Using cached data for {symbol} ({start} to {end})` or `INFO: Fetching fresh data for {symbol} (cache stale or partial).`
+
+- **FR-086**: System MUST handle data source failures during on-demand fetch:
+  - On network timeout or API error, retry 3× with exponential backoff (1s, 2s, 4s).
+  - After retries exhausted, check for stale cache; if present and `--allow_stale_cache` flag set, use stale data with `WARNING`.
+  - If no cache and retries exhausted, raise `DataSourceError: Unable to fetch {symbol} from {source} after 3 retries. Check network/API status.`
 
 - **FR-071**: System MUST pin required Python packages:
   - `requirements.txt` or `pyproject.toml` MUST specify exact versions (via `==`) or constrained ranges (via `>=,<`) for all direct dependencies.
@@ -771,7 +785,14 @@ The system SHALL guarantee reproducibility of Monte Carlo runs using:
 ### Dependency & Assumption Success Criteria
 * **SC-043**: Given missing `pandas-ta` when indicator is configured, the system raises `DependencyError` with installation instructions (per FR-066).
 * **SC-044**: Given incompatible `numpy==2.0.0`, the system checks version on import and raises `DependencyError` (per FR-067).
-* **SC-045**: Given missing `data/historical/1d/` directory, the CLI raises `DirectoryNotFoundError` with actionable message (per FR-070).
+* **SC-045**: Given missing `data/historical/1d/` directory on first run, the CLI creates the directory structure and emits `INFO: Created data directory structure` (per FR-070).
+
+### On-Demand Data Fetching Success Criteria
+* **SC-068**: Given a symbol not present in local cache, the system automatically fetches OHLCV from configured data source (yfinance), writes to Parquet cache, and proceeds with run without user intervention (per FR-001).
+* **SC-069**: Given cached data that is stale (fetched >1 day ago for daily data), the system detects staleness, re-fetches from data source, updates cache, and emits `INFO: Fetching fresh data for {symbol} (cache stale)` (per FR-085).
+* **SC-070**: Given cached data with partial date range (cached: 2020-2023, requested: 2020-2025), the system fetches incremental data (2023-2025), appends to cache, and proceeds without re-downloading entire history (per FR-085).
+* **SC-071**: Given a data source fetch failure (network timeout, API error) after 3 retries, and no cached data available, the system raises `DataSourceError` with actionable message including retry count and suggested fixes (per FR-086).
+* **SC-072**: Given a data source fetch failure and stale cache present, when user provides `--allow_stale_cache` flag, the system uses stale data with `WARNING: Using stale cached data due to fetch failure` (per FR-086).
 
 ### Traceability & Reproducibility Success Criteria
 * **SC-046**: Given any successful run, `run_meta.json` includes `git_commit_sha`, `spec_version`, `python_version`, `cpu_count`, `total_ram_gb`, and all component versions (per FR-072, FR-073, FR-075).
@@ -818,7 +839,7 @@ The system SHALL guarantee reproducibility of Monte Carlo runs using:
 * **US8** (Replay) → SC-015, SC-027, SC-046, SC-047, SC-048
 
 ### Functional Requirements → Success Criteria Traceability
-* **FR-001** (Data loading) → SC-054
+* **FR-001** (Data loading + on-demand fetch) → SC-054, SC-068
 * **FR-002** (Distributions) → SC-004, SC-016, SC-063
 * **FR-003** (Stock strategy) → SC-002
 * **FR-004** (Option strategy) → SC-002
@@ -902,6 +923,8 @@ The system SHALL guarantee reproducibility of Monte Carlo runs using:
 * **FR-082** (Candidate state features) → SC-050
 * **FR-083** (Objective function) → SC-052, SC-053
 * **FR-084** (Parallel execution model) → SC-062
+* **FR-085** (Cache staleness detection) → SC-069, SC-070
+* **FR-086** (Data source failure handling) → SC-071, SC-072
 * **FR-CAND-001** (Selector abstraction) → SC-049
 * **FR-CAND-002** (Episode construction) → SC-010
 * **FR-CAND-003** (Conditional backtest) → SC-008, SC-009, SC-011
@@ -915,8 +938,8 @@ The system SHALL guarantee reproducibility of Monte Carlo runs using:
 - **ASSUME-001**: VPS has **24 GB RAM** available. System MUST detect total RAM via `psutil.virtual_memory()` and validate ≥ 20 GB available (per FR-073).
 - **ASSUME-002**: VPS has **8 vCPU cores** available. System MUST detect via `os.cpu_count()` and validate ≥ 4 cores (per FR-073).
 - **ASSUME-003**: **Single-user execution** (no concurrent CLI instances from different users). System SHALL NOT implement file locking but SHOULD emit `WARNING` if concurrent runs to same output directory detected via PID file check.
-- **ASSUME-004**: **Historical data is pre-downloaded to Parquet** before running CLI commands. System MUST check for required directories/files (per FR-070) and raise `DirectoryNotFoundError` if missing.
-- **ASSUME-005**: User has **write permissions** to `runs/` directory. System MUST check on startup and raise `PermissionError` if unable to create output directory.
+- **ASSUME-004**: **Historical data may be cached locally** in Parquet format for performance. System SHALL fetch on-demand from configured data source (yfinance/Schwab) if not present in cache or if cache is stale (per FR-001, FR-085, FR-086). Users do NOT need to manually download data before first run.
+- **ASSUME-005**: User has **write permissions** to `data/` and `runs/` directories. System MUST check on startup and raise `PermissionError` if unable to create required directories (per FR-070).
 - **ASSUME-006**: **No live trading execution** in MVP scope. All runs are research/backtest only; no brokerage API integration beyond data ingestion stubs.
 - **ASSUME-007**: **CPU-only execution** (no GPU). All numpy/scipy operations use CPU; no CUDA/cuBLAS/cuDNN dependencies.
 - **ASSUME-008**: **Linux or macOS environment**. Windows is unsupported (per FR-068). System MUST detect OS on startup and emit `WARNING` if running on Windows.

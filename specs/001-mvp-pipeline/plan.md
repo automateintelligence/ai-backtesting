@@ -89,7 +89,7 @@ quant-scenario-engine/
 
 ## Interfaces & Public Functions (per module)
 
-- `backtesting.data`: `load_ohlcv(symbol, start, end, interval) -> DataFrame`; adapters `YFinanceSource`, `SchwabStub` chosen via config.
+- `backtesting.data`: `load_ohlcv(symbol, start, end, interval) -> DataFrame` with automatic on-demand fetching and local caching; adapters `YFinanceSource`, `SchwabStub` chosen via config. Implements cache-aside pattern: check local Parquet → fetch on miss/stale → validate → write cache → return data.
 - `backtesting.distributions`: `ReturnDistribution.fit(returns)`, `.sample(n_paths, n_steps, seed)`, models: Laplace (default), Student-T, optional GARCH-T flag (FR-002).
 - `backtesting.mc`: `generate_paths(dist, n_paths, n_steps, s0, seed, storage_policy)` with memmap/npz fallback (FR-013/DM-011).
 - `backtesting.pricing`: `OptionPricer.price(path_slice, option_spec)`; `BlackScholesPricer` default; `PyVollibPricer` optional; adapter slot for QuantLib/Heston 'HestonPricer' later(FR-016).
@@ -152,6 +152,186 @@ quant-scenario-engine/
 - Harden error-handling, resource limits, and reproducibility (replay) in line with spec and success criteria.
 
 Future phases may extend to more advanced pricers, additional distribution models, and portfolio-level strategies once MVP is stable.
+
+## Data Loading & Caching Architecture
+
+**On-Demand Fetching with Local Cache** (per FR-001, FR-085, FR-086):
+
+```python
+# data/data_loader.py
+
+from pathlib import Path
+import pandas as pd
+from datetime import datetime, timedelta
+
+class DataLoader:
+    """Load OHLCV with automatic on-demand fetching and caching."""
+
+    def __init__(self, cache_dir: Path, data_source_factory):
+        self.cache_dir = cache_dir
+        self.data_source_factory = data_source_factory
+
+    def load_ohlcv(
+        self,
+        symbol: str,
+        start: str,
+        end: str,
+        interval: str = "1d",
+        allow_stale: bool = False,
+        force_refresh: bool = False
+    ) -> pd.DataFrame:
+        """Load OHLCV with cache-aside pattern and corporate action detection (FR-085)."""
+
+        # Determine cache paths
+        cache_path = self.cache_dir / interval / f"{symbol}.parquet"
+        cache_meta_path = cache_path.with_suffix(".meta.json")
+
+        # 0. Force refresh bypasses cache entirely (FR-085)
+        if force_refresh:
+            log.info(f"Force refresh requested for {symbol}, bypassing cache...")
+            df = self._fetch_from_source(symbol, start, end, interval)
+            self._write_cache(cache_path, df, symbol, interval)
+            return df
+
+        # 1. Check cache
+
+        if cache_path.exists() and cache_meta_path.exists():
+            # Load cache metadata
+            cache_meta = json.loads(cache_meta_path.read_text())
+            cached_start = pd.Timestamp(cache_meta["start"])
+            cached_end = pd.Timestamp(cache_meta["end"])
+            fetched_at = pd.Timestamp(cache_meta["fetched_at"])
+
+            # Check staleness (FR-085)
+            staleness_threshold = timedelta(days=1 if interval == "1d" else 0)
+            is_stale = (datetime.now() - fetched_at) > staleness_threshold
+
+            # Check coverage
+            requested_start = pd.Timestamp(start)
+            requested_end = pd.Timestamp(end)
+            has_full_coverage = (cached_start <= requested_start and
+                                 cached_end >= requested_end)
+
+            # Use cache if fresh and complete
+            if has_full_coverage and not is_stale:
+                log.info(f"Using cached data for {symbol} ({start} to {end})")
+                df = pd.read_parquet(cache_path)
+                return df.loc[start:end]
+
+            # Fetch incremental if partial coverage
+            elif not is_stale and cached_end < requested_end:
+                log.info(f"Fetching incremental data for {symbol} "
+                         f"({cached_end} to {end})")
+
+                # Corporate action detection (FR-085)
+                # Fetch overlapping bar to detect stock splits/dividends
+                overlap_start = cached_end
+                overlap_end = cached_end + timedelta(days=1)
+                overlap_data = self._fetch_from_source(
+                    symbol, overlap_start, overlap_end, interval
+                )
+
+                if len(overlap_data) > 0:
+                    cached_last_close = cache_meta.get("last_close")
+                    fresh_close = overlap_data.iloc[0]["close"]
+
+                    if cached_last_close is not None:
+                        divergence = abs(fresh_close - cached_last_close) / cached_last_close
+                        if divergence > 0.01:  # 1% threshold
+                            log.warning(
+                                f"Historical prices adjusted for {symbol} "
+                                f"(cached: {cached_last_close:.2f}, "
+                                f"fresh: {fresh_close:.2f}, "
+                                f"divergence: {divergence:.2%}). "
+                                f"Likely stock split/dividend adjustment. "
+                                f"Triggering full refresh."
+                            )
+                            # Full refresh instead of incremental
+                            df = self._fetch_from_source(symbol, start, end, interval)
+                            self._write_cache(cache_path, df, symbol, interval)
+                            return df
+
+                # No corporate action detected, proceed with incremental append
+                new_data = self._fetch_from_source(
+                    symbol, cached_end, end, interval
+                )
+                df = pd.read_parquet(cache_path)
+                df = pd.concat([df, new_data]).drop_duplicates()
+                self._write_cache(cache_path, df, symbol, interval)
+                return df.loc[start:end]
+
+            # Stale cache: re-fetch or use if allowed
+            elif is_stale:
+                try:
+                    log.info(f"Cache stale for {symbol}, re-fetching...")
+                    df = self._fetch_from_source(symbol, start, end, interval)
+                    self._write_cache(cache_path, df, symbol, interval)
+                    return df
+                except DataSourceError as e:
+                    if allow_stale:
+                        log.warning(f"Using stale cache due to fetch failure: {e}")
+                        df = pd.read_parquet(cache_path)
+                        return df.loc[start:end]
+                    else:
+                        raise
+
+        # 2. Cache miss: fetch from source
+        log.info(f"Cache miss for {symbol}, fetching from data source...")
+        df = self._fetch_from_source(symbol, start, end, interval)
+        self._write_cache(cache_path, df, symbol, interval)
+        return df
+
+    def _fetch_from_source(self, symbol, start, end, interval) -> pd.DataFrame:
+        """Fetch with retries and exponential backoff (FR-086)."""
+        source = self.data_source_factory.create(self.config.data_source)
+
+        for attempt in range(3):
+            try:
+                df = source.fetch(symbol, start, end, interval)
+                self._validate_schema(df)
+                return df
+            except Exception as e:
+                if attempt < 2:
+                    backoff = 2 ** attempt  # 1s, 2s, 4s
+                    log.warning(f"Fetch attempt {attempt+1} failed: {e}. "
+                                f"Retrying in {backoff}s...")
+                    time.sleep(backoff)
+                else:
+                    raise DataSourceError(
+                        f"Unable to fetch {symbol} from {source.name} "
+                        f"after 3 retries. Check network/API status."
+                    )
+
+    def _write_cache(self, path: Path, df: pd.DataFrame, symbol: str, interval: str):
+        """Write Parquet + metadata atomically."""
+        path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Write data
+        df.to_parquet(path, compression="snappy")
+
+        # Write metadata (FR-085: include last_close for corporate action detection)
+        meta = {
+            "symbol": symbol,
+            "interval": interval,
+            "start": str(df.index[0]),
+            "end": str(df.index[-1]),
+            "source": self.config.data_source,
+            "fetched_at": datetime.utcnow().isoformat(),
+            "last_close": float(df.iloc[-1]["close"])  # For corporate action detection
+        }
+        path.with_suffix(".meta.json").write_text(json.dumps(meta, indent=2))
+
+        log.info(f"Cached {len(df)} bars for {symbol} to {path}")
+```
+
+**Cache Management**:
+- **Directory structure**: `data/historical/{interval}/{symbol}.parquet` + `{symbol}.meta.json`
+- **Staleness detection**: Compare `fetched_at` to current time with interval-specific thresholds
+- **Incremental updates**: Append new data to existing cache rather than full re-download
+- **Corporate action detection** (FR-085): Before incremental append, fetch overlapping bar to detect stock splits/dividends via >1% price divergence. Triggers full refresh with warning if detected.
+- **Force refresh**: `--force_refresh` flag bypasses cache entirely for manual control after known corporate actions
+- **Atomic writes**: Write data + metadata together to prevent partial corruption
+- **Graceful degradation**: Use stale cache on fetch failure if `--allow_stale_cache` flag set
 
 ## Component Wiring & Dependency Injection
 
