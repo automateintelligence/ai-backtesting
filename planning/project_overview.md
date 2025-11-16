@@ -7,29 +7,11 @@ I am focused on single stock and option trading algo optimization.
 
 - I envision a backtesting module, a strategy module, and a strategy optimization module.  I am very familiar with a variety of optimization methods that I would like to employ to efficiently optimize strategy parameters and test them with massive parallelization.  I am comfortable writing all my own modules, but if I can leverage existing open-source libraries, I prefer to do that first, but it must be in a way that makes sense and is relatively easy to use as I just described.
 - Now that you have done all this research, please recommend a system that I can build to an MVP quickly to start evaluating single stock and option strategies.  My first goal is to compare risk and reward surfaces for stock trades versus option trades on the same underlying stock.  User-initiated CLI or GUI trade execution is a nice-to-have, but not a must for MVP.  I can trade on the Thinkorswim platform or on the brokerage websites if I must.  Then I can gradually increase complexity and features as we move forward.
-Great, this is a nice, clean set of goals. I’ll aim for something you can actually start coding this week on a CPU-only VPS, but that won’t box you in later for portfolio-level work or GPUs.
 
 1) I can use the Schwab API for data residual too, but I need to test it out to see of it is better than yfinance or PyData.  
 2) I want to use existing library function calls for calculating distribution fits and a large suite of financial and momentum indicators.  
 3) When there are other financial indicators, like Fed Rate, that I wanted to include, I assume that I can use event driven library or simply interpolate it into same time series time steps. 
 4) There are more accurate option pricing models than Black-Scholes.  I would like to use one that is appropriate for this application. 
-
-## User Stories
-4) Stock Screening - As a user, quickly evaluate if a large number (100s) of stocks are a good candidate for trading strategy (specified by strategy module) before trading begins the next day.  
-5) 
-
-### User Story X - Parameter grid exploration (Priority: P2)
-
-Author defines a parameter grid (e.g., thresholds, DTE, strike offset) and runs batch evaluations in parallel, receiving aggregate metrics (mean, CVaR, drawdown) per configuration.
-
-**Why this priority**: Enables strategy optimization and surface mapping beyond a single run.
-
-**Independent Test**: Supply a small grid (≥3 configs) and confirm per-config metrics are produced and ranked by an objective function.
-
-**Acceptance Scenarios**:
-
-1. **Given** a grid of strategy parameters, **When** the batch job executes, **Then** results include metrics per config and an objective score suitable for ranking.  
-2. **Given** N paths × M configs, **When** parallel execution runs, **Then** the job completes within configured resource limits and without race conditions or corrupted outputs.
 
 ---
 
