@@ -284,7 +284,7 @@ class CandidateSelector(ABC):
         """Return boolean Series: True when this timestamp is a candidate."""
 ```
 
-Then your strategy/backtest operates **only on timestamps where `select` is True**.
+Then your strategy/backtesting operates **only on timestamps where `select` is True**.
 
 ---
 
@@ -451,9 +451,9 @@ def build_candidate_episodes(
     """
 ```
 
-This lives at the boundary between **data layer** and **strategy/backtest**.
+This lives at the boundary between **data layer** and **strategy/backtesting**.
 
-### 2.4.6.3 Conditional backtest runner
+### 2.4.6.3 Conditional backtesting runner
 
 ```python
 def run_conditional_backtest(
@@ -552,7 +552,7 @@ Now you can treat parameters as axes and compute metrics:
   * Option days-to-expiry
   * Strike moneyness (K/S)
   * Position size
-* For each grid point, run the Monte Carlo backtest and compute:
+* For each grid point, run the Monte Carlo backtesting and compute:
 
   * Expected P&L
   * CVaR
@@ -738,7 +738,7 @@ quant_sys/
     base.py
     stock_strategies.py
     option_strategies.py
-  backtest/
+  backtesting/
     simulator.py
     metrics.py
     reporting.py
@@ -1105,7 +1105,7 @@ class CallOverlayStrategy(Strategy):
 Handles both **historical** and **simulated** price arrays.
 
 ```python
-# quant_sys/backtest/simulator.py
+# quant_sys/backtesting/simulator.py
 import numpy as np
 import pandas as pd
 from typing import Dict, Any, Tuple
@@ -1197,7 +1197,7 @@ For Monte Carlo paths `(n_paths, n_steps)`, you can vectorize `simulate_stock` a
 ### 6.3 Metrics & reporting
 
 ```python
-# quant_sys/backtest/metrics.py
+# quant_sys/backtesting/metrics.py
 import pandas as pd
 import quantstats as qs
 
@@ -1345,7 +1345,7 @@ You can turn these directly into specification items.
 **NFR-3: Maintainability & Spec-Driven Development**
 
 * NFR-3.1: All public classes and methods shall have docstrings specifying purpose, inputs, outputs, and side effects, suitable for automated doc generation.
-* NFR-3.2: The project shall be structured into logically separated modules (data, models, strategy, backtest, optimize) to support Spec-Driven Development using GitHub Specify.
+* NFR-3.2: The project shall be structured into logically separated modules (data, models, strategy, backtesting, optimize) to support Spec-Driven Development using GitHub Specify.
 * NFR-3.3: Configuration (e.g., data source selection, distribution model, option pricer implementation) shall be externalized (e.g., `config/settings.py` or `.yaml`) rather than hard-coded.
 
 **NFR-4: Testability**
@@ -1396,7 +1396,7 @@ quant_sys/
     stock_strategies.py
     option_strategies.py
 
-  backtest/
+  backtesting/
     __init__.py
     simulator.py
     metrics.py
@@ -1909,10 +1909,10 @@ class MeanReversionCallStrategy(Strategy):
 
 ## 6. Backtesting layer
 
-### 6.1 `backtest/simulator.py`
+### 6.1 `backtesting/simulator.py`
 
 ```python
-# quant_sys/backtest/simulator.py
+# quant_sys/backtesting/simulator.py
 
 from typing import Dict, Any
 import numpy as np
@@ -1989,10 +1989,10 @@ class MarketSimulator:
         return results
 ```
 
-### 6.2 `backtest/metrics.py`
+### 6.2 `backtesting/metrics.py`
 
 ```python
-# quant_sys/backtest/metrics.py
+# quant_sys/backtesting/metrics.py
 
 from typing import Dict
 import pandas as pd
@@ -2075,8 +2075,8 @@ from quant_sys.models.path_generator import generate_price_paths
 from quant_sys.models.option_pricing import BlackScholesPricer
 from quant_sys.strategy.stock_strategies import MeanReversionStockStrategy
 from quant_sys.strategy.option_strategies import MeanReversionCallStrategy
-from quant_sys.backtest.simulator import MarketSimulator
-from quant_sys.backtest.metrics import summarize_equity_curve
+from quant_sys.backtesting.simulator import MarketSimulator
+from quant_sys.backtesting.metrics import summarize_equity_curve
 
 def get_distribution_model(name: str):
     if name == "normal":
