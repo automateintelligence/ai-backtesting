@@ -1,6 +1,6 @@
 # Feature Specification: Backtesting & Strategy Spec Authoring
 
-**Feature Branch**: `001-create-specs`  
+**Feature Branch**: `001-mvp-pipeline`  
 **Created**: 2025-11-15  
 **Status**: Draft  
 **Input**: User description: "Review 'planning/project_goals.md' and 'planning/project_overview.md' and then create specifications."
