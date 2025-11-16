@@ -223,6 +223,15 @@ class BlackScholesPricer:
 - **FR-029**: System MUST enforce missing-data tolerances: fail/run warning when continuous gaps exceed 3× bar interval or total missing bars exceed 1% of window unless an explicit imputation rule is configured.
 - **FR-030**: System MUST guarantee atomic, append-only writes of `run_meta.json` and artifacts; metadata is immutable after run completion.
 - **FR-031**: Storage policy for Monte Carlo datasets SHALL remain non-persistent by default (DM-009), but persistence is permitted when explicitly requested (replay) or required for memmap fallback; `run_meta` MUST record when persistence is used.
+- **FR-032**: System MUST enforce minimum sample sizes per distribution model (Laplace ≥60 bars, Student-T ≥60 bars, Normal ≥60 bars, GARCH-T ≥252 bars) and fail with structured error if unmet.
+- **FR-033**: Each CLI command (`compare`, `grid`, `screen`, `conditional`, `replay`) MUST validate all parameters against contracts/openapi.yaml and reject unknown/invalid parameters with a clear error.
+- **FR-034**: Artifacts MUST follow defined formats: metrics JSON/CSV schema, `run_meta.json` with provenance (seeds, versions, fingerprints), optional plots/HTML reports; schemas SHALL be versioned.
+- **FR-035**: Candidate episodes MUST capture `(symbol, t0, horizon, state_features)` with horizon > 0; episode construction rules SHALL be documented and applied consistently across backtest and conditional MC.
+- **FR-036**: Conditional Monte Carlo SHALL support both bootstrap (non-parametric) and parametric refit methods; fallback order (bootstrap → refit → unconditional) MUST be documented and logged when taken.
+- **FR-037**: Distribution “implausible parameter” thresholds SHALL be defined per model (e.g., scale > 0 and finite; Student-T df ∈ [2, 100]; GARCH parameters within stationarity bounds) and violations must fail fast with structured errors.
+- **FR-038**: Fail-fast is the default for invalid data/config/fits; recoverable fallbacks (e.g., secondary data source, unconditional MC) MUST emit warnings and record the fallback in logs and run_meta.
+- **FR-039**: Logging MUST be structured (JSON) and include at minimum timestamp, run_id, component, event, severity, duration (when applicable), and key parameters; long-running jobs MUST emit progress updates.
+- **FR-040**: Performance budgets MUST be documented and enforced: data load/fit/MC/strategy eval latencies, MC throughput targets, expected resource utilization, and grid scaling behavior; breaches MUST trigger structured warnings.
 
 # **Candidate Selection Functional Requirements**
 - **FR-CAND-001:** System SHALL implement a `CandidateSelector` abstraction that produces candidate timestamps based solely on information available at time t.
@@ -307,6 +316,12 @@ The system SHALL fail or warn when continuous gaps exceed **3× bar interval** o
 
 ### **DM-018: Run Metadata Durability**
 Run metadata SHALL be written atomically and treated as immutable after run completion; retries must not produce partial or corrupted metadata files.
+
+### Conflict Resolution Notes
+- **Memory thresholds (FR-013 vs FR-018)**: Both use the same estimator (<25% RAM in-memory; otherwise memmap/npz) and max_workers ≤ 6 on 8-core VPS; preflight checks enforce both.
+- **Storage policy (DM-009 vs US8 replay)**: Default is non-persistent; persistence only when explicitly requested or required for memmap/replay, recorded in run_meta (FR-031).
+- **Fail-fast vs fallback (FR-010 vs recovery)**: Fail-fast is default (FR-038); fallbacks (secondary data sources, unconditional MC) are allowed only with explicit warnings + run_meta entries.
+- **max_workers alignment**: Contracts/OpenAPI capped at 6 to match plan/spec FR-018; tasks/plan must honor this cap.
 
 ### **DM-001: Resolution Selection – Daily Bars**
 The system SHALL use **daily OHLCV bars** for:

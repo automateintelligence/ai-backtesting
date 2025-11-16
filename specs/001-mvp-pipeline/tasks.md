@@ -34,6 +34,9 @@ Per plan.md structure:
 - [ ] T006 [P] Create README.md with quickstart instructions per plan.md onboarding section
 - [ ] T007 Create requirements-dev.txt with testing/dev dependencies (pytest, pytest-cov, ruff, black, mypy)
 
+# Added to address new FR/NFR/DM gaps
+- [ ] T007a Define performance budget benchmarks and add validation script (measure data load, fit, MC throughput, strategy eval) per FR-015 and FR-040 (scripts/benchmarks/perf_check.py)
+
 ---
 
 ## Phase 2: Foundational (Blocking Prerequisites)
@@ -53,8 +56,12 @@ Per plan.md structure:
 - [ ] T016 Create CandidateSelector abstract base class in quant-scenario-engine/interfaces/candidate_selector.py per FR-CAND-001
 - [ ] T017 [P] Implement resource estimator in quant-scenario-engine/utils/resources.py (estimate memory footprint for n_paths × n_steps, enforce FR-013/FR-018 thresholds)
 - [ ] T018 [P] Create run metadata schema in quant-scenario-engine/schema/run_meta.py with JSON serialization per FR-008/FR-019
+- [ ] T018a [P] Capture reproducibility context in run_meta (seeds, library versions, environment: CPU/RAM/OS, git commit) per FR-021 and CHK139-CHK141
 - [ ] T019 [P] Setup Parquet data directory structure in data/{historical,features}/{interval}/{symbol}.parquet per DM-006
 - [ ] T020 Create storage policy selector in backtesting/mc/storage.py (decide memory vs npz vs memmap based on RAM threshold per DM-008/DM-010/DM-011)
+- [ ] T020a Add Parquet schema validation and fingerprint computation in quant-scenario-engine/data/validation.py (DM-015, DM-016, FR-027, FR-028)
+- [ ] T020b Add missing-data tolerance enforcement (3× interval continuous gap, 1% total) and configurable imputation rules in data validation (FR-029, DM-017)
+- [ ] T020c Ensure run_meta writes are atomic/immutable and record persistence usage (FR-030, FR-031, DM-018)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -106,11 +113,13 @@ Per plan.md structure:
 - [ ] T039 [US1] Implement metrics calculator in quant-scenario-engine/simulation/metrics.py (mean/median P&L, drawdown, VaR/CVaR, Sharpe/Sortino) per FR-003
 - [ ] T040 [US1] Create SimulationRun orchestrator in quant-scenario-engine/simulation/run.py to coordinate MC, strategies, simulation per data-model.md
 - [ ] T041 [US1] Implement run_compare() function in quant-scenario-engine/simulation/compare.py integrating all components for stock vs option comparison per FR-005
+- [ ] T041a [US1] Enforce CLI parameter validation against contracts/openapi.yaml for compare command (FR-033)
 
 #### Artifacts & Persistence (US1)
 
 - [ ] T042 [P] [US1] Implement MetricsReport serialization in quant-scenario-engine/schema/metrics.py with JSON/CSV export per FR-008
 - [ ] T043 [P] [US1] Create run artifact writer in quant-scenario-engine/utils/artifacts.py (metrics, plots, run_meta.json) per FR-008
+- [ ] T043a [P] [US1] Ensure run_meta/artifacts write atomically and include schema versions; record persistence usage (FR-030, FR-031, FR-034)
 - [ ] T044 [US1] Implement run_meta.json persistence in quant-scenario-engine/utils/run_meta.py with all required fields per FR-019 and data-model.md example
 
 #### CLI (US1)
@@ -146,6 +155,7 @@ Per plan.md structure:
 - [ ] T053 [US4] Implement selector.score() and selector.select() methods per data-model.md CandidateSelector interface
 - [ ] T054 [P] [US4] Create CandidateEpisode dataclass in quant-scenario-engine/schema/episode.py per data-model.md
 - [ ] T055 [US4] Implement build_candidate_episodes() in quant-scenario-engine/selectors/episodes.py per data-model.md reference code
+- [ ] T055a [US4] Document and enforce candidate episode construction rules (horizon > 0, state_features captured) across backtest and conditional MC (FR-035)
 
 #### Screening Engine (US4)
 
@@ -232,6 +242,7 @@ Per plan.md structure:
 - [ ] T082 [US6] Create conditional MC method selector in backtesting/mc/conditional.py (bootstrap vs refit) with fallback logic per FR-CAND-005
 - [ ] T083 [US6] Implement minimum episode threshold check with warning and fallback per spec.md US6 acceptance scenario 3
 - [ ] T084 [US6] Create run_conditional_mc() in quant-scenario-engine/simulation/conditional_mc.py integrating conditional sampling with strategies per FR-CAND-004
+- [ ] T084a [US6] Log method selection and fallbacks (bootstrap → refit → unconditional) in run_meta/logs per FR-036/FR-038
 
 #### CLI (US6)
 
@@ -258,6 +269,8 @@ Per plan.md structure:
 - [ ] T090 [P] [US7] Add environment variable override support in quant-scenario-engine/config/env.py per plan.md onboarding
 - [ ] T091 [US7] Implement config validation with fail-fast on invalid values per spec.md US7 acceptance scenario 3
 - [ ] T092 [US7] Wire all factories (data, distribution, pricer) to read from unified config per FR-009
+- [ ] T092a [US7] Enforce configuration precedence (CLI > ENV > YAML) and log overrides per FR-024/FR-026
+- [ ] T092b [US7] Detect and block incompatible config combinations (e.g., pricer not supported) with structured errors per FR-025
 
 #### Advanced Components (US7)
 
@@ -342,6 +355,7 @@ Per plan.md structure:
 - [ ] T120 [P] Implement optional plotly report generation in quant-scenario-engine/utils/plots.py per FR-008
 - [ ] T121 [P] Add quantstats integration for tearsheet generation in quant-scenario-engine/utils/quantstats_report.py per plan.md dependencies
 - [ ] T122 Create performance profiling utilities in quant-scenario-engine/utils/profiling.py to validate SC-001/SC-002/SC-003 time budgets
+- [ ] T122a Add structured logging (JSON) with required fields and progress events; emit diagnostics when performance budgets breach (FR-039, FR-040)
 
 ---
 
