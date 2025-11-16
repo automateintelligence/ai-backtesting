@@ -23,9 +23,9 @@ Parent: `plan.md` (under `spec.md` per constitution). Children: contracts consum
 - **Relationships**: Supplies data for `ReturnDistribution` and `CandidateSelector`.
 
 ### ReturnDistribution
-- **Fields**: `model` (enum: laplace [default], student_t, garch_t), `params` (dict), `fit_window` (int bars), `seed` (int), `aic`/`bic` (float, optional), `fit_status` (enum: success, warn, fail), `min_samples` (int ≥60).
-- **Validation**: Parameter dict must match model; `len(returns) >= min_samples`; seed required for reproducibility; failure triggers `DistributionFitError` and fallback model.
-- **Relationships**: Generates `PricePath` samples; params + seed written to run_meta.
+- **Fields**: `model` (enum: laplace [default], student_t, garch_t), `params` (dict), `fit_window` (int bars), `seed` (int), `estimator` (enum: mle, gmm), `loglik` (float), `aic`/`bic` (float), `fit_status` (enum: success, warn, fail), `min_samples` (int ≥60).
+- **Validation**: Parameter dict must match model; `len(returns) >= min_samples`; stationarity/AR preflight must pass or transform; implausible-parameter thresholds enforced per model; convergence limits enforced; seed required for reproducibility; failure triggers `DistributionFitError` and fallback model.
+- **Relationships**: Generates `PricePath` samples; params + seed + estimator metadata written to run_meta.
 
 ```python
 # interfaces/distribution.py
@@ -48,8 +48,8 @@ class ReturnDistribution(ABC):
 ```
 
 ### PricePath
-- **Fields**: `paths` (np.ndarray|memmap) shape `[n_paths, n_steps]`, `n_paths` (int), `n_steps` (int), `s0` (float), `storage` (enum: memory, npz, memmap), `seed` (int).
-- **Validation**: `n_paths * n_steps * 8 bytes` must respect RAM thresholds (<25% in-memory; ≥25% triggers memmap/npz); seed mandatory for replay; memmap requires file handle in run dir.
+- **Fields**: `paths` (np.ndarray|memmap) shape `[n_paths, n_steps]`, `n_paths` (int), `n_steps` (int), `s0` (float), `storage` (enum: memory, npz, memmap), `seed` (int), `estimated_gb` (float).
+- **Validation**: `n_paths * n_steps * 8 bytes` (×1.1 overhead) must respect RAM thresholds (<25% in-memory; ≥25% triggers memmap/npz; ≥50% abort); seed mandatory for replay; memmap requires file handle in run dir.
 - **Relationships**: Consumed by `Strategy` evaluations and option pricers.
 
 ### StrategyParams
@@ -110,18 +110,18 @@ class Strategy(ABC):
 - **Relationships**: Feeds conditional backtests and conditional MC sampling.
 
 ### SimulationRun
-- **Fields**: `run_id` (uuid/str), `symbol` (str or list), `config` (RunConfig), `distribution` (ReturnDistribution), `price_paths` (PricePath), `strategies` (list[StrategyParams]), `episodes` (list[CandidateEpisode]|null), `artifacts_path` (abs path).
-- **Validation**: Unique run_id; seed in config; conditional runs require non-empty episodes or documented fallback; artifacts path writable.
+- **Fields**: `run_id` (uuid/str), `symbol` (str or list), `config` (RunConfig), `distribution` (ReturnDistribution), `price_paths` (PricePath), `strategies` (list[StrategyParams]), `episodes` (list[CandidateEpisode]|null), `artifacts_path` (abs path), `system_info` (cpu_count, ram_gb, os), `git_sha` (str).
+- **Validation**: Unique run_id; seed in config; conditional runs require non-empty episodes or documented fallback; artifacts path writable; system_info/git_sha captured for reproducibility.
 - **Relationships**: Orchestrates MC generation, strategy execution, metrics, and artifact emission.
 
 ### RunConfig
-- **Fields**: `n_paths` (int), `n_steps` (int), `seed` (int), `distribution_model` (enum), `data_source` (enum), `selector` (CandidateSelector|null), `grid` (list[StrategyParams]|null), `resource_limits` ({`max_workers` int, `mem_threshold` float, `runtime_budget_s` int}).
-- **Validation**: Enforce FR-018 limits; reject configs exceeding RAM/time estimates; seed required; `max_workers <= 6` on 8-core VPS by default.
+- **Fields**: `n_paths` (int), `n_steps` (int), `seed` (int), `distribution_model` (enum), `data_source` (enum), `selector` (CandidateSelector|null), `grid` (list[StrategyParams]|null), `resource_limits` ({`max_workers` int, `mem_threshold` float, `runtime_budget_s` int}), `covariance_estimator` (enum: sample, ledoit_wolf, shrinkage_delta), `var_method` (enum: parametric, historical), `lookback_window` (int bars).
+- **Validation**: Enforce FR-018 limits; reject configs exceeding RAM/time estimates; seed required; `max_workers <= 6` on 8-core VPS by default; resource limits stored in run_meta.
 - **Relationships**: Stored within `SimulationRun` and `run_meta.json` for replay (FR-019).
 
 ### MetricsReport
-- **Fields**: `per_config_metrics` (list of `{config_id, pnl_stats, drawdown, var, cvar, sharpe, sortino, objective}`), `comparison` (stock vs option summary), `conditional_metrics` (episode-level stats), `logs_path` (str), `plots` (optional paths).
-- **Validation**: Objective function defined; metrics arrays align with configs; conditional metrics only when episodes provided.
+- **Fields**: `per_config_metrics` (list of `{config_id, pnl_stats, drawdown, var, cvar, sharpe, sortino, objective, var_method, lookback}`), `comparison` (stock vs option summary), `conditional_metrics` (episode-level stats), `logs_path` (str), `plots` (optional paths), `parameter_stability` (optional rolling SE/CI metadata).
+- **Validation**: Objective function defined; metrics arrays align with configs; conditional metrics only when episodes provided; VaR/CVaR must include estimator/window metadata.
 - **Relationships**: Generated from `SimulationRun`; persisted as JSON/CSV; referenced by quickstart/CLI outputs.
 
 ## Relationships Overview
@@ -150,16 +150,21 @@ class Strategy(ABC):
     "distribution_model": "laplace",
     "data_source": "yfinance",
     "selector": null,
-    "resource_limits": {"max_workers": 6, "mem_threshold": 0.25, "runtime_budget_s": 900}
+    "resource_limits": {"max_workers": 6, "mem_threshold": 0.25, "runtime_budget_s": 900},
+    "covariance_estimator": "ledoit_wolf",
+    "var_method": "historical",
+    "lookback_window": 252
   },
-  "distribution": {"model": "laplace", "params": {"loc": 0.0, "scale": 0.012}, "fit_window": 252, "seed": 42},
-  "price_paths": {"storage": "memory", "n_paths": 1000, "n_steps": 60, "s0": 190.0, "seed": 42},
+  "distribution": {"model": "laplace", "params": {"loc": 0.0, "scale": 0.012}, "fit_window": 252, "seed": 42, "estimator": "mle", "loglik": -1234.5, "aic": 2469.0, "bic": 2480.0},
+  "price_paths": {"storage": "memory", "n_paths": 1000, "n_steps": 60, "s0": 190.0, "seed": 42, "estimated_gb": 0.005},
   "strategies": [
     {"name": "stock_basic", "kind": "stock", "params": {"threshold": 0.01}, "position_sizing": "fixed_notional", "fees": 0.0, "slippage": 0.0},
     {"name": "call_basic", "kind": "option", "params": {"entry": "atm"}, "position_sizing": "fixed_notional", "fees": 0.0, "slippage": 0.0,
      "option_spec": {"option_type": "call", "strike": "atm", "maturity_days": 60, "implied_vol": 0.25, "risk_free_rate": 0.05, "contracts": 1}}
   ],
   "episodes": null,
-  "artifacts_path": "runs/2024-11-16T01-compare-aapl"
+  "artifacts_path": "runs/2024-11-16T01-compare-aapl",
+  "system_info": {"cpu_count": 8, "ram_gb": 24, "os": "linux"},
+  "git_sha": "abc123"
 }
 ```

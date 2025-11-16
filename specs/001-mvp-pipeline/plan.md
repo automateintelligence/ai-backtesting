@@ -11,28 +11,39 @@ Build a CPU-only Quant Scenario Engine that loads Parquet OHLCV, fits heavy-tail
 ## Technical Context & Constraints
 - **Runtime**: Python 3.11 on 8 vCPU / 24 GB RAM VPS; CPU-only.
 - **Data**: Parquet canonical storage (DM-004..014), 1d/5m/1m bars; features stored separately. Default yfinance, Schwab stub optional; schema validation on load (FR-027), fingerprint + drift detection (FR-019, FR-028, DM-013).
-- **MC**: Laplace default; Student-T/GARCH-T optional. Memory estimator (`n_paths*n_steps*8*1.1`) and storage policy thresholds per FR-013/FR-023; non-positive/overflow rejection per FR-022; implausible parameter bounds per FR-020/FR-037.
+- **MC**: Laplace default; Student-T/GARCH-T optional. Memory estimator (`n_paths*n_steps*8*1.1`) and storage policy thresholds per FR-013/FR-023; non-positive/overflow rejection per FR-022; implausible parameter bounds per FR-020/FR-037; stationarity/AR preflight and estimator metadata (MLE/GMM, loglik, AIC/BIC).
 - **Pricing**: Black–Scholes default, swap-friendly (FR-016); option maturity/ATM edge handling per spec.
 - **Config**: CLI > ENV > YAML precedence with defaults and incompatible-combo fail-fast (FR-009, FR-024, FR-025); component swap logging (FR-026).
-- **Performance**: Budgets per FR-018 (≤10s baseline, ≤15m grid), throughput targets captured; resource limit enforcement + warnings/abort.
-- **Observability**: Structured JSON logs, progress, diagnostics (FR-039, FR-040); run_meta immutability and atomic writes (FR-030).
+- **Performance**: Budgets per FR-018 (≤10s baseline, ≤15m grid), throughput targets captured; resource limit enforcement + warnings/abort; VaR/CVaR lookback stability checks.
+- **Observability**: Structured JSON logs, progress, diagnostics (FR-039, FR-040); run_meta immutability and atomic writes (FR-030); audit trail completeness.
 - **Reproducibility**: Seeds applied everywhere (FR-012/021), capture package versions/system config/git SHA, data fingerprints (FR-019, FR-028, FR-034).
 - **Assumptions**: Single-user execution, pre-downloaded Parquet, 8 vCPU/24 GB RAM (FR-018 context); revisit if violated.
+
+**Reference Lectures (for implementation guidance)**:  
+`planning/quantopian_research/notebooks/lectures/ARCH_GARCH_and_GMM` — vol clustering, MLE/GMM fit, conditional variance forecasting (FR-002, FR-020, FR-037, FR-023, FR-021).  
+`Autocorrelation_and_AR_Models` — AR detection/preflight before IID fits (FR-002, FR-037).  
+`Integration_Cointegration_and_Stationarity` — stationarity/cointegration checks and transforms (FR-002, FR-037, FR-019).  
+`Kalman_Filters` — rolling beta/alpha and smoothed estimates (optional feature hooks; observability) (FR-039/040).  
+`Estimating_Covariance_Matrices` — shrinkage/Ledoit-Wolf options for risk metrics (RunConfig covariance_estimator, MetricsReport) (FR-034).  
+`Maximum_Likelihood_Estimation` — estimator diagnostics/loglik/AIC/BIC capture (FR-002, FR-020, FR-037, FR-034).  
+`VaR_and_CVaR` — tail metrics (parametric/historical), lookback stability (MetricsReport, FR-034, FR-040).  
+`Instability_of_Estimates` + `Regression_Model_Instability` — parameter/regime stability warnings, regime-change logging (FR-039/040, FR-034).  
+`The_Dangers_of_Overfitting` + `p-Hacking_and_Multiple_Comparisons_Bias` — OOS/IC, multiple-comparison discipline for grids/selectors (FR-040, testing practices).
 
 ## Workstreams
 1) **Data & Schema**  
    - Implement DataSource adapters (yfinance default, Schwab stub) with retries and drift detection (FR-001, FR-017, FR-027, FR-028).  
    - Enforce missing-data tolerances and gap handling (FR-010, FR-029); align macro series (FR-014).  
-   - Persist fingerprints and schema metadata in run_meta (FR-019, FR-034).
+   - Persist fingerprints and schema metadata in run_meta (FR-019, FR-034); capture stationarity/AR diagnostics.
 
 2) **MC Models & Storage Policy**  
    - Implement ReturnDistribution interface + Laplace/Student-T/GARCH-T fits with bounds, convergence limits, and implausible-parameter checks (FR-002, FR-020, FR-037).  
-   - Log-return → price transform with overflow/non-positive rejection (FR-022).  
+   - Log-return → price transform with overflow/non-positive rejection (FR-022); stationarity preflight and estimator metadata (MLE/GMM, loglik, AIC/BIC).  
    - Memory estimator + policy: in-memory <25% RAM; memmap/npz ≥25%; abort ≥50% (FR-013, FR-023); record in run_meta.
 
 3) **Strategies & Pricing**  
    - Stock/option strategy interfaces; option pricer abstraction with Black–Scholes default and plug-ins (FR-004, FR-016).  
-   - Handle option-specific edge cases (maturity vs horizon, ATM precision, invalid IV) with structured errors (FR-022).
+   - Handle option-specific edge cases (maturity vs horizon, ATM precision, invalid IV) with structured errors (FR-022); include VaR/CVaR metric hooks.
 
 4) **CLI & Config**  
    - Typer CLIs for `compare`, `grid`, `screen`, `conditional`, `replay` with parameter validation against contracts (FR-005, FR-033).  
@@ -47,8 +58,8 @@ Build a CPU-only Quant Scenario Engine that loads Parquet OHLCV, fits heavy-tail
 
 6) **Resource Limits, Observability, Reproducibility**  
    - Enforce time/memory budgets and worker caps (FR-018, FR-023).  
-   - Structured logging + progress + diagnostics (FR-039/040); audit trail completeness.  
-   - run_meta: seeds, versions (Python/pkg), git SHA, system config, data fingerprints, storage policy, fallbacks (FR-019, FR-021, FR-030, FR-034).
+   - Structured logging + progress + diagnostics (FR-039/040); audit trail completeness; regime change/instability warnings where applicable.  
+   - run_meta: seeds, versions (Python/pkg), git SHA, system config, data fingerprints, storage policy, fallbacks, covariance/VAR method metadata (FR-019, FR-021, FR-030, FR-034).
 
 ## Phases & Milestones
 - **Phase 0: Architecture & Contracts**  
@@ -72,9 +83,9 @@ Build a CPU-only Quant Scenario Engine that loads Parquet OHLCV, fits heavy-tail
 ## Deliverables (Definition of Done)
 - Updated `plan.md`, `data-model.md`, `quickstart.md`, `contracts/` aligning to spec; `tasks.md` with executable backlog.  
 - Implemented CLIs (`compare`, `grid`, `screen`, `conditional`, `replay`) meeting FR-005/033 and US1–US8 acceptance scenarios.  
-- MC + storage policy + option pricer per FR-002/013/016/020/022/023/037.  
-- Candidate flows per FR-CAND-001..006; episode artifacts and conditional metrics per SC-010/011/012.  
-- run_meta content: seeds, versions, git SHA, system config, data fingerprints, storage policy, fallbacks, drift status.  
+- MC + storage policy + option pricer per FR-002/013/016/020/022/023/037, with stationarity/AR preflight and estimator metadata.  
+- Candidate flows per FR-CAND-001..006; episode artifacts and conditional metrics per SC-010/011/012; selector sparsity fallback documented.  
+- run_meta content: seeds, versions, git SHA, system config, data fingerprints, storage policy, fallbacks, drift status, covariance/VaR method metadata, parameter stability.  
 - Tests: unit for distributions/pricers/config validation; integration for CLI commands; property/boundary tests for MC reproducibility and resource thresholds; coverage ≥80%.
 
 ## Risks & Mitigations

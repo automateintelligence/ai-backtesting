@@ -129,7 +129,7 @@ Author can inspect a run directory and reconstruct exactly how results were prod
 ### Functional Requirements
 
 - **FR-001**: System MUST load OHLCV for a symbol and date range from a pluggable data source (yfinance baseline; Schwab later), automatically downloading on-demand if not present in local cache, and validate presence of required columns. Local cache SHALL use Parquet format per DM-004 and be stored under `data/historical/{interval}/{symbol}.parquet`. On cache miss, system SHALL fetch from configured data source, validate, write to cache, then proceed with run.
-- **FR-002**: System MUST fit Laplacian (double-exponential) returns as the default heavy-tailed model and generate N Monte Carlo paths of length T from that fit; additional models (e.g., Student-T) MAY be provided as alternatives.
+- **FR-002**: System MUST fit Laplacian (double-exponential) returns as the default heavy-tailed model and generate N Monte Carlo paths of length T from that fit; additional models (e.g., Student-T, GARCH-T) MAY be provided as alternatives. Fitting MUST record estimator type (MLE/GMM), convergence status, log-likelihood, AIC/BIC, and implausible-parameter checks per model; non-stationary series MUST be rejected or transformed prior to fit (stationarity/AR preflight required).
 - **FR-003**: System MUST run a stock strategy over generated paths, producing per-path equity curves and summary metrics (mean/median P&L, drawdown, VaR/CVaR, Sharpe/Sortino).
 - **FR-004**: System MUST run an option strategy over the same paths using an option pricer (Black-Scholes with configurable IV) and produce analogous metrics.
 ```python
@@ -171,10 +171,10 @@ class MarketSimulator:
 - **FR-010**: System MUST handle missing data gracefully with clear warnings and deterministic fallbacks (e.g., drop NaNs, fail-fast if below minimum length).
 - **FR-011**: System MUST provide stubs for Schwab API data and advanced pricers while defaulting to yfinance + BS so the MVP runs locally.
 - **FR-012**: System MUST allow deterministic seeding of random number generation for reproducible simulations.
-- **FR-013**: System SHOULD cap Monte Carlo sampling based on estimated footprint `n_paths * n_steps * 8 bytes` and refuse in-memory runs above **25% of available RAM**, automatically switching to memmap/npz and emitting a warning.  
+- **FR-013**: System SHOULD cap Monte Carlo sampling based on estimated footprint `n_paths * n_steps * 8 bytes` plus **10% overhead** and refuse in-memory runs above **25% of available RAM**, automatically switching to memmap/npz and emitting a warning; MUST abort when estimate exceeds **50% of available RAM**.  
 - **FR-014**: System SHOULD support macro/alternative series alignment (e.g., interpolation to bar frequency) with explicit tolerances: maximum forward/backfill gap of **3× bar interval** and warning when alignment error exceeds tolerance.  
-- **FR-015**: System SHOULD document performance targets (paths × steps per second) for the CPU-only VPS.
-- **FR-016**: System MUST support Black–Scholes pricing with per-strike implied volatility as the default option pricer, and MUST allow swapping in more advanced pricers (e.g., Heston/QuantLib) via configuration without changes to strategy or backtest code.
+- **FR-015**: System SHOULD document performance targets (paths × steps per second) for the CPU-only VPS and specify measurement methodology (hardware profile, wall-clock vs CPU, sample config).
+- **FR-016**: System MUST support Black–Scholes pricing with per-strike implied volatility as the default option pricer, and MUST allow swapping in more advanced pricers (e.g., Heston/QuantLib) via configuration without changes to strategy or backtest code. Option pricing MUST handle maturity=horizon, ATM precision, invalid IV, and negative/zero prices with structured errors.
 ```python
 # models/options.py
 
@@ -214,9 +214,9 @@ class BlackScholesPricer:
   - The system MUST cap concurrent workers (e.g., max_workers ≤ 6 on an 8-core VPS) and abort the run (with structured error) when pre-run estimates exceed thresholds; if estimates are within limits but runtime exceeds, emit escalating warnings and stop remaining jobs.
 - **FR-019**: System MUST prevent replay when underlying historical data version has changed since `run_meta` (unless an explicit `--force-replay`/`allow_data_drift` flag is provided), and must record the drift status in the replay output.
 - **FR-020**: System MUST enforce distribution parameter validation (per-model bounds, heavy-tail sanity checks) and fit convergence controls (max iterations, failure fallback to Laplace) with structured errors when validation fails.
-- **FR-021**: System MUST ensure reproducibility across seeded runs with numeric tolerance of ±1e-10 for path-level values; captures library versions and seed in `run_meta` and applies seeding to all MC operations (including conditional sampling).
+- **FR-021**: System MUST ensure reproducibility across seeded runs with numeric tolerance of ±1e-10 for path-level values; captures library versions, git SHA, system config (CPU/RAM/OS), and seed in `run_meta` and applies seeding to all MC operations (including conditional sampling).
 - **FR-022**: System MUST detect numeric overflow/underflow or non-positive prices during log-return → price transforms and abort with a structured error; paths producing NaN/inf or ≤0 prices SHALL be rejected (no silent clipping).
-- **FR-023**: System MUST apply a deterministic memory footprint estimator (`n_paths × n_steps × 8 bytes` plus 10% overhead) before MC execution and enforce storage policy selection based on the estimator (in-memory <25% RAM; otherwise memmap/npz) with user-visible warnings.
+- **FR-023**: System MUST apply a deterministic memory footprint estimator (`n_paths × n_steps × 8 bytes` plus 10% overhead) before MC execution and enforce storage policy selection based on the estimator (in-memory <25% RAM; memmap/npz ≥25%; abort ≥50%) with user-visible warnings; record the decision in `run_meta`.
 - **FR-024**: System MUST define configuration precedence (CLI flags > environment variables > YAML files) and log any overrides applied per run.
 - **FR-025**: System MUST fail fast on invalid or incompatible configuration combinations (e.g., pricer not supported for asset type) and MUST define defaults for all optional parameters in configuration schemas.
 - **FR-026**: System MUST log component swap events (data source, distribution, pricer, selector) with timestamp, run_id, and prior→new values for auditability.
@@ -227,10 +227,10 @@ class BlackScholesPricer:
 - **FR-031**: Storage policy for Monte Carlo datasets SHALL remain non-persistent by default (DM-009), but persistence is permitted when explicitly requested (replay) or required for memmap fallback; `run_meta` MUST record when persistence is used.
 - **FR-032**: System MUST enforce minimum sample sizes per distribution model (Laplace ≥60 bars, Student-T ≥60 bars, Normal ≥60 bars, GARCH-T ≥252 bars) and fail with structured error if unmet.
 - **FR-033**: Each CLI command (`compare`, `grid`, `screen`, `conditional`, `replay`) MUST validate all parameters against contracts/openapi.yaml and reject unknown/invalid parameters with a clear error.
-- **FR-034**: Artifacts MUST follow defined formats: metrics JSON/CSV schema, `run_meta.json` with provenance (seeds, versions, fingerprints), optional plots/HTML reports; schemas SHALL be versioned.
+- **FR-034**: Artifacts MUST follow defined formats: metrics JSON/CSV schema, `run_meta.json` with provenance (seeds, versions, fingerprints, git SHA, system config), optional plots/HTML reports; schemas SHALL be versioned. Metrics MUST include VaR/CVaR (parametric + historical) with lookback window and estimator metadata.
 - **FR-035**: Candidate episodes MUST capture `(symbol, t0, horizon, state_features)` with horizon > 0; episode construction rules SHALL be documented and applied consistently across backtest and conditional MC.
-- **FR-036**: Conditional Monte Carlo SHALL support both bootstrap (non-parametric) and parametric refit methods; fallback order (bootstrap → refit → unconditional) MUST be documented and logged when taken.
-- **FR-037**: Distribution “implausible parameter” thresholds SHALL be defined per model (e.g., scale > 0 and finite; Student-T df ∈ [2, 100]; GARCH parameters within stationarity bounds) and violations must fail fast with structured errors.
+- **FR-036**: Conditional Monte Carlo SHALL support both bootstrap (non-parametric) and parametric refit methods; fallback order (bootstrap → refit → unconditional) MUST be documented and logged when taken. Selector sparsity MUST trigger a documented fallback (e.g., unconditional MC with warning).
+- **FR-037**: Distribution “implausible parameter” thresholds SHALL be defined per model (e.g., scale > 0 and finite; Student-T df ∈ [2, 100]; GARCH parameters within stationarity bounds) and violations must fail fast with structured errors; AR/stationarity diagnostics MUST be logged when applicable.
 - **FR-038**: Fail-fast is the default for invalid data/config/fits; recoverable fallbacks (e.g., secondary data source, unconditional MC) MUST emit warnings and record the fallback in logs and run_meta.
 - **FR-039**: Logging MUST be structured (JSON) and include at minimum timestamp, run_id, component, event, severity, duration (when applicable), and key parameters; long-running jobs MUST emit progress updates.
 - **FR-040**: Performance budgets MUST be documented and enforced: data load/fit/MC/strategy eval latencies, MC throughput targets, expected resource utilization, and grid scaling behavior; breaches MUST trigger structured warnings. Performance measurement methodology SHALL be:
