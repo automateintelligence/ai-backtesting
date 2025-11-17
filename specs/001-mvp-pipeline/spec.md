@@ -174,7 +174,7 @@ class MarketSimulator:
 - **FR-013**: System SHOULD cap Monte Carlo sampling based on estimated footprint `n_paths * n_steps * 8 bytes` plus **10% overhead** and refuse in-memory runs above **25% of available RAM**, automatically switching to memmap/npz and emitting a warning; MUST abort when estimate exceeds **50% of available RAM**.  
 - **FR-014**: System SHOULD support macro/alternative series alignment (e.g., interpolation to bar frequency) with explicit tolerances: maximum forward/backfill gap of **3× bar interval** and warning when alignment error exceeds tolerance. Alignment method SHALL be configurable per feature (default `forward_fill`; `linear` or `spline` for smooth series) and documented in config.
 - **FR-015**: System SHOULD document performance targets (paths × steps per second) for the CPU-only VPS and specify measurement methodology (hardware profile, wall-clock vs CPU, sample config).
-- **FR-016**: System MUST support Black–Scholes pricing with per-strike implied volatility as the default option pricer, and MUST allow swapping in more advanced pricers (e.g., Heston/QuantLib) via configuration without changes to strategy or backtest code. Option pricing MUST handle maturity=horizon, ATM precision, invalid IV, and negative/zero prices with structured errors; strategy-driven early exercise hooks MUST be honored when an American-capable pricer is configured. IV sourcing SHALL follow a fallback chain (`yfinance` option chain → realized 30d volatility → config default), validate IV ∈ (0, 5), and record the chosen source in `run_meta`.
+- **FR-016**: System MUST support Black–Scholes pricing with per-strike implied volatility as the default option pricer, and MUST allow swapping in more advanced pricers (e.g., Heston/QuantLib) via configuration without changes to strategy or backtest code. Option pricing MUST handle maturity=horizon, ATM precision, invalid IV, and negative/zero prices with structured errors; strategy-driven early exercise hooks MUST be honored when an American-capable pricer is configured. IV sourcing SHALL follow a fallback chain (`yfinance` option chain → realized 30d volatility → config default), validate IV ∈ (0, 5), and record the chosen source in `run_meta`. **Invalid IV handling**: When IV is outside bounds (0, 5) or unavailable, system SHALL fall back to realized 30d volatility, emit `WARNING: Invalid IV={iv}. Using realized_vol_30d={vol}`, and record `iv_source: "realized_vol"` in run_meta; if realized vol unavailable, fall back to config default (default: 0.25) and record `iv_source: "config_default"`.
 ```python
 # models/options.py
 
@@ -233,10 +233,10 @@ class BlackScholesPricer:
 - **FR-041 (Slippage/Fees Defaults)**: StrategyParams MUST support fee/slippage parameters with conservative defaults of 5 bps per notional trade and $0.65 per option contract; application is per-fill unless overridden. Defaults and overrides MUST be recorded in run_meta and applied consistently across strategies.
 - **FR-035**: Candidate episodes MUST capture `(symbol, t0, horizon, state_features)` with horizon > 0; episode construction rules SHALL be documented and applied consistently across backtest and conditional MC.
 - **FR-036**: Conditional Monte Carlo SHALL support both bootstrap (non-parametric) and parametric refit methods; fallback order (bootstrap → refit → unconditional) MUST be documented and logged when taken. Selector sparsity MUST trigger a documented fallback (e.g., unconditional MC with warning).
-- **FR-037**: Distribution “implausible parameter” thresholds SHALL be defined per model (e.g., scale > 0 and finite; Student-T df ∈ [2, 100]; GARCH parameters within stationarity bounds) and violations must fail fast with structured errors; AR/stationarity diagnostics MUST be logged when applicable.
+- **FR-037**: Distribution "implausible parameter" thresholds SHALL be defined per model (e.g., scale > 0 and finite; Student-T df ∈ [2, 100]; GARCH parameters within stationarity bounds) and violations must fail fast with structured errors; AR/stationarity diagnostics MUST be logged when applicable. Heavy-tailed validation SHALL require **excess kurtosis ≥ 1.0** for fitted distributions; emit `WARNING` if kurtosis < 0.5 but proceed with fit marked `heavy_tail_warning: true` in run_meta.
 - **FR-038**: Fail-fast is the default for invalid data/config/fits; recoverable fallbacks (e.g., secondary data source, unconditional MC) MUST emit warnings and record the fallback in logs and run_meta.
-- **FR-039**: Logging MUST be structured (JSON) and include at minimum timestamp, run_id, component, event, severity, duration (when applicable), and key parameters; long-running jobs MUST emit progress updates.
-- **FR-040**: Performance budgets MUST be documented and enforced: data load/fit/MC/strategy eval latencies, MC throughput targets, expected resource utilization, and grid scaling behavior; breaches MUST trigger structured warnings. Performance measurement methodology SHALL be:
+- **FR-039**: Logging MUST be structured (JSON) and include at minimum timestamp, run_id, component, event, severity, duration (when applicable), and key parameters; long-running jobs MUST emit progress updates. **Enhanced audit trail** SHALL additionally include: user/process context (user_id, pid, hostname), data lineage tracking (source file paths with versions/timestamps for all loaded data), and per-field config source provenance (CLI flag, ENV var, or YAML file with path/line number) recorded in run_meta.
+- **FR-040**: Performance budgets MUST be documented and enforced: data load/fit/MC/strategy eval latencies, MC throughput targets, expected resource utilization, and grid scaling behavior; breaches MUST trigger structured warnings. **Performance threshold policy**: Emit `INFO` log when operation exceeds 1.5× documented budget, `WARNING` at 2× budget, and `ERROR` at 3× budget (ERROR blocks production deployment but not dev runs); apply to data loading, distribution fitting, MC simulation, and strategy evaluation. Performance measurement methodology SHALL be:
   - **Wall-clock time**: Measured via `time.perf_counter()` for end-to-end CLI duration.
   - **CPU time**: Measured via `time.process_time()` for computational work.
   - **Benchmark VPS**: 8 vCPU, 24 GB RAM, NVMe SSD; OS: Ubuntu 22.04; Python 3.11.
@@ -417,8 +417,10 @@ class BlackScholesPricer:
 # **Traceability & Reproducibility Requirements**
 
 - **FR-072**: System MUST capture git commit hash in `run_meta.json`:
-  - Detect via `git rev-parse HEAD` and store as `git_commit_sha`.
-  - If not a git repo, store `git_commit_sha: null` and emit `WARNING: Not a git repository. Git SHA not captured.`
+  - Detect via `subprocess.run(['git', 'rev-parse', 'HEAD'])` and store as `git_commit_sha`.
+  - **Dirty working tree handling**: If uncommitted changes exist, record SHA + `dirty: true` + list of modified file paths in `run_meta.uncommitted_changes`.
+  - **Missing .git directory**: Store `git_commit_sha: null`, `version_source: "unknown"`, emit `WARNING: Not a git repository. Git SHA not captured.`
+  - **Never block runs**: Always proceed with best-effort version capture; treat all git errors as non-fatal.
 
 - **FR-073**: System MUST capture system configuration in `run_meta.json`:
   - Include: `os_type` (Linux/macOS), `os_version`, `python_version`, `cpu_count`, `total_ram_gb`.
@@ -955,6 +957,17 @@ The system SHALL guarantee reproducibility of Monte Carlo runs using:
 - **ASSUME-013**: Core development is **single-developer** with occasional pairing. Code review is self-review + automated lint/type checks until external reviewer available.
 
 ## Clarifications & Anti-Requirements
+
+### Clarification Sessions
+
+#### Session 2025-11-16
+- Q: How should the system quantify and validate that a fitted distribution is appropriately "heavy-tailed" for financial returns? → A: Excess kurtosis ≥ 1.0 with warning if < 0.5
+- Q: When option pricing encounters invalid IV (implied volatility outside reasonable bounds), what should the system do? → A: Fallback to realized 30d volatility with warning and record iv_source in run_meta
+- Q: What additional information should be included in the audit trail beyond the minimum logging requirements already specified? → A: Add user/process context (user_id, pid, hostname), data lineage (source files with versions), and per-field config source tracking (CLI/ENV/YAML)
+- Q: What specific performance threshold breaches should trigger structured warnings or optimization requirements? → A: Tiered approach - INFO at 1.5× budget, WARNING at 2×, ERROR at 3× (blocks production); apply to data load, fitting, MC, strategy eval
+- Q: How should the system capture version control state when git SHA is unavailable or workspace has uncommitted changes? → A: Best-effort capture via git rev-parse HEAD; record dirty=true + modified files if uncommitted changes; record git_sha=null with WARNING if no .git; never block runs
+
+### Design Clarifications
 
 - **Conditional Backtesting vs Conditional Monte Carlo**: Conditional backtesting replays historical episodes where a selector fired; conditional MC resamples/parameterizes returns conditioned on the same state and then simulates synthetic paths. Both must share selector definitions but produce different artifacts (historical metrics vs simulated distributions).
 - **Anti-requirements**: MVP will not execute live trades, will not require GPUs, and will not store brokerage credentials in-repo; all runs are research-only (per ASSUME-006, ASSUME-007).
