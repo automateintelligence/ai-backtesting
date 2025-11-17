@@ -33,6 +33,7 @@ def screen(
     conditional_file: str = typer.Option(None, help="Optional selector YAML for conditional mode"),
     top: int | None = typer.Option(None, help="Top N candidates to keep"),
     max_workers: int = typer.Option(4, help="Max workers for screening"),
+    output: Path = typer.Option(Path("runs"), help="Output directory for artifacts"),
 ) -> None:
     validate_screen_inputs(horizon=horizon, max_workers=max_workers)
     valid_intervals = {"1m", "5m", "15m", "30m", "1h", "1d", "1wk", "1mo"}
@@ -69,6 +70,8 @@ def screen(
     # Enrich each symbol's data with features
     enriched = {sym: enrich_ohlcv(g) for sym, g in grouped.items()}
 
+    output.mkdir(parents=True, exist_ok=True)
+
     # Mode A: selector-only
     if not strategy:
         selector = GapVolumeSelector(gap_min=gap_min, volume_z_min=volume_z_min, horizon=horizon)
@@ -84,7 +87,10 @@ def screen(
             }
             for c in candidates
         ]
-        typer.echo(json.dumps({"candidates": payload}, indent=2))
+        result_obj = {"candidates": payload}
+        target_file = output / "screen_results_unconditional.json"
+        target_file.write_text(json.dumps(result_obj, indent=2))
+        typer.echo(json.dumps(result_obj, indent=2))
         log.info("screen command completed", extra={"candidates": len(payload)})
         return
 
@@ -114,5 +120,9 @@ def screen(
             entry["episode_count"] = res.episode_count
         payload.append(entry)
 
-    typer.echo(json.dumps({"results": payload}, indent=2))
-    log.info("strategy screen completed", extra={"symbols": len(payload)})
+    result_obj = {"results": payload}
+    suffix = "conditional" if selector else "unconditional"
+    target_file = output / f"screen_results_{suffix}.json"
+    target_file.write_text(json.dumps(result_obj, indent=2))
+    typer.echo(json.dumps(result_obj, indent=2))
+    log.info("strategy screen completed", extra={"symbols": len(payload), "output": str(target_file)})

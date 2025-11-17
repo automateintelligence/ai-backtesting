@@ -81,6 +81,7 @@ class ConditionalResult:
     conditional: Optional[MetricsReport]
     episode_count: int
     reports: List[MetricsReport]
+    comparison: Optional[dict] = None
 
     def to_json(self) -> str:
         import json
@@ -89,6 +90,7 @@ class ConditionalResult:
             "unconditional": json.loads(metrics_to_json(self.unconditional)),
             "conditional": json.loads(metrics_to_json(self.conditional)) if self.conditional else None,
             "episode_count": self.episode_count,
+            "comparison": self.comparison,
         }
         return json.dumps(payload, indent=2)
 
@@ -146,4 +148,17 @@ def run_conditional_backtest(
         reports.append(metrics)
 
     aggregate = aggregate_episode_metrics(reports)
-    return ConditionalResult(unconditional=unconditional, conditional=aggregate, episode_count=len(reports), reports=reports)
+    comparison = None
+    if aggregate:
+        comparison = {
+            "delta_mean_pnl": round(aggregate.mean_pnl - unconditional.mean_pnl, 2),
+            "delta_sharpe": round(aggregate.sharpe - unconditional.sharpe, 2),
+            "episode_count": len(reports),
+        }
+    return ConditionalResult(
+        unconditional=unconditional,
+        conditional=aggregate,
+        episode_count=len(reports),
+        reports=reports,
+        comparison=comparison,
+    )

@@ -1,0 +1,6 @@
+name: gap_volume
+description: Gap down with volume spike selector
+parameters:
+  gap_min: 0.03
+  volume_z_min: 1.5
+  horizon: 10

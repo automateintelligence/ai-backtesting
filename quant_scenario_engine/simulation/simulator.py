@@ -72,3 +72,39 @@ class MarketSimulator:
             bankruptcy_rate=bankruptcy_rate,
             early_exercise_events=early_exercise_events,
         )
+
+    def run_episodes(
+        self,
+        price_paths: np.ndarray,
+        signals: StrategySignals,
+        episodes: list[tuple[int, int]],
+        *,
+        var_method: str = "historical",
+        covariance_estimator: str = "sample",
+    ) -> list[MetricsReport]:
+        """Evaluate metrics for each [start, end] episode window (inclusive)."""
+
+        results: list[MetricsReport] = []
+        for start, end in episodes:
+            start_idx = max(0, start)
+            end_idx = min(price_paths.shape[1], end)
+            if end_idx - start_idx < 2:
+                continue
+            window_prices = price_paths[:, start_idx:end_idx]
+            window_signals_stock = signals.signals_stock[:, start_idx:end_idx]
+            window_signals_option = signals.signals_option[:, start_idx:end_idx]
+            window_signals = StrategySignals(
+                signals_stock=window_signals_stock,
+                signals_option=window_signals_option,
+                option_spec=signals.option_spec,
+                features_used=signals.features_used,
+            )
+            metrics = self.run(
+                window_prices,
+                window_signals,
+                var_method=var_method,
+                covariance_estimator=covariance_estimator,
+                lookback_window=None,
+            )
+            results.append(metrics)
+        return results
