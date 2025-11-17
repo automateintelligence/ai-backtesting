@@ -19,7 +19,10 @@ class FactoryBase(Generic[T]):
         component = self.builder()
         log.info(
             "Component loaded",
-            extra={"type": component.__class__.__name__, "name": self.name, "prior": prior},
+            extra={
+                "type": component.__class__.__name__,
+                "component_name": self.name,
+                "prior": prior,
+            },
         )
         return component
-

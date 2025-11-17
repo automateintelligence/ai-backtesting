@@ -64,11 +64,11 @@ Per plan.md structure:
 - [X] T020b [P] Add missing-data tolerance enforcement (3× interval continuous gap, 1% total) and configurable imputation rules in data validation (FR-029, DM-017)
 - [X] T020c [P] Ensure run_meta writes are atomic/immutable and record persistence usage (FR-030, FR-031, DM-018: atomic file writes, immutability validation, storage policy tracking)
 - [X] T020d [P] Document resolution tier strategy (daily for distribution fitting, 5-min for backtesting, 1-min for live) and implement tier selection logic in data validation (DM-001, DM-002, DM-003)
-- [ ] T020e [P] Enforce raw OHLCV vs derived features separation in Parquet storage (data/historical/{interval}/ vs data/features/{interval}/) per DM-005
-- [ ] T020f [P] Add Parquet historical data versioning support (_v2, _v3 suffixes) and retention policy documentation per DM-013
-- [ ] T020h Create DataLoader class in quant-scenario-engine/data/data_loader.py with cache-aside pattern per FR-085/086 (load_ohlcv with cache check, staleness detection per interval, incremental updates, metadata writes per plan.md lines 100-268)
-- [ ] T020i [P] Implement corporate action detection in DataLoader per FR-085 (fetch overlapping bar, compare cached_last_close vs fresh_close, trigger full refresh on >1% divergence with warning per plan.md lines 169-195)
-- [ ] T020j [P] Add force_refresh and allow_stale_cache flag support in DataLoader per FR-085/086 (force_refresh bypasses cache, allow_stale_cache uses stale on fetch failure per plan.md lines 132-136, 206-219)
+- [X] T020e [P] Enforce raw OHLCV vs derived features separation in Parquet storage (data/historical/{interval}/ vs data/features/{interval}/) per DM-005
+- [X] T020f [P] Add Parquet historical data versioning support (_v2, _v3 suffixes) and retention policy documentation per DM-013
+- [X] T020h Create DataLoader class in quant-scenario-engine/data/data_loader.py with cache-aside pattern per FR-085/086 (load_ohlcv with cache check, staleness detection per interval, incremental updates, metadata writes per plan.md lines 100-268)
+- [X] T020i [P] Implement corporate action detection in DataLoader per FR-085 (fetch overlapping bar, compare cached_last_close vs fresh_close, trigger full refresh on >1% divergence with warning per plan.md lines 169-195)
+- [X] T020j [P] Add force_refresh and allow_stale_cache flag support in DataLoader per FR-085/086 (force_refresh bypasses cache, allow_stale_cache uses stale on fetch failure per plan.md lines 132-136, 206-219)
 - [X] T020g [P] Create Universe/Watchlist/Live Set configuration schema (symbol tiers: Universe=daily+5min, Watchlist=daily+5min+features, Live=all resolutions) per DM-007
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
