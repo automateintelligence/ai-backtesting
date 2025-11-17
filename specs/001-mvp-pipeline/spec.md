@@ -131,7 +131,7 @@ Author can inspect a run directory and reconstruct exactly how results were prod
 - **FR-001**: System MUST load OHLCV for a symbol and date range from a pluggable data source (yfinance baseline; Schwab later), automatically downloading on-demand if not present in local cache, and validate presence of required columns. Local cache SHALL use Parquet format per DM-004 and be stored under `data/historical/{interval}/{symbol}.parquet`. On cache miss, system SHALL fetch from configured data source, validate, write to cache, then proceed with run.
 - **FR-002**: System MUST fit Laplacian (double-exponential) returns as the default heavy-tailed model and generate N Monte Carlo paths of length T from that fit; additional models (e.g., Student-T, GARCH-T) MAY be provided as alternatives. Fitting MUST record estimator type (MLE/GMM), convergence status, log-likelihood, AIC/BIC, and implausible-parameter checks per model; non-stationary series MUST be rejected or transformed prior to fit (stationarity/AR preflight required).
 - **FR-003**: System MUST run a stock strategy over generated paths, producing per-path equity curves and summary metrics (mean/median P&L, drawdown, VaR/CVaR, Sharpe/Sortino).
-- **FR-004**: System MUST run an option strategy over the same paths using an option pricer (Black-Scholes with configurable IV) and produce analogous metrics.
+- **FR-004**: System MUST run an option strategy over the same paths using an option pricer (Black-Scholes with configurable IV) and produce analogous metrics; option strategies MUST support strategy-driven early exercise hooks (e.g., `check_early_exercise`) to exit before expiry, using European pricing by default unless an American-capable pricer is configured.
 ```python
 # engine/simulator.py
 
@@ -164,7 +164,7 @@ class MarketSimulator:
         return pd.Series(np.cumsum(pnl), index=close.index)
 ```
 - **FR-005**: System MUST expose a CLI to execute the stock-vs-option comparison with configurable symbol, date range, distribution, paths, steps, and strategy parameters.
-- **FR-006**: System MUST support feature/indicator injection (e.g., SMA/RSI via pandas-ta) without modifying strategy engine code.
+- **FR-006**: System MUST support feature/indicator injection (e.g., SMA/RSI via pandas-ta) without modifying strategy engine code and SHALL ship a baseline “hello world” strategy (dual-SMA crossover) for validation and demos.
 - **FR-007**: System MUST support parameter grid/batch execution with parallelization and return an objective score per configuration.
 - **FR-008**: System MUST emit artifacts per run (e.g., metrics JSON/CSV and optional plots/HTML reports) to a run output directory.
 - **FR-009**: System MUST allow selection of data source and option pricer via configuration rather than code changes.
@@ -172,9 +172,9 @@ class MarketSimulator:
 - **FR-011**: System MUST provide stubs for Schwab API data and advanced pricers while defaulting to yfinance + BS so the MVP runs locally.
 - **FR-012**: System MUST allow deterministic seeding of random number generation for reproducible simulations.
 - **FR-013**: System SHOULD cap Monte Carlo sampling based on estimated footprint `n_paths * n_steps * 8 bytes` plus **10% overhead** and refuse in-memory runs above **25% of available RAM**, automatically switching to memmap/npz and emitting a warning; MUST abort when estimate exceeds **50% of available RAM**.  
-- **FR-014**: System SHOULD support macro/alternative series alignment (e.g., interpolation to bar frequency) with explicit tolerances: maximum forward/backfill gap of **3× bar interval** and warning when alignment error exceeds tolerance.  
+- **FR-014**: System SHOULD support macro/alternative series alignment (e.g., interpolation to bar frequency) with explicit tolerances: maximum forward/backfill gap of **3× bar interval** and warning when alignment error exceeds tolerance. Alignment method SHALL be configurable per feature (default `forward_fill`; `linear` or `spline` for smooth series) and documented in config.
 - **FR-015**: System SHOULD document performance targets (paths × steps per second) for the CPU-only VPS and specify measurement methodology (hardware profile, wall-clock vs CPU, sample config).
-- **FR-016**: System MUST support Black–Scholes pricing with per-strike implied volatility as the default option pricer, and MUST allow swapping in more advanced pricers (e.g., Heston/QuantLib) via configuration without changes to strategy or backtest code. Option pricing MUST handle maturity=horizon, ATM precision, invalid IV, and negative/zero prices with structured errors.
+- **FR-016**: System MUST support Black–Scholes pricing with per-strike implied volatility as the default option pricer, and MUST allow swapping in more advanced pricers (e.g., Heston/QuantLib) via configuration without changes to strategy or backtest code. Option pricing MUST handle maturity=horizon, ATM precision, invalid IV, and negative/zero prices with structured errors; strategy-driven early exercise hooks MUST be honored when an American-capable pricer is configured. IV sourcing SHALL follow a fallback chain (`yfinance` option chain → realized 30d volatility → config default), validate IV ∈ (0, 5), and record the chosen source in `run_meta`.
 ```python
 # models/options.py
 
@@ -211,8 +211,9 @@ class BlackScholesPricer:
 - **FR-018**: System MUST define and enforce configurable run time and resource limits for grid jobs on the VPS, with the initial defaults that:
   - A single baseline CLI run (e.g., 1,000 paths × 60 steps for one config) SHOULD complete in ≤ 10 seconds on the target VPS.
   - A grid job (e.g., up to 50 configurations with 1,000 paths × 60 steps each) SHOULD complete in ≤ 15 minutes wall-clock time.
-  - The system MUST cap concurrent workers (e.g., max_workers ≤ 6 on an 8-core VPS) and abort the run (with structured error) when pre-run estimates exceed thresholds; if estimates are within limits but runtime exceeds, emit escalating warnings and stop remaining jobs.
-- **FR-019**: System MUST prevent replay when underlying historical data version has changed since `run_meta` (unless an explicit `--force-replay`/`allow_data_drift` flag is provided), and must record the drift status in the replay output.
+  - The system MUST cap concurrent workers (e.g., max_workers ≤ 6 on an 8-core VPS), reserve at least 2 cores for the OS, and abort the run (with structured error) when pre-run estimates exceed thresholds; if estimates are within limits but runtime exceeds, emit escalating warnings and stop remaining jobs.
+-  - Worker auto-detection MUST default to `max_workers = min(6, cores-2)` when unspecified.
+- **FR-019**: System MUST prevent replay when underlying historical data version has changed since `run_meta` (unless an explicit `--force-replay`/`allow_data_drift` flag is provided), and must record the drift status in the replay output; detected schema drift SHALL block replay, while count/distribution drift SHALL warn and honor `--allow_data_drift`. Drift decisions and data fingerprint deltas MUST be recorded in `run_meta`.
 - **FR-020**: System MUST enforce distribution parameter validation (per-model bounds, heavy-tail sanity checks) and fit convergence controls (max iterations, failure fallback to Laplace) with structured errors when validation fails.
 - **FR-021**: System MUST ensure reproducibility across seeded runs with numeric tolerance of ±1e-10 for path-level values; captures library versions, git SHA, system config (CPU/RAM/OS), and seed in `run_meta` and applies seeding to all MC operations (including conditional sampling).
 - **FR-022**: System MUST detect numeric overflow/underflow or non-positive prices during log-return → price transforms and abort with a structured error; paths producing NaN/inf or ≤0 prices SHALL be rejected (no silent clipping).
@@ -227,7 +228,9 @@ class BlackScholesPricer:
 - **FR-031**: Storage policy for Monte Carlo datasets SHALL remain non-persistent by default (DM-009), but persistence is permitted when explicitly requested (replay) or required for memmap fallback; `run_meta` MUST record when persistence is used.
 - **FR-032**: System MUST enforce minimum sample sizes per distribution model (Laplace ≥60 bars, Student-T ≥60 bars, Normal ≥60 bars, GARCH-T ≥252 bars) and fail with structured error if unmet.
 - **FR-033**: Each CLI command (`compare`, `grid`, `screen`, `conditional`, `replay`) MUST validate all parameters against contracts/openapi.yaml and reject unknown/invalid parameters with a clear error.
-- **FR-034**: Artifacts MUST follow defined formats: metrics JSON/CSV schema, `run_meta.json` with provenance (seeds, versions, fingerprints, git SHA, system config), optional plots/HTML reports; schemas SHALL be versioned. Metrics MUST include VaR/CVaR (parametric + historical) with lookback window and estimator metadata.
+- **FR-034**: Artifacts MUST follow defined formats: metrics JSON/CSV schema, `run_meta.json` with provenance (seeds, versions, fingerprints, git SHA, system config), optional plots/HTML reports; schemas SHALL be versioned. Metrics MUST include VaR/CVaR (parametric + historical) with lookback window and estimator metadata; grid objectives MUST standardize candidate metrics (z-score) before weighting; metrics MUST report `bankruptcy_rate` (fraction of MC paths hitting ≤0) and early-exercise events when applicable.
+
+- **FR-041 (Slippage/Fees Defaults)**: StrategyParams MUST support fee/slippage parameters with conservative defaults of 5 bps per notional trade and $0.65 per option contract; application is per-fill unless overridden. Defaults and overrides MUST be recorded in run_meta and applied consistently across strategies.
 - **FR-035**: Candidate episodes MUST capture `(symbol, t0, horizon, state_features)` with horizon > 0; episode construction rules SHALL be documented and applied consistently across backtest and conditional MC.
 - **FR-036**: Conditional Monte Carlo SHALL support both bootstrap (non-parametric) and parametric refit methods; fallback order (bootstrap → refit → unconditional) MUST be documented and logged when taken. Selector sparsity MUST trigger a documented fallback (e.g., unconditional MC with warning).
 - **FR-037**: Distribution “implausible parameter” thresholds SHALL be defined per model (e.g., scale > 0 and finite; Student-T df ∈ [2, 100]; GARCH parameters within stationarity bounds) and violations must fail fast with structured errors; AR/stationarity diagnostics MUST be logged when applicable.

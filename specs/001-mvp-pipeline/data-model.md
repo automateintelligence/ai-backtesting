@@ -53,13 +53,13 @@ class ReturnDistribution(ABC):
 - **Relationships**: Consumed by `Strategy` evaluations and option pricers.
 
 ### StrategyParams
-- **Fields**: `name` (str), `kind` (enum: stock, option), `params` (typed dict: floats/ints/enums per strategy), `position_sizing` (enum: fixed_notional, percent_equity), `fees` (float ≥0), `slippage` (float ≥0).
-- **Validation**: Strategy-specific schema enforced; no negative sizing; DTE/strike offsets valid for option strategies.
+- **Fields**: `name` (str), `kind` (enum: stock, option), `params` (typed dict: floats/ints/enums per strategy), `position_sizing` (enum: fixed_notional, percent_equity), `fees` (float ≥0, default 0.0005 of notional), `slippage` (float ≥0, default 0.65 per option contract).
+- **Validation**: Strategy-specific schema enforced; no negative sizing; DTE/strike offsets valid for option strategies; defaults MUST be captured in run_meta.
 - **Relationships**: Drives `StrategySignals`; ties to `OptionSpec` when `kind=option`.
 
-### OptionSpec
-- **Fields**: `option_type` (enum: call, put), `strike` (float or relative offset string like `atm`, `+0.05`), `maturity_days` (int), `implied_vol` (float >0), `risk_free_rate` (float), `contracts` (int !=0).
-- **Validation**: `maturity_days >= simulation horizon`; IV > 0; strike positive; contracts non-zero; warning when IV source missing.
+- ### OptionSpec
+- **Fields**: `option_type` (enum: call, put), `strike` (float or relative offset string like `atm`, `+0.05`), `maturity_days` (int), `implied_vol` (float >0), `risk_free_rate` (float), `contracts` (int !=0), `iv_source` (enum: yfinance, realized_vol, config_default).
+- **Validation**: `maturity_days >= simulation horizon`; IV > 0 and < 5; strike positive; contracts non-zero; record IV source; warning when IV source falls back; `early_exercise` flag allowed when matched with American-capable pricer.
 - **Relationships**: Passed to `OptionPricer`; linked from `StrategyParams`/`StrategySignals`.
 
 ### StrategySignals
@@ -114,14 +114,14 @@ class Strategy(ABC):
 - **Validation**: Unique run_id; seed in config; conditional runs require non-empty episodes or documented fallback; artifacts path writable; system_info/git_sha captured for reproducibility.
 - **Relationships**: Orchestrates MC generation, strategy execution, metrics, and artifact emission.
 
-### RunConfig
-- **Fields**: `n_paths` (int), `n_steps` (int), `seed` (int), `distribution_model` (enum), `data_source` (enum), `selector` (CandidateSelector|null), `grid` (list[StrategyParams]|null), `resource_limits` ({`max_workers` int, `mem_threshold` float, `runtime_budget_s` int}), `covariance_estimator` (enum: sample, ledoit_wolf, shrinkage_delta), `var_method` (enum: parametric, historical), `lookback_window` (int bars).
-- **Validation**: Enforce FR-018 limits; reject configs exceeding RAM/time estimates; seed required; `max_workers <= 6` on 8-core VPS by default; resource limits stored in run_meta.
+-### RunConfig
+- **Fields**: `n_paths` (int), `n_steps` (int), `seed` (int), `distribution_model` (enum), `data_source` (enum), `selector` (CandidateSelector|null), `grid` (list[StrategyParams]|null), `resource_limits` ({`max_workers` int, `mem_threshold` float, `runtime_budget_s` int, `reserved_cores` int default 2}), `covariance_estimator` (enum: sample, ledoit_wolf, shrinkage_delta), `var_method` (enum: parametric, historical), `lookback_window` (int bars).
+- **Validation**: Enforce FR-018 limits; reject configs exceeding RAM/time estimates; seed required; `max_workers <= 6` on 8-core VPS by default and `max_workers <= cores - reserved_cores`; resource limits stored in run_meta.
 - **Relationships**: Stored within `SimulationRun` and `run_meta.json` for replay (FR-019).
 
-### MetricsReport
-- **Fields**: `per_config_metrics` (list of `{config_id, pnl_stats, drawdown, var, cvar, sharpe, sortino, objective, var_method, lookback}`), `comparison` (stock vs option summary), `conditional_metrics` (episode-level stats), `logs_path` (str), `plots` (optional paths), `parameter_stability` (optional rolling SE/CI metadata).
-- **Validation**: Objective function defined; metrics arrays align with configs; conditional metrics only when episodes provided; VaR/CVaR must include estimator/window metadata.
+-### MetricsReport
+- **Fields**: `per_config_metrics` (list of `{config_id, pnl_stats, drawdown, var, cvar, sharpe, sortino, objective, var_method, lookback, bankruptcy_rate}`), `comparison` (stock vs option summary), `conditional_metrics` (episode-level stats), `logs_path` (str), `plots` (optional paths), `parameter_stability` (optional rolling SE/CI metadata), `early_exercise_events` (optional list).
+- **Validation**: Objective function defined; metrics arrays align with configs; conditional metrics only when episodes provided; VaR/CVaR must include estimator/window metadata; `bankruptcy_rate` captured when any MC paths hit ≤0; early exercise events recorded when applicable.
 - **Relationships**: Generated from `SimulationRun`; persisted as JSON/CSV; referenced by quickstart/CLI outputs.
 
 ## Relationships Overview

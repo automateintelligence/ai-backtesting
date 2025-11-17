@@ -15,7 +15,7 @@ Build a CPU-only Quant Scenario Engine that loads Parquet OHLCV, fits heavy-tail
 - **Pricing**: Black–Scholes default, swap-friendly (FR-016); option maturity/ATM edge handling per spec.
 - **Config**: CLI > ENV > YAML precedence with defaults and incompatible-combo fail-fast (FR-009, FR-024, FR-025); component swap logging (FR-026).
 - **Performance**: Budgets per FR-018 (≤10s baseline, ≤15m grid), throughput targets captured; resource limit enforcement + warnings/abort; VaR/CVaR lookback stability checks.
-- **Observability**: Structured JSON logs, progress, diagnostics (FR-039, FR-040); run_meta immutability and atomic writes (FR-030); audit trail completeness.
+- **Observability**: Structured JSON logs, progress, diagnostics (FR-039, FR-040); run_meta immutability and atomic writes (FR-030); audit trail completeness; record IV source and drift decisions.
 - **Reproducibility**: Seeds applied everywhere (FR-012/021), capture package versions/system config/git SHA, data fingerprints (FR-019, FR-028, FR-034).
 - **Assumptions**: Single-user execution, pre-downloaded Parquet, 8 vCPU/24 GB RAM (FR-018 context); revisit if violated.
 
@@ -43,7 +43,8 @@ Build a CPU-only Quant Scenario Engine that loads Parquet OHLCV, fits heavy-tail
 
 3) **Strategies & Pricing**  
    - Stock/option strategy interfaces; option pricer abstraction with Black–Scholes default and plug-ins (FR-004, FR-016).  
-   - Handle option-specific edge cases (maturity vs horizon, ATM precision, invalid IV) with structured errors (FR-022); include VaR/CVaR metric hooks.
+   - Handle option-specific edge cases (maturity vs horizon, ATM precision, invalid IV) with structured errors (FR-022); include VaR/CVaR metric hooks; implement IV sourcing fallback chain and log source (FR-016); support strategy-driven early exercise when American-capable pricer supplied.  
+   - Add baseline dual-SMA strategy for demos/validation (FR-006) and apply fee/slippage defaults (FR-041).
 
 4) **CLI & Config**  
    - Typer CLIs for `compare`, `grid`, `screen`, `conditional`, `replay` with parameter validation against contracts (FR-005, FR-033).  
@@ -57,8 +58,8 @@ Build a CPU-only Quant Scenario Engine that loads Parquet OHLCV, fits heavy-tail
    - Selector sparsity/zero-candidate and replay data-drift handling (FR-019, SC-011/012/020).
 
 6) **Resource Limits, Observability, Reproducibility**  
-   - Enforce time/memory budgets and worker caps (FR-018, FR-023).  
-   - Structured logging + progress + diagnostics (FR-039/040); audit trail completeness; regime change/instability warnings where applicable.  
+    - Enforce time/memory budgets and worker caps (FR-018, FR-023); default worker selection `min(6, cores-2)`.  
+   - Structured logging + progress + diagnostics (FR-039/040); audit trail completeness; regime change/instability warnings where applicable; record IV source and drift decisions.  
    - run_meta: seeds, versions (Python/pkg), git SHA, system config, data fingerprints, storage policy, fallbacks, covariance/VAR method metadata (FR-019, FR-021, FR-030, FR-034).
 
 ## Phases & Milestones
