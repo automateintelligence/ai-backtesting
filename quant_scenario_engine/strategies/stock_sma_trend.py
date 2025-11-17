@@ -21,7 +21,7 @@ class StockSmaTrendStrategy(Strategy):
       for a typical one-day move in the underlying.
     """
 
-    def __init__(self, short_window: int = 20, long_window: int = 50) -> None:
+    def __init__(self, short_window: int = 12, long_window: int = 38) -> None:
         if short_window <= 0 or long_window <= 0:
             raise ValueError("window sizes must be positive")
         self.short_window = short_window
