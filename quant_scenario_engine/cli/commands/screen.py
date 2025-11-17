@@ -11,7 +11,7 @@ from quant_scenario_engine.cli.validation import validate_screen_inputs
 from quant_scenario_engine.features.pipeline import enrich_ohlcv
 from quant_scenario_engine.selectors.gap_volume import GapVolumeSelector
 from quant_scenario_engine.simulation.screen import screen_universe, run_strategy_screen
-from quant_scenario_engine.data.cache import load_or_fetch, parse_symbol_list
+from quant_scenario_engine.data.cache import safe_load_or_fetch, parse_symbol_list
 from quant_scenario_engine.selectors.loader import load_selector
 from quant_scenario_engine.utils.logging import get_logger
 
@@ -58,15 +58,22 @@ def screen(
             symbols = universe
 
     if not grouped:
-        symbol_list = parse_symbol_list(symbols)
-        if not symbol_list:
-            raise typer.Exit(code=1)
-        if not start or not end:
-            raise typer.Exit(code=1)
-        for sym in symbol_list:
-            df = load_or_fetch(sym, start=start, end=end, interval=interval, target=target)
-            df = df.sort_values("date")
-            grouped[sym] = df.set_index("date")
+            symbol_list = parse_symbol_list(symbols)
+            if not symbol_list:
+                raise typer.Exit(code=1)
+            if not start or not end:
+                raise typer.Exit(code=1)
+            for sym in symbol_list:
+                df = safe_load_or_fetch(sym, start=start, end=end, interval=interval, target=target)
+                if df is None or df.empty:
+                    log.warning("no data for symbol", extra={"symbol": sym})
+                    continue
+                df = df.sort_values("date")
+                grouped[sym] = df.set_index("date")
+
+    if not grouped:
+        log.error("No symbols with data available")
+        raise typer.Exit(code=2)
 
     # Enrich each symbol's data with features
     enriched = {sym: enrich_ohlcv(g) for sym, g in grouped.items()}

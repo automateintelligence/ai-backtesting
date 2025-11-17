@@ -48,6 +48,18 @@ def load_or_fetch(symbol: str, start: str, end: str, interval: str, target: Path
     return df
 
 
+def safe_load_or_fetch(symbol: str, start: str, end: str, interval: str, target: Path) -> pd.DataFrame | None:
+    """Wrapper that returns None instead of raising when data is missing."""
+
+    try:
+        df = load_or_fetch(symbol, start=start, end=end, interval=interval, target=target)
+    except Exception:
+        return None
+    if df is None or df.empty:
+        return None
+    return df
+
+
 def parse_symbol_list(raw: str) -> list[str]:
     raw = raw.strip()
     if not raw:
