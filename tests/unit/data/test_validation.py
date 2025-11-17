@@ -5,6 +5,7 @@ from quant_scenario_engine.data.validation import (
     REQUIRED_COLUMNS,
     compute_fingerprint,
     enforce_missing_tolerance,
+    fingerprints_match,
     validate_ohlcv,
 )
 from quant_scenario_engine.exceptions import SchemaError, TimestampAnomalyError
@@ -29,6 +30,13 @@ def test_validate_ohlcv_missing_columns():
         validate_ohlcv(df)
 
 
+def test_validate_ohlcv_future_timestamp():
+    df = _frame()
+    df.index = pd.date_range(pd.Timestamp.utcnow() + pd.Timedelta(days=1), periods=2, freq="D")
+    with pytest.raises(TimestampAnomalyError):
+        validate_ohlcv(df)
+
+
 def test_validate_ohlcv_passes_and_fingerprint_changes_on_data_change():
     df = _frame()
     validate_ohlcv(df)  # no raise
@@ -37,6 +45,7 @@ def test_validate_ohlcv_passes_and_fingerprint_changes_on_data_change():
     df2.loc[df2.index[-1], "close"] = 99
     fp2 = compute_fingerprint(df2)
     assert fp1 != fp2
+    assert fingerprints_match(fp1, fp1)
 
 
 def test_enforce_missing_tolerance_detects_gap():

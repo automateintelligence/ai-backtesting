@@ -19,18 +19,27 @@ class ValidationResult:
     is_stale: bool
 
 
-def validate_ohlcv(df: pd.DataFrame) -> None:
+def validate_ohlcv(df: pd.DataFrame, allow_future: bool = False) -> None:
     missing = [c for c in REQUIRED_COLUMNS if c not in df.columns]
     if missing:
         raise SchemaError(f"Missing required columns: {missing}")
+    if not pd.api.types.is_datetime64_any_dtype(df.index):
+        raise SchemaError("Index must be datetime-like")
     if not df.index.is_monotonic_increasing:
         raise TimestampAnomalyError("Index must be monotonically increasing")
+    now_ts = pd.Timestamp.now(tz=df.index.tz)
+    if not allow_future and (df.index.max() > now_ts):
+        raise TimestampAnomalyError("Data contains future timestamps")
 
 
 def compute_fingerprint(df: pd.DataFrame) -> str:
     """Return SHA256 hash of canonicalized OHLCV data."""
     payload = df[REQUIRED_COLUMNS].to_csv(index=True).encode()
     return hashlib.sha256(payload).hexdigest()
+
+
+def fingerprints_match(fp_old: str, fp_new: str) -> bool:
+    return fp_old == fp_new
 
 
 def enforce_missing_tolerance(df: pd.DataFrame, max_gap: int = 3, max_ratio: float = 0.01) -> Tuple[int, float]:
@@ -54,4 +63,3 @@ def enforce_missing_tolerance(df: pd.DataFrame, max_gap: int = 3, max_ratio: flo
             f"Missing data exceeds tolerance (gap={largest_gap}, ratio={missing_ratio:.4f})"
         )
     return largest_gap, float(missing_ratio)
-
