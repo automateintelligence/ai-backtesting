@@ -603,10 +603,10 @@ def mock_run_config():
 
 **Purpose**: Advanced toggles and performance optimizations referenced in plan.md but not blocking MVP
 
-- [ ] T121 [P] Implement GARCH-T distribution in backtesting/distributions/garch_t.py behind use_garch flag per research.md decision 2 (include stationarity checks per T025/T026 pattern, warn on expected latency)
-- [ ] T122 [P] Add numba JIT compilation to hot paths in MC generator for >2× speedup per plan.md performance budget (annotate generate_price_paths with @njit, validate performance gains)
+- [ ] T121 [P] Implement GARCH-T distribution in backtesting/distributions/garch_t.py behind use_garch flag per FR-002, FR-032, FR-037 (include stationarity checks per T025/T026 pattern, warn on expected latency per research.md decision 2)
+- [ ] T122 [P] Add numba JIT compilation to hot paths in MC generator for >2× speedup per FR-040 performance budget (annotate generate_price_paths with @njit, validate performance gains)
 - [ ] T123 [P] Implement optional plotly report generation in quant-scenario-engine/utils/plots.py per FR-008
-- [ ] T124 [P] Add quantstats integration for tearsheet generation in quant-scenario-engine/utils/quantstats_report.py per plan.md dependencies
+- [ ] T124 [P] Add quantstats integration for tearsheet generation in quant-scenario-engine/utils/quantstats_report.py per plan.md dependencies (optional reporting extension)
 - [ ] T125 Create performance profiling utilities in quant-scenario-engine/utils/profiling.py to validate SC-001/SC-002/SC-003 time budgets
 - [ ] T125a Add structured logging (JSON) diagnostics when performance budgets breach per FR-039/040 (emit warnings at 50%/90% of time budgets, detailed timing breakdowns)
 
@@ -616,17 +616,17 @@ def mock_run_config():
 
 **Purpose**: Improvements that affect multiple user stories and final validation
 
-- [ ] T126 [P] Add comprehensive docstrings to all public interfaces per constitution testing discipline
+- [ ] T126 [P] Add comprehensive docstrings to all public interfaces per ASSUME-012 (≥80% test coverage quality standard) and constitution testing discipline
 - [ ] T127 [P] Create architecture diagram (DataSource → Distribution → MC → Strategies → Simulation → Metrics) per plan.md phase 2
 - [ ] T128 [P] Document all CLI commands in README.md with examples per plan.md onboarding
-- [ ] T129 [P] Add type hints to all functions and validate with mypy --strict
-- [ ] T130 Run code coverage analysis and ensure ≥80% coverage per constitution and plan.md testing
-- [ ] T131 Perform security audit of external data sources and input validation per constitution
-- [ ] T132 Run linting (ruff) and formatting (black) across entire codebase
-- [ ] T133 Create quickstart.md validation script in scripts/validate_quickstart.py to test documented workflows
+- [ ] T129 [P] Add type hints to all functions and validate with mypy --strict per constitution quality standards
+- [ ] T130 Run code coverage analysis and ensure ≥80% coverage per ASSUME-012, constitution, and plan.md testing
+- [ ] T131 Perform security audit of external data sources and input validation per FR-057 (timestamp validation), FR-086 (data source failures), and constitution
+- [ ] T132 Run linting (ruff) and formatting (black) across entire codebase per constitution quality standards
+- [ ] T133 Create quickstart.md validation script in scripts/validate_quickstart.py to test documented workflows per FR-076 (backward compatibility testing)
 - [ ] T134 Document performance budget validation in scripts/benchmark.py (SC-001: 1k×60 ≤10s, SC-002: grid ≤15m per T007a benchmarks)
 - [ ] T135 Add constitution compliance checklist in CONSTITUTION_CHECK.md covering all principles
-- [ ] T136 Create deployment guide for CPU-only VPS in docs/deployment.md per plan.md target platform
+- [ ] T136 Create deployment guide for CPU-only VPS in docs/deployment.md per FR-068 (VPS OS and Python constraints) and plan.md target platform
 
 ---
 
