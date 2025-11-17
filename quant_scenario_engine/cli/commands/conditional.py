@@ -95,7 +95,7 @@ def conditional(
 
     outputs = []
     for sym, df in grouped.items():
-        enriched = enrich_ohlcv(df)
+        enriched = enrich_ohlcv(df, log_output=False)
         episodes = selector.select(enriched)
         result = run_conditional_backtest(
             df=enriched,

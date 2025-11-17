@@ -27,6 +27,7 @@ def enrich_ohlcv(
     rsi_period: int = 14,
     volume_window: int = 20,
     fillna: bool = True,
+    log_output: bool = True,
 ) -> pd.DataFrame:
     """Return a copy of df with derived features appended.
 
@@ -52,9 +53,10 @@ def enrich_ohlcv(
     if fillna:
         out = out.ffill().bfill()
 
-    log.info(
-        "Feature pipeline complete",
-        extra={"component": "features", "features_added": [c for c in out.columns if c not in df.columns]},
-    )
+    if log_output:
+        log.info(
+            "Feature pipeline complete",
+            extra={"component": "features", "features_added": [c for c in out.columns if c not in df.columns]},
+        )
 
     return out

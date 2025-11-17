@@ -82,7 +82,8 @@ def screen(
         raise typer.Exit(code=2)
 
     # Enrich each symbol's data with features
-    enriched = {sym: enrich_ohlcv(g) for sym, g in grouped.items()}
+    enriched = {sym: enrich_ohlcv(g, log_output=False) for sym, g in grouped.items()}
+    log.info("Feature pipeline complete", extra={"symbols_processed": len(enriched)})
 
     output.mkdir(parents=True, exist_ok=True)
     # lookback_years currently informational; hook for future slicing logic
