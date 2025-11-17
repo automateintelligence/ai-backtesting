@@ -398,30 +398,30 @@ def mock_run_config():
 
 #### Feature Engineering (US4)
 
-- [ ] T052 [P] [US4] Implement technical indicator wrapper in quant-scenario-engine/features/indicators.py using pandas-ta (SMA, RSI, volume_z) per FR-006/FR-066 (pandas-ta fallback logging; reference T020l/T020m for stationarity-aware feature computation)
-- [ ] T053 [P] [US4] Create feature computation pipeline in quant-scenario-engine/features/pipeline.py to enrich OHLCV with indicators per FR-006 (keep derived features separate per FR-029/DM005)
-- [ ] T054 [US4] Implement gap percentage calculator in quant-scenario-engine/features/gap.py (open vs prev_close) for selector rules per FR-056/FR-029 (track extreme gaps, log/tolerances)
+- [X] T052 [P] [US4] Implement technical indicator wrapper in quant-scenario-engine/features/indicators.py using pandas-ta (SMA, RSI, volume_z) per FR-006/FR-066 (pandas-ta fallback logging; reference T020l/T020m for stationarity-aware feature computation)
+- [X] T053 [P] [US4] Create feature computation pipeline in quant-scenario-engine/features/pipeline.py to enrich OHLCV with indicators per FR-006 (keep derived features separate per FR-029/DM005)
+- [X] T054 [US4] Implement gap percentage calculator in quant-scenario-engine/features/gap.py (open vs prev_close) for selector rules per FR-056/FR-029 (track extreme gaps, log/tolerances)
 
 #### Candidate Selection (US4)
 
-- [ ] T055 [US4] Implement GapVolumeSelector in quant-scenario-engine/selectors/gap_volume.py extending CandidateSelector per FR-CAND-001/FR-CAND-006 (default MVP selector, gap+volume rules) and SC-049
-- [ ] T056 [US4] Implement selector.score() and selector.select() methods per data-model.md CandidateSelector interface (log warnings for missing features per FR-CAND-006, enforce min_episodes threshold per SC-020)
-- [ ] T057 [P] [US4] Create CandidateEpisode dataclass in quant-scenario-engine/schema/episode.py per data-model.md and FR-CAND-002 (symbol, horizon, score)
-- [ ] T058 [US4] Implement build_candidate_episodes() in quant-scenario-engine/selectors/episodes.py per data-model.md reference (validate horizon > 0, state_features captured, maturity_days >= horizon for option specs per FR-035 and SC-010)
-- [ ] T058a [US4] Document and enforce candidate episode construction rules across backtest and conditional MC per FR-035 (horizon validation, state_features tracking, episode metadata for run_meta/scenario logging)
+- [X] T055 [US4] Implement GapVolumeSelector in quant-scenario-engine/selectors/gap_volume.py extending CandidateSelector per FR-CAND-001/FR-CAND-006 (default MVP selector, gap+volume rules) and SC-049
+- [X] T056 [US4] Implement selector.score() and selector.select() methods per data-model.md CandidateSelector interface (log warnings for missing features per FR-CAND-006, enforce min_episodes threshold per SC-020)
+- [X] T057 [P] [US4] Create CandidateEpisode dataclass in quant-scenario-engine/schema/episode.py per data-model.md and FR-CAND-002 (symbol, horizon, score)
+- [X] T058 [US4] Implement build_candidate_episodes() in quant-scenario-engine/selectors/episodes.py per data-model.md reference (validate horizon > 0, state_features captured, maturity_days >= horizon for option specs per FR-035 and SC-010)
+- [X] T058a [US4] Document and enforce candidate episode construction rules across backtest and conditional MC per FR-035 (horizon validation, state_features tracking, episode metadata for run_meta/scenario logging)
 
 #### Screening Engine (US4)
 
-- [ ] T059 [US4] Implement universe screening logic in quant-scenario-engine/simulation/screen.py to scan symbols and apply selector per FR-CAND-001/FR-033
-- [ ] T060 [US4] Add parallel symbol processing with max_workers cap per FR-018 concurrency model (ProcessPoolExecutor w/ worker clamping per plan.md lines 329-367)
-- [ ] T061 [US4] Implement candidate ranking and top_n filtering in quant-scenario-engine/simulation/screen.py per contracts/openapi.yaml ScreenRequest and FR-033
-- [ ] T062 [US4] Add error handling for missing/partial data per symbol per SC-020/FR-029 (log warnings, continue with available symbols, report failures in run_meta)
+- [X] T059 [US4] Implement universe screening logic in quant-scenario-engine/simulation/screen.py to scan symbols and apply selector per FR-CAND-001/FR-033
+- [X] T060 [US4] Add parallel symbol processing with max_workers cap per FR-018 concurrency model (ProcessPoolExecutor w/ worker clamping per plan.md lines 329-367)
+- [X] T061 [US4] Implement candidate ranking and top_n filtering in quant-scenario-engine/simulation/screen.py per contracts/openapi.yaml ScreenRequest and FR-033
+- [X] T062 [US4] Add error handling for missing/partial data per symbol per SC-020/FR-029 (log warnings, continue with available symbols, report failures in run_meta)
 
 #### CLI (US4)
 
-- [ ] T063 [US4] Create screen command in quant-scenario-engine/cli/commands/screen.py with universe and selector arguments per contracts/openapi.yaml ScreenRequest and FR-033 CLI schema
-- [ ] T064 [US4] Wire screen CLI to screening engine with validation per contracts/openapi.yaml ScreenResponse (FR-033)
-- [ ] T065 [US4] Implement ScreenResponse serialization with candidate list (symbol, t0, state_features) per contracts/openapi.yaml (FR-033)
+- [X] T063 [US4] Create screen command in quant-scenario-engine/cli/commands/screen.py with universe and selector arguments per contracts/openapi.yaml ScreenRequest and FR-033 CLI schema
+- [X] T064 [US4] Wire screen CLI to screening engine with validation per contracts/openapi.yaml ScreenResponse (FR-033)
+- [X] T065 [US4] Implement ScreenResponse serialization with candidate list (symbol, t0, state_features) per contracts/openapi.yaml (FR-033)
 
 **Checkpoint**: User Story 4 complete - can screen universe and generate candidate lists
 

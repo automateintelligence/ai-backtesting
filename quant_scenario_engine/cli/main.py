@@ -8,6 +8,7 @@ import typer
 
 from quant_scenario_engine.cli.commands.compare import compare
 from quant_scenario_engine.cli.commands.fetch import fetch
+from quant_scenario_engine.cli.commands.screen import screen
 from quant_scenario_engine.exceptions import (
     ConfigValidationError,
     DistributionFitError,
@@ -21,6 +22,7 @@ app = typer.Typer(help="Quant Scenario Engine CLI")
 
 app.command()(fetch)
 app.command()(compare)
+app.command()(screen)
 
 
 log = get_logger(__name__, component="cli")

@@ -6,7 +6,10 @@ from quant_scenario_engine.interfaces.strategy import Strategy
 
 def test_interface_subclassing():
     class DemoSelector(CandidateSelector):
-        def select_candidates(self):
+        def score(self, row: dict) -> float:
+            return 0.0
+
+        def select(self, data):
             return []
 
     class DemoDist(ReturnDistribution):
@@ -24,7 +27,7 @@ def test_interface_subclassing():
         def generate_signals(self, price_paths, features, params):
             return None
 
-    assert DemoSelector().select_candidates() == []
+    assert DemoSelector().select_candidates(None) == []
     dist = DemoDist()
     dist.fit([])
     assert dist.metadata.fit_status == "success"

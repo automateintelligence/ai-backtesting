@@ -38,3 +38,8 @@ def validate_compare_inputs(
         allowed = {"laplace", "student_t"}
         if distribution not in allowed:
             raise ConfigValidationError(f"distribution must be one of {sorted(allowed)}")
+
+
+def validate_screen_inputs(*, horizon: int, max_workers: int) -> None:
+    require_positive("horizon", horizon)
+    require_positive("max_workers", max_workers)
