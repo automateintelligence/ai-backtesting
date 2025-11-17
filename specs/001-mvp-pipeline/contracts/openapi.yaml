@@ -159,30 +159,82 @@ components:
             $ref: '#/components/schemas/StrategyGridConfig'
     ScreenRequest:
       type: object
-      required: [universe, selector]
+      required: [universe]
       properties:
         universe:
           type: array
           minItems: 1
           items:
             type: string
+          description: "CSV file path or list of symbols to screen"
+        strategy:
+          type: string
+          description: "Optional strategy name for Mode B/C. If omitted, runs Mode A (candidate selection only)"
+        rank_by:
+          type: string
+          enum: [sharpe, mean_pnl, sortino, max_drawdown, cvar]
+          default: sharpe
+          description: "Metric to rank symbols by when strategy is specified"
+        conditional_file:
+          type: string
+          description: "Optional path to YAML selector file for Mode C (conditional strategy screening)"
         selector:
           $ref: '#/components/schemas/CandidateSelector'
+          description: "Inline selector for Mode A (US4) or Mode C. Mutually exclusive with conditional_file"
         lookback_years:
           type: number
           minimum: 1
+          description: "Years of historical data for strategy evaluation"
         top_n:
           type: integer
           minimum: 1
+          description: "Return top N ranked symbols"
+        min_episodes:
+          type: integer
+          default: 10
+          description: "Minimum episodes required per symbol for conditional screening (Mode C)"
     ScreenResponse:
       type: object
       properties:
+        mode:
+          type: string
+          enum: [candidate_selection, unconditional_strategy, conditional_strategy]
+          description: "Which screening mode was executed"
         selector_name:
           type: string
+          description: "Name of selector used (Modes A and C only)"
+        strategy:
+          type: string
+          description: "Strategy evaluated (Modes B and C only)"
+        rank_by:
+          type: string
+          description: "Metric used for ranking (Modes B and C only)"
         candidates:
           type: array
           items:
             $ref: '#/components/schemas/CandidateEpisode'
+          description: "Candidate episodes for Mode A, or ranked symbol results for Modes B/C"
+        ranked_symbols:
+          type: array
+          items:
+            $ref: '#/components/schemas/RankedSymbolResult'
+          description: "Ranked symbols with strategy metrics (Modes B and C only)"
+    RankedSymbolResult:
+      type: object
+      properties:
+        symbol:
+          type: string
+        rank:
+          type: integer
+        metrics:
+          $ref: '#/components/schemas/MetricsReport'
+        episode_count:
+          type: integer
+          description: "Number of episodes evaluated (Mode C only)"
+        confidence:
+          type: string
+          enum: [high, medium, low]
+          description: "Confidence level based on episode count"
     ConditionalRequest:
       allOf:
         - $ref: '#/components/schemas/CompareRequest'

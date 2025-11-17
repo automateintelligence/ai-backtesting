@@ -60,16 +60,58 @@ Author runs a CLI to scan a universe of symbols, apply a candidate-selection rul
 
 ---
 
-### User Story 5 - Conditional episode backtesting for candidates (Priority: P1)
-Author runs a conditional backtest that evaluates a strategy only on historical episodes where the candidate selector would have fired, and receives episode-level and aggregate metrics for stock vs option variants.
+### User Story 5 - Strategy-symbol screening with optional conditional episodes (Priority: P1)
+Author runs a CLI to evaluate a strategy across a universe of symbols, receiving a ranked list of which symbols work best for that strategy. Optionally, author can filter evaluation to only historical episodes matching specific market conditions (e.g., gaps, volume spikes) defined by a candidate selector from US4.
 
-**Why this priority**: Directly answers “How does this strategy behave given the weird transient conditions that make this stock a candidate?” rather than generic average performance.
-**Independent Test**: Define a candidate selector (e.g., large gap + volume spike), build at least 50 historical episodes for a test symbol, run the conditional backtest, and verify episode-level and aggregate metrics are produced for both stock and option strategies.
+**Why this priority**: Directly answers "Which stocks should I trade with this strategy?" and optionally "Which stocks work best under specific transient conditions?" This bridges US4 (defining conditions) with strategy evaluation across symbols.
+
+**Independent Test**:
+1. Run screen with strategy on ≥100 symbols (unconditional), verify ranked output by performance metrics (sharpe/mean_pnl/etc.)
+2. Add conditional selector filter, verify episodes are filtered and rankings change accordingly
+3. Run without strategy (US4 mode), verify candidate selection works as before
+
+**Three Operational Modes**:
+
+**Mode A - Candidate Selection Only (US4 functionality preserved)**:
+```bash
+screen --universe sp500.csv --gap-min 0.03 --volume-z-min 1.5 --top 20
+```
+- No `--strategy` flag present
+- Filters universe by conditions for recent/current market state
+- Output: Symbols matching conditions right now (forward-looking)
+- Use case: "What should I look at tomorrow morning?"
+
+**Mode B - Unconditional Strategy Screening**:
+```bash
+screen --universe sp500.csv --strategy stock_sma_trend --rank-by sharpe --top 20
+```
+- `--strategy` flag present, no conditional filters
+- Backtests strategy on ALL historical data per symbol
+- Output: Symbols where strategy performed best historically
+- Use case: "Which stocks work best for this strategy overall?"
+
+**Mode C - Conditional Strategy Screening**:
+```bash
+screen --universe sp500.csv --strategy stock_sma_trend --rank-by sharpe \
+  --conditional-file selectors/gap_down_volume_spike.yaml --top 20
+```
+- `--strategy` flag + `--conditional-file` or inline conditional params
+- Backtests strategy ONLY on historical episodes where selector conditions met
+- Output: Symbols where strategy performed best during specific conditions
+- Use case: "Which stocks work best for this strategy when gaps occur?"
 
 **Acceptance Scenarios**:
-1. **Given** a candidate selector and 5+ years of historical data for a symbol, **When** the user runs the conditional backtest, **Then** the system constructs episodes (symbol, t₀, horizon) and computes P&L for each episode for both stock and option strategies.
-2. **Given** conditional backtesting is enabled, **When** a run completes, **Then** the outputs include both unconditional metrics (all bars) and conditional metrics (candidate-only episodes), clearly labeled and separated.
-3. **Given** a change in candidate criteria (e.g., new thresholds), **When** the conditional backtest is re-run, **Then** the episode set changes and this change is reflected in the run metadata and metrics without modifying strategy or simulator code.
+1. **Given** a universe of symbols and a strategy (Mode B), **When** screen runs unconditionally, **Then** system backtests strategy on all historical data per symbol and returns ranked list by specified metric (sharpe, mean_pnl, sortino, etc.) with run metadata indicating unconditional evaluation.
+
+2. **Given** a conditional selector file (YAML format) and Mode C invocation, **When** screen runs with --conditional-file flag, **Then** system evaluates strategy ONLY on episodes where selector conditions are met and ranks symbols by conditional performance, with run metadata clearly indicating episode count per symbol and filtering criteria applied.
+
+3. **Given** no --strategy flag (Mode A), **When** screen runs with only condition parameters, **Then** system performs candidate selection (US4 behavior) on recent bars and returns symbols matching current conditions without strategy evaluation.
+
+4. **Given** some symbols lack sufficient conditional episodes (<10 episodes), **When** Mode C screen runs, **Then** those symbols are flagged with warnings in output but remain in ranked results with low-confidence indicators and episode counts clearly stated.
+
+5. **Given** a conditional selector definition changes (e.g., gap_min threshold increased), **When** the conditional screen is re-run, **Then** the episode set changes per symbol and this is reflected in run metadata and metrics without modifying strategy or simulator code.
+
+6. **Given** outputs from conditional vs unconditional runs on the same universe and strategy, **When** reviewing results side-by-side, **Then** artifacts clearly distinguish between evaluation modes (unconditional: all bars, conditional: filtered episodes) with different result file naming conventions.
 
 ---
 
