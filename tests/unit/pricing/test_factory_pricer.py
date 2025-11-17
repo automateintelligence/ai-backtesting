@@ -1,7 +1,7 @@
 import pytest
 
-from quant_scenario_engine.pricing.factory import get_pricer, pricer_factory
 from quant_scenario_engine.exceptions import DependencyError
+from quant_scenario_engine.pricing.factory import get_pricer, pricer_factory
 
 
 def test_pricer_factory_creates():

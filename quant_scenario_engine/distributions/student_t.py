@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
-from numpy.random import Generator, PCG64
+from numpy.random import PCG64, Generator
 from scipy import stats
 
 from quant_scenario_engine.distributions.ar_detection import detect_ar_process

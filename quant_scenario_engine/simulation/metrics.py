@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import asdict, dataclass
-from typing import Literal, Optional
+from typing import Literal
 
 import numpy as np
 from scipy.stats import norm
@@ -67,7 +67,7 @@ class MetricsReport:
     var: float
     cvar: float
     var_method: VarMethod
-    lookback_window: Optional[int]
+    lookback_window: int | None
     covariance_estimator: CovarianceEstimator
     bankruptcy_rate: float
     early_exercise_events: int
@@ -105,7 +105,7 @@ def compute_metrics(
     equity_curve: np.ndarray,
     *,
     var_method: VarMethod = "historical",
-    lookback_window: Optional[int] = None,
+    lookback_window: int | None = None,
     covariance_estimator: CovarianceEstimator = "sample",
     bankruptcy_rate: float = 0.0,
     early_exercise_events: int = 0,

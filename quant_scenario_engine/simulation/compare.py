@@ -3,17 +3,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
 
+from quant_scenario_engine.features.technical import compute_all_features
 from quant_scenario_engine.interfaces.distribution import ReturnDistribution
+from quant_scenario_engine.mc.generator import generate_price_paths
 from quant_scenario_engine.models.options import OptionSpec
 from quant_scenario_engine.schema.signals import StrategySignals
 from quant_scenario_engine.schema.strategy import StrategyParams
 from quant_scenario_engine.simulation.metrics import MetricsReport
 from quant_scenario_engine.simulation.simulator import MarketSimulator
-from quant_scenario_engine.mc.generator import generate_price_paths
 from quant_scenario_engine.strategies.factory import get_strategy
-from quant_scenario_engine.features.technical import compute_all_features
 
 
 @dataclass
@@ -28,9 +27,9 @@ def _build_signals(
     stock_strategy_name: str,
     option_strategy_name: str,
     option_spec: OptionSpec,
-    stock_params: Optional[dict] = None,
-    option_params: Optional[dict] = None,
-    features: Optional[dict] = None,
+    stock_params: dict | None = None,
+    option_params: dict | None = None,
+    features: dict | None = None,
 ) -> StrategySignals:
     """
     Build combined signals from stock and option strategies.
@@ -87,16 +86,16 @@ def run_compare(
     distribution: ReturnDistribution,
     n_paths: int,
     n_steps: int,
-    seed: Optional[int],
+    seed: int | None,
     stock_strategy: str,
     option_strategy: str,
     option_spec: OptionSpec,
-    stock_params: Optional[dict] = None,
-    option_params: Optional[dict] = None,
+    stock_params: dict | None = None,
+    option_params: dict | None = None,
     var_method: str = "historical",
     covariance_estimator: str = "sample",
     lookback_window: int | None = None,
-    features: Optional[dict] = None,
+    features: dict | None = None,
     compute_features: bool = True,
 ) -> RunResult:
     """

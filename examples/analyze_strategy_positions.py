@@ -13,9 +13,9 @@ import numpy as np
 
 from quant_scenario_engine.analysis.signals import (
     analyze_signals,
+    extract_position_changes,
     generate_signal_summary,
     position_changes_to_dataframe,
-    extract_position_changes,
     print_position_history,
 )
 from quant_scenario_engine.distributions.factory import get_distribution
@@ -60,7 +60,7 @@ def main():
     print("Running simulation...")
     print(f"  Paths: {config['n_paths']}")
     print(f"  Steps: {config['n_steps']}")
-    print(f"  Strategy: stock_sma_trend vs option_atm_call_momentum")
+    print("  Strategy: stock_sma_trend vs option_atm_call_momentum")
     print()
 
     # Run compare

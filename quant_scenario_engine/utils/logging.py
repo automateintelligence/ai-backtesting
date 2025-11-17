@@ -6,7 +6,7 @@ import json
 import logging
 import sys
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 DEFAULT_FIELDS = {"run_id", "component", "symbol", "config_index", "duration_ms"}
 
@@ -15,7 +15,7 @@ class JSONFormatter(logging.Formatter):
     """JSON formatter adding common contextual fields when present."""
 
     def format(self, record: logging.LogRecord) -> str:  # type: ignore[override]
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "level": record.levelname,
             "message": record.getMessage(),
@@ -28,7 +28,7 @@ class JSONFormatter(logging.Formatter):
         return json.dumps(payload)
 
 
-def configure_logging(run_id: Optional[str] = None, component: Optional[str] = None, level: int = logging.INFO) -> None:
+def configure_logging(run_id: str | None = None, component: str | None = None, level: int = logging.INFO) -> None:
     """Configure root logger with structured JSON output.
 
     Embeds run_id/component defaults so downstream loggers inherit context without
@@ -53,7 +53,7 @@ def configure_logging(run_id: Optional[str] = None, component: Optional[str] = N
     root.addHandler(handler)
 
 
-def get_logger(name: str, run_id: Optional[str] = None, component: Optional[str] = None) -> logging.Logger:
+def get_logger(name: str, run_id: str | None = None, component: str | None = None) -> logging.Logger:
     """Convenience helper to fetch a logger with optional context defaults."""
 
     logger = logging.getLogger(name)

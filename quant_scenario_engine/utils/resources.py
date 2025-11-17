@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import shutil
-from typing import Literal, Tuple
+from typing import Literal
 
 from quant_scenario_engine.exceptions import ResourceLimitError
 
@@ -15,7 +15,7 @@ def estimate_footprint_gb(n_paths: int, n_steps: int) -> float:
     return n_paths * n_steps * 8 * 1.1 / 1e9
 
 
-def select_storage_policy(n_paths: int, n_steps: int, total_ram_gb: float | None = None) -> Tuple[StoragePolicy, float]:
+def select_storage_policy(n_paths: int, n_steps: int, total_ram_gb: float | None = None) -> tuple[StoragePolicy, float]:
     """Return recommended storage policy and estimated footprint.
 
     Thresholds: <25% RAM -> memory, ≥25% -> memmap, ≥50% -> abort.

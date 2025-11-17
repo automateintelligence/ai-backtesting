@@ -1,8 +1,6 @@
 import json
 import logging
 
-import pytest
-
 from quant_scenario_engine.utils.logging import JSONFormatter, configure_logging, get_logger
 
 

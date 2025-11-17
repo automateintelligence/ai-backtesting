@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
 
 import numpy as np
 
@@ -16,8 +15,8 @@ except Exception:  # pragma: no cover - optional import fallback
 
 @dataclass
 class StationarityResult:
-    adf_pvalue: Optional[float]
-    kpss_pvalue: Optional[float]
+    adf_pvalue: float | None
+    kpss_pvalue: float | None
     recommendation: str
 
 

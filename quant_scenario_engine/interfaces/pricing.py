@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+
 import numpy as np
 
 from quant_scenario_engine.models.options import OptionSpec

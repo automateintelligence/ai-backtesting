@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal, Union
+from typing import Literal
 
 from quant_scenario_engine.exceptions import ConfigValidationError
 
@@ -14,7 +14,7 @@ IVSource = Literal["yfinance", "realized_vol", "config_default"]
 @dataclass(slots=True)
 class OptionSpec:
     option_type: OptionType
-    strike: Union[float, str]
+    strike: float | str
     maturity_days: int
     implied_vol: float
     risk_free_rate: float

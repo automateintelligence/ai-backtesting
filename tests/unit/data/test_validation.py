@@ -2,7 +2,6 @@ import pandas as pd
 import pytest
 
 from quant_scenario_engine.data.validation import (
-    REQUIRED_COLUMNS,
     compute_fingerprint,
     enforce_missing_tolerance,
     fingerprints_match,

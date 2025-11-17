@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass
-from typing import Iterable, Tuple
 
 import pandas as pd
 
@@ -42,7 +41,7 @@ def fingerprints_match(fp_old: str, fp_new: str) -> bool:
     return fp_old == fp_new
 
 
-def enforce_missing_tolerance(df: pd.DataFrame, max_gap: int = 3, max_ratio: float = 0.01) -> Tuple[int, float]:
+def enforce_missing_tolerance(df: pd.DataFrame, max_gap: int = 3, max_ratio: float = 0.01) -> tuple[int, float]:
     """Enforce missing data tolerance.
 
     Returns tuple of (largest_gap, missing_ratio) for observability.

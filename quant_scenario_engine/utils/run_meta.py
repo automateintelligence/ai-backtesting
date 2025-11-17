@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
 from quant_scenario_engine.schema.run_meta import RunMeta
 
@@ -10,7 +10,7 @@ from quant_scenario_engine.schema.run_meta import RunMeta
 def build_run_meta(
     run_id: str,
     symbol: str,
-    config: Dict[str, Any],
+    config: dict[str, Any],
     storage_policy: str,
     seed: int,
     covariance_estimator: str | None = None,

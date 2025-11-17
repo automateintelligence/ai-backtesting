@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import time
-from typing import Optional
 
 import pandas as pd
 
@@ -11,14 +10,14 @@ from quant_scenario_engine.exceptions import DataSourceError
 
 
 class YFinanceDataSource:
-    def __init__(self, max_retries: int = 3, backoff_seconds: Optional[list[int]] = None) -> None:
+    def __init__(self, max_retries: int = 3, backoff_seconds: list[int] | None = None) -> None:
         self.max_retries = max_retries
         self.backoff_seconds = backoff_seconds or [1, 2, 4]
         if len(self.backoff_seconds) < self.max_retries:
             self.backoff_seconds.extend([self.backoff_seconds[-1]] * (self.max_retries - len(self.backoff_seconds)))
 
     def fetch(self, symbol: str, start: str, end: str, interval: str = "1d") -> pd.DataFrame:
-        last_exc: Optional[Exception] = None
+        last_exc: Exception | None = None
         for attempt in range(self.max_retries):
             try:
                 df = self._download(symbol, start, end, interval, progress=False)

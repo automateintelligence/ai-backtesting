@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List, Optional
 
 import numpy as np
 
@@ -16,8 +15,8 @@ from quant_scenario_engine.schema.strategy import StrategyParams
 class StrategySignals:
     signals_stock: np.ndarray
     signals_option: np.ndarray
-    option_spec: Optional[OptionSpec]
-    features_used: List[str]
+    option_spec: OptionSpec | None
+    features_used: list[str]
 
 
 class Strategy(ABC):

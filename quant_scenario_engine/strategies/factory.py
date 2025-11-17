@@ -2,22 +2,22 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 from quant_scenario_engine.exceptions import DependencyError
 from quant_scenario_engine.interfaces.strategy import Strategy
 from quant_scenario_engine.models.options import OptionSpec
-from quant_scenario_engine.strategies.option_call import OptionCallStrategy
-from quant_scenario_engine.strategies.stock_bollinger_reversion import StockBollingerReversionStrategy
-from quant_scenario_engine.strategies.stock_basic import StockBasicStrategy
-from quant_scenario_engine.strategies.stock_donchian_breakout import StockDonchianBreakoutStrategy
-from quant_scenario_engine.strategies.stock_sma_trend import StockSmaTrendStrategy
-from quant_scenario_engine.strategies.stock_rsi_reversion import StockRsiReversionStrategy
 from quant_scenario_engine.strategies.option_atm_call_momentum import OptionAtmCallMomentumStrategy
 from quant_scenario_engine.strategies.option_atm_put_rsi import OptionAtmPutRsiStrategy
+from quant_scenario_engine.strategies.option_call import OptionCallStrategy
+from quant_scenario_engine.strategies.stock_basic import StockBasicStrategy
+from quant_scenario_engine.strategies.stock_bollinger_reversion import (
+    StockBollingerReversionStrategy,
+)
+from quant_scenario_engine.strategies.stock_donchian_breakout import StockDonchianBreakoutStrategy
+from quant_scenario_engine.strategies.stock_rsi_reversion import StockRsiReversionStrategy
+from quant_scenario_engine.strategies.stock_sma_trend import StockSmaTrendStrategy
 
 
-def get_strategy(name: str, kind: str, option_spec: Optional[OptionSpec] = None) -> Strategy:
+def get_strategy(name: str, kind: str, option_spec: OptionSpec | None = None) -> Strategy:
     """
     Create a strategy instance by name.
 

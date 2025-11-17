@@ -5,12 +5,11 @@ from __future__ import annotations
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal, Tuple
+from typing import Literal
 
 import numpy as np
 
-from quant_scenario_engine.exceptions import ResourceLimitError
-from quant_scenario_engine.utils.resources import estimate_footprint_gb, select_storage_policy
+from quant_scenario_engine.utils.resources import select_storage_policy
 
 StorageDecision = Literal["memory", "memmap", "npz"]
 

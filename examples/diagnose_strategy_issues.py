@@ -26,9 +26,9 @@ from quant_scenario_engine.analysis.signals import (
     print_position_history,
 )
 from quant_scenario_engine.distributions.factory import get_distribution
+from quant_scenario_engine.mc.generator import generate_price_paths
 from quant_scenario_engine.models.options import OptionSpec
 from quant_scenario_engine.simulation.compare import run_compare
-from quant_scenario_engine.mc.generator import generate_price_paths
 
 
 def interpret_metrics(metrics) -> dict:

@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Tuple
 
 import numpy as np
 from scipy.stats import norm
@@ -46,7 +45,7 @@ def _compute_ttm(maturity_days: int, horizon_steps: int | None = None) -> float:
     return days / 252.0
 
 
-def _validate_inputs(path_slice: np.ndarray, option_spec: OptionSpec) -> Tuple[np.ndarray, float, float, float, float]:
+def _validate_inputs(path_slice: np.ndarray, option_spec: OptionSpec) -> tuple[np.ndarray, float, float, float, float]:
     s = np.asarray(path_slice, dtype=float)
     if s.ndim != 1:
         raise PricingError("path_slice must be 1-D for a single path")

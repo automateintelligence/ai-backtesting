@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Literal, Optional
+from dataclasses import dataclass
+from typing import Literal
 
 from quant_scenario_engine.exceptions import ConfigValidationError
 
@@ -21,7 +21,7 @@ class RunConfig:
     covariance_estimator: CovEstimator = "sample"
     var_method: VarMethod = "historical"
     lookback_window: int = 252
-    max_workers: Optional[int] = None
+    max_workers: int | None = None
 
     def __post_init__(self) -> None:
         if self.n_paths <= 0:
@@ -40,7 +40,7 @@ class RunConfig:
             raise ConfigValidationError("max_workers must be positive when set")
 
     @classmethod
-    def from_dict(cls, data: dict) -> "RunConfig":
+    def from_dict(cls, data: dict) -> RunConfig:
         return cls(**data)
 
     def to_dict(self) -> dict:

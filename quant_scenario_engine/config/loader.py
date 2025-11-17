@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import json
 import os
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional
+from typing import Any
 
 from quant_scenario_engine.exceptions import ConfigValidationError
 
 
-def _load_yaml(path: Path) -> Dict[str, Any]:
+def _load_yaml(path: Path) -> dict[str, Any]:
     if not path.exists():
         raise ConfigValidationError(f"Config file not found: {path}")
     if path.suffix.lower() not in {".yml", ".yaml", ".json"}:
@@ -34,25 +35,25 @@ def _coerce(value: str, caster: Callable[[str], Any]) -> Any:
 
 def load_config_with_precedence(
     *,
-    config_path: Optional[Path],
+    config_path: Path | None,
     env_prefix: str,
-    cli_values: Dict[str, Any],
-    defaults: Dict[str, Any],
-    casters: Dict[str, Callable[[Any], Any]],
-) -> Dict[str, Any]:
+    cli_values: dict[str, Any],
+    defaults: dict[str, Any],
+    casters: dict[str, Callable[[Any], Any]],
+) -> dict[str, Any]:
     """Merge config values with precedence CLI > ENV > YAML > defaults."""
 
-    file_values: Dict[str, Any] = {}
+    file_values: dict[str, Any] = {}
     if config_path:
         file_values = _load_yaml(config_path)
 
-    env_values: Dict[str, Any] = {}
+    env_values: dict[str, Any] = {}
     for key, caster in casters.items():
         env_key = f"{env_prefix}{key.upper()}"
         if env_key in os.environ:
             env_values[key] = _coerce(os.environ[env_key], caster)
 
-    merged: Dict[str, Any] = {}
+    merged: dict[str, Any] = {}
     for key, default in defaults.items():
         cli_val = cli_values.get(key)
         if cli_val is not None:

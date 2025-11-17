@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
 
 import typer
 
@@ -20,21 +19,21 @@ log = get_logger(__name__, component="cli_compare")
 
 
 def compare(
-    config: Optional[Path] = typer.Option(
+    config: Path | None = typer.Option(
         None, "--config", help="Optional YAML/JSON config path"
     ),
-    symbol: Optional[str] = typer.Option(None, help="Ticker symbol"),
-    s0: Optional[float] = typer.Option(None, help="Starting price"),
-    paths: Optional[int] = typer.Option(None, help="Number of MC paths"),
-    steps: Optional[int] = typer.Option(None, help="Steps per path"),
-    seed: Optional[int] = typer.Option(None, help="Random seed"),
-    distribution: Optional[str] = typer.Option(None, help="Return distribution"),
-    strategy: Optional[str] = typer.Option(None, "--strategy", help="Stock strategy name (e.g., stock_basic)"),
-    option_strategy: Optional[str] = typer.Option(None, "--option-strategy", help="Option strategy name (e.g., call_basic)"),
-    strike: Optional[float] = typer.Option(None, help="Option strike"),
-    maturity_days: Optional[int] = typer.Option(None, help="Option maturity in days"),
-    iv: Optional[float] = typer.Option(None, help="Implied volatility"),
-    rfr: Optional[float] = typer.Option(None, help="Risk-free rate"),
+    symbol: str | None = typer.Option(None, help="Ticker symbol"),
+    s0: float | None = typer.Option(None, help="Starting price"),
+    paths: int | None = typer.Option(None, help="Number of MC paths"),
+    steps: int | None = typer.Option(None, help="Steps per path"),
+    seed: int | None = typer.Option(None, help="Random seed"),
+    distribution: str | None = typer.Option(None, help="Return distribution"),
+    strategy: str | None = typer.Option(None, "--strategy", help="Stock strategy name (e.g., stock_basic)"),
+    option_strategy: str | None = typer.Option(None, "--option-strategy", help="Option strategy name (e.g., call_basic)"),
+    strike: float | None = typer.Option(None, help="Option strike"),
+    maturity_days: int | None = typer.Option(None, help="Option maturity in days"),
+    iv: float | None = typer.Option(None, help="Implied volatility"),
+    rfr: float | None = typer.Option(None, help="Risk-free rate"),
 ) -> None:
     defaults = {
         "symbol": None,

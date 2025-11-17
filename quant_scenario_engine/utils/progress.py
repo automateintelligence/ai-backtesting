@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Optional
 
 
 class ProgressReporter:
@@ -17,8 +16,8 @@ class ProgressReporter:
     def __init__(
         self,
         *,
-        total: Optional[int] = None,
-        log: Optional[logging.Logger] = None,
+        total: int | None = None,
+        log: logging.Logger | None = None,
         every: int = 10,
         every_seconds: int = 60,
         component: str | None = None,

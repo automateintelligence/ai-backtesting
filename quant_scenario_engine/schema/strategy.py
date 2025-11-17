@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, Literal
+from typing import Literal
 
 from quant_scenario_engine.exceptions import ConfigValidationError
 
@@ -15,7 +15,7 @@ PositionSizing = Literal["fixed_notional", "percent_equity"]
 class StrategyParams:
     name: str
     kind: StrategyKind
-    params: Dict[str, object] = field(default_factory=dict)
+    params: dict[str, object] = field(default_factory=dict)
     position_sizing: PositionSizing = "fixed_notional"
     fees: float = 0.0005
     slippage: float = 0.65

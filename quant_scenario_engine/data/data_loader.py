@@ -5,12 +5,12 @@ from __future__ import annotations
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Literal
 
 import pandas as pd
 
-from quant_scenario_engine.exceptions import DataSourceError
 from quant_scenario_engine.data.validation import compute_fingerprint, validate_ohlcv
+from quant_scenario_engine.exceptions import DataSourceError
 
 
 class DataLoader:
@@ -45,7 +45,7 @@ class DataLoader:
         start: str,
         end: str,
         interval: str = "1d",
-        version: Optional[str] = None,
+        version: str | None = None,
         force_refresh: bool = False,
         allow_stale_cache: bool = False,
     ) -> pd.DataFrame:
@@ -161,7 +161,7 @@ class DataLoader:
         target = cache_path if cache_path.suffix == ".parquet" else cache_path.with_suffix(".parquet")
         return pd.read_parquet(target)
 
-    def _resolve_partition(self, symbol: str, interval: str, version: Optional[str]) -> Path:
+    def _resolve_partition(self, symbol: str, interval: str, version: str | None) -> Path:
         partition_root = self.base_dir / f"interval={interval}" / f"symbol={symbol}"
         if version is None:
             version_dirs = []

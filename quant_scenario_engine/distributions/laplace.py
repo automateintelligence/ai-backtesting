@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
-from numpy.random import Generator, PCG64
+from numpy.random import PCG64, Generator
 from scipy.stats import kurtosis, laplace
 
 from quant_scenario_engine.distributions.stationarity import check_stationarity

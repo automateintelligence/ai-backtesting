@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Optional
 
 import numpy as np
 
@@ -14,8 +13,8 @@ from quant_scenario_engine.models.options import OptionSpec
 class StrategySignals:
     signals_stock: np.ndarray
     signals_option: np.ndarray
-    option_spec: Optional[OptionSpec]
-    features_used: List[str]
+    option_spec: OptionSpec | None
+    features_used: list[str]
 
     def __post_init__(self) -> None:
         if self.signals_stock.shape != self.signals_option.shape:
@@ -28,7 +27,7 @@ class StrategySignals:
             raise ValueError("signals must be 2-D array [n_paths, n_steps]")
         # De-duplicate feature list while preserving order
         seen: set[str] = set()
-        deduped: List[str] = []
+        deduped: list[str] = []
         for f in self.features_used:
             if f not in seen:
                 seen.add(f)

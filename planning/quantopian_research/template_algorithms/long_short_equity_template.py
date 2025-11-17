@@ -15,19 +15,18 @@ Quantopian's Lecture Series. Please direct any
 questions, feedback, or corrections to max@quantopian.com
 """
 
-from quantopian.algorithm import attach_pipeline, pipeline_output, order_optimal_portfolio
-from quantopian.pipeline import Pipeline
-from quantopian.pipeline.factors import CustomFactor, SimpleMovingAverage, AverageDollarVolume, RollingLinearRegressionOfReturns
-from quantopian.pipeline.data.builtin import USEquityPricing
-from quantopian.pipeline.data import Fundamentals
-from quantopian.pipeline.filters.morningstar import IsPrimaryShare
-from quantopian.pipeline.classifiers.fundamentals import Sector  
-
-import numpy as np
 import pandas as pd
-
-from quantopian.pipeline.filters import Q1500US
 import quantopian.experimental.optimize as opt
+from quantopian.algorithm import attach_pipeline, order_optimal_portfolio, pipeline_output
+from quantopian.pipeline import Pipeline
+from quantopian.pipeline.classifiers.fundamentals import Sector
+from quantopian.pipeline.data import Fundamentals
+from quantopian.pipeline.data.builtin import USEquityPricing
+from quantopian.pipeline.factors import (
+    CustomFactor,
+    RollingLinearRegressionOfReturns,
+)
+from quantopian.pipeline.filters import Q1500US
 
 # Constraint Parameters
 MAX_GROSS_LEVERAGE = 1.0
@@ -35,7 +34,7 @@ NUM_LONG_POSITIONS = 300
 NUM_SHORT_POSITIONS = 300
 
 # Here we define the maximum position size that can be held for any
-# given stock. If you have a different idea of what these maximum 
+# given stock. If you have a different idea of what these maximum
 # sizes should be, feel free to change them. Keep in mind that the
 # optimizer needs some leeway in order to operate. Namely, if your
 # maximum is too small, the optimizer may be overly-constrained.
@@ -45,7 +44,7 @@ MAX_LONG_POSITION_SIZE = 2*1.0/(NUM_LONG_POSITIONS + NUM_SHORT_POSITIONS)
 # Risk Exposures
 MAX_SECTOR_EXPOSURE = 0.10
 MAX_BETA_EXPOSURE = 0.20
-        
+
 class Momentum(CustomFactor):
     """
     Here we define a basic momentum factor using a CustomFactor. We take
@@ -70,21 +69,21 @@ def make_pipeline():
 
     In particular, this function can be copy/pasted into research and run by itself.
     """
-    
+
     # Create our momentum, value, and quality factors
     momentum = Momentum()
     # By appending .latest to the imported morningstar data, we get builtin Factors
     # so there's no need to define a CustomFactor
     value = Fundamentals.ebit.latest / Fundamentals.enterprise_value.latest
     quality = Fundamentals.roe.latest
-    
+
     # Classify all securities by sector so that we can enforce sector neutrality later
     sector = Sector()
-    
-    # Screen out non-desirable securities by defining our universe. 
+
+    # Screen out non-desirable securities by defining our universe.
     # Removes ADRs, OTCs, non-primary shares, LP, etc.
     # Also sets a minimum $500MM market cap filter and $5 price filter
-    mkt_cap_filter = Fundamentals.market_cap.latest >= 500000000    
+    mkt_cap_filter = Fundamentals.market_cap.latest >= 500000000
     price_filter = USEquityPricing.close.latest >= 5
     universe = Q1500US() & price_filter & mkt_cap_filter
 
@@ -109,7 +108,7 @@ def make_pipeline():
     # The final output of our pipeline should only include
     # the top/bottom 300 stocks by our criteria
     long_short_screen = (longs | shorts)
-    
+
     # Define any risk factors that we will want to neutralize
     # We are chiefly interested in market beta as a risk factor so we define it using
     # Bloomberg's beta calculation
@@ -120,7 +119,7 @@ def make_pipeline():
                     regression_length=260,
                     mask=long_short_screen
                     ).beta + 0.33*1.0
-    
+
 
     # Create pipeline
     pipe = Pipeline(columns = {
@@ -138,7 +137,7 @@ def make_pipeline():
 
 
 def initialize(context):
-    # Here we set our slippage and commisions. Set slippage 
+    # Here we set our slippage and commisions. Set slippage
     # and commission to zero to evaulate the signal-generating
     # ability of the algorithm independent of these additional
     # costs.
@@ -178,9 +177,9 @@ def recording_statements(context, data):
 def rebalance(context, data):
     ### Optimize API
     pipeline_data = context.pipeline_data
-    
-    ### Extract from pipeline any specific risk factors you want 
-    # to neutralize that you have already calculated 
+
+    ### Extract from pipeline any specific risk factors you want
+    # to neutralize that you have already calculated
     risk_factor_exposures = pd.DataFrame({
             'market_beta':pipeline_data.market_beta.fillna(1.0)
         })
@@ -189,15 +188,15 @@ def rebalance(context, data):
     # want to err on the side of caution. We don't want to exclude
     # a security just because it's missing a calculated market beta,
     # so we assume any missing values have full exposure to the market.
-    
-    
+
+
     ### Here we define our objective for the Optimize API. We have
     # selected MaximizeAlpha because we believe our combined factor
     # ranking to be proportional to expected returns. This routine
     # will optimize the expected return of our algorithm, going
     # long on the highest expected return and short on the lowest.
     objective = opt.MaximizeAlpha(pipeline_data.combined_rank)
-    
+
     ### Define the list of constraints
     constraints = []
     # Constrain our maximum gross leverage
@@ -221,7 +220,7 @@ def rebalance(context, data):
         max_exposures={'market_beta':MAX_BETA_EXPOSURE}
         )
     constraints.append(neutralize_risk_factors)
-    
+
     # With this constraint we enforce that no position can make up
     # greater than MAX_SHORT_POSITION_SIZE on the short side and
     # no greater than MAX_LONG_POSITION_SIZE on the long side. This
@@ -242,5 +241,5 @@ def rebalance(context, data):
         objective=objective,
         constraints=constraints
     )
-    
+
 

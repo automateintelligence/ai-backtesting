@@ -16,7 +16,6 @@ from quant_scenario_engine.exceptions import (
 )
 from quant_scenario_engine.utils.logging import configure_logging, get_logger
 
-
 app = typer.Typer(help="Quant Scenario Engine CLI")
 
 

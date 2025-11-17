@@ -55,7 +55,7 @@ def run_strategy_comparison():
         risk_free_rate=0.01,
         contracts=1,
     )
-    
+
     # Strategy combinations to test
     test_cases = [
         {

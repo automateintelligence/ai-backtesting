@@ -6,34 +6,32 @@ import json
 import os
 import platform
 import subprocess
-from dataclasses import dataclass, asdict, field
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Dict, Optional
-
-from quant_scenario_engine.exceptions import ConfigValidationError
+from typing import Any
 
 
 @dataclass
 class ReproducibilityContext:
     seed: int
-    library_versions: Dict[str, str]
-    system_info: Dict[str, Any]
-    git_sha: Optional[str]
+    library_versions: dict[str, str]
+    system_info: dict[str, Any]
+    git_sha: str | None
 
 
 @dataclass
 class RunMeta:
     run_id: str
     symbol: str
-    config: Dict[str, Any]
+    config: dict[str, Any]
     storage_policy: str
-    drift_status: Optional[str] = None
-    iv_source: Optional[str] = None
-    parameter_stability: Optional[str] = None
-    covariance_estimator: Optional[str] = None
-    var_method: Optional[str] = None
-    lookback_window: Optional[int] = None
-    reproducibility: Optional[ReproducibilityContext] = None
+    drift_status: str | None = None
+    iv_source: str | None = None
+    parameter_stability: str | None = None
+    covariance_estimator: str | None = None
+    var_method: str | None = None
+    lookback_window: int | None = None
+    reproducibility: ReproducibilityContext | None = None
 
     def to_json(self) -> str:
         return json.dumps(asdict(self), indent=2)
@@ -45,7 +43,7 @@ class RunMeta:
         tmp_path.replace(path)
 
     @classmethod
-    def from_json(cls, raw: str) -> "RunMeta":
+    def from_json(cls, raw: str) -> RunMeta:
         data = json.loads(raw)
         return cls(**data)
 
@@ -54,16 +52,16 @@ class RunMeta:
         cls,
         run_id: str,
         symbol: str,
-        config: Dict[str, Any],
+        config: dict[str, Any],
         storage_policy: str,
         seed: int,
-        covariance_estimator: Optional[str] = None,
-        var_method: Optional[str] = None,
-        lookback_window: Optional[int] = None,
-        drift_status: Optional[str] = None,
-        iv_source: Optional[str] = None,
-        parameter_stability: Optional[str] = None,
-    ) -> "RunMeta":
+        covariance_estimator: str | None = None,
+        var_method: str | None = None,
+        lookback_window: int | None = None,
+        drift_status: str | None = None,
+        iv_source: str | None = None,
+        parameter_stability: str | None = None,
+    ) -> RunMeta:
         reproducibility = ReproducibilityContext(
             seed=seed,
             library_versions=_capture_lib_versions(),
@@ -89,8 +87,8 @@ class RunMeta:
         )
 
 
-def _capture_lib_versions() -> Dict[str, str]:
-    versions: Dict[str, str] = {}
+def _capture_lib_versions() -> dict[str, str]:
+    versions: dict[str, str] = {}
     for lib in ["numpy", "pandas", "scipy", "numba", "statsmodels", "arch", "typer"]:
         try:
             module = __import__(lib)
@@ -100,7 +98,7 @@ def _capture_lib_versions() -> Dict[str, str]:
     return versions
 
 
-def _capture_git_sha() -> Optional[str]:
+def _capture_git_sha() -> str | None:
     try:
         return subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
     except Exception:

@@ -23,7 +23,6 @@ portfolio's leverage.
 import numpy as np
 import pandas as pd
 from pykalman import KalmanFilter
-import statsmodels.api as sm
 
 
 def initialize(context):
@@ -31,7 +30,7 @@ def initialize(context):
     set_slippage(slippage.FixedSlippage(spread=0))
     set_commission(commission.PerShare(cost=0.01, min_trade_cost=1.0))
     set_symbol_lookup_date('2014-01-01')
-    
+
     context.pairs = [
         KalmanPairTrade(symbol('STX'), symbol('WDC'),
                         initial_bars=300, freq='1m', delta=1e-3, maxlen=300),
@@ -45,61 +44,61 @@ def initialize(context):
                         initial_bars=300, freq='1m', delta=1e-3, maxlen=300),
         KalmanPairTrade(symbol('COP'), symbol('CVX'),
                         initial_bars=300, freq='1m', delta=1e-3, maxlen=300),
-       
+
     ]
-    
+
     weight = 1.8 / len(context.pairs)
     for pair in context.pairs:
         pair.leverage = weight
-        
+
     context.kelly = KellyLeverage()
     schedule_function(context.kelly.update,
                       time_rule=time_rules.market_close())
     schedule_function(update_leverage,
                       time_rule=time_rules.market_open())
-    
+
     for minute in range(10, 390, 120):
         for pair in context.pairs:
             schedule_function(pair.trading_logic,
                               time_rule=time_rules.market_open(minutes=minute))
-            
-class KellyLeverage(object):
-    
+
+class KellyLeverage:
+
     def __init__(self, minlen=30, maxlen=500):
         self.equity = []
         self.minlen = minlen
         self.maxlen = maxlen
-        
+
     def update(self, context, data):
         self.equity.append(context.portfolio.portfolio_value)
         if len(self.equity) > self.maxlen:
             self.equity = self.equity[-self.maxlen::]
-        
+
     def kelly_score(self):
         if len(self.equity) < self.minlen:
             return np.nan
         returns = np.diff(np.log(self.equity))[1:]
         return np.mean(returns) / np.var(returns)
-        
-    
+
+
 def handle_data(context, data):
     record(market_exposure=context.account.net_leverage,
-           leverage=context.account.leverage, 
+           leverage=context.account.leverage,
            kelly=context.kelly.kelly_score())
-    
-    
+
+
 def update_leverage(context, data):
     kelly = context.kelly.kelly_score()
     if np.isnan(kelly):
         return
-    
+
     weight = max(1.0, kelly) / len(context.pairs)
     for pair in context.pairs:
         pair.leverage = weight
-    
-class KalmanPairTrade(object):
 
-    def __init__(self, y, x, leverage=1.0, initial_bars=10, 
+class KalmanPairTrade:
+
+    def __init__(self, y, x, leverage=1.0, initial_bars=10,
                  freq='1d', delta=1e-3, maxlen=3000):
         self._y = y
         self._x = x
@@ -112,10 +111,10 @@ class KalmanPairTrade(object):
         self.X = KalmanMovingAverage(self._x, maxlen=self.maxlen)
         self.kf = None
         self.entry_dt = pd.Timestamp('1900-01-01', tz='utc')
-        
+
     @property
     def name(self):
-        return "{}~{}".format(self._y.symbol, self._x.symbol)
+        return f"{self._y.symbol}~{self._x.symbol}"
 
     def trading_logic(self, context, data):
         try:
@@ -159,7 +158,7 @@ class KalmanPairTrade(object):
                     order_target_percent(self._x, -self.leverage / 2.)
                     self.entry_dt = now
         except Exception as e:
-            log.debug("[{}] {}".format(self.name, str(e)))
+            log.debug(f"[{self.name}] {str(e)}")
 
     def update(self):
         prices = np.log(history(bar_count=1, frequency='1m', field='price'))
@@ -178,7 +177,7 @@ class KalmanPairTrade(object):
         mu_X = self.X.state_means
         return pd.DataFrame([mu_Y, mu_X]).T
 
-            
+
     def initialize_filters(self, context, data):
         prices = np.log(history(self.initial_bars, self.freq, 'price'))
         self.X.update(prices)
@@ -189,7 +188,7 @@ class KalmanPairTrade(object):
         self.Y.state_means = self.Y.state_means.iloc[-self.initial_bars:]
         self.kf = KalmanRegression(self.Y.state_means, self.X.state_means,
                                    delta=self.delta, maxlen=self.maxlen)
-    
+
     def get_pnl(self, context, data):
         x = self._x
         y = self._y
@@ -199,13 +198,13 @@ class KalmanPairTrade(object):
         dy = prices[y] - positions[y].cost_basis
         return (positions[x].amount * dx +
                 positions[y].amount * dy)
-    
-    
-    
 
-    
-    
-class KalmanMovingAverage(object):
+
+
+
+
+
+class KalmanMovingAverage:
     """
     Estimates the moving average of a price process 
     via Kalman Filtering. 
@@ -213,11 +212,11 @@ class KalmanMovingAverage(object):
     See http://pykalman.github.io/ for docs on the 
     filtering process. 
     """
-    
+
     def __init__(self, asset, observation_covariance=1.0, initial_value=0,
-                 initial_state_covariance=1.0, transition_covariance=0.05, 
+                 initial_state_covariance=1.0, transition_covariance=0.05,
                  initial_window=20, maxlen=3000, freq='1d'):
-        
+
         self.asset = asset
         self.freq = freq
         self.initial_window = initial_window
@@ -230,12 +229,12 @@ class KalmanMovingAverage(object):
                                transition_covariance=transition_covariance)
         self.state_means = pd.Series([self.kf.initial_state_mean], name=self.asset)
         self.state_vars = pd.Series([self.kf.initial_state_covariance], name=self.asset)
-        
-        
+
+
     def update(self, observations):
         for dt, observation in observations[self.asset].iterkv():
             self._update(dt, observation)
-        
+
     def _update(self, dt, observation):
         mu, cov = self.kf.filter_update(self.state_means.iloc[-1],
                                         self.state_vars.iloc[-1],
@@ -246,16 +245,16 @@ class KalmanMovingAverage(object):
             self.state_means = self.state_means.iloc[-self.maxlen:]
         if self.state_vars.shape[0] > self.maxlen:
             self.state_vars = self.state_vars.iloc[-self.maxlen:]
-        
-        
-class KalmanRegression(object):
+
+
+class KalmanRegression:
     """
     Uses a Kalman Filter to estimate regression parameters 
     in an online fashion.
     
     Estimated model: y ~ beta * x + alpha
     """
-    
+
     def __init__(self, initial_y, initial_x, delta=1e-5, maxlen=3000):
         self._x = initial_x.name
         self._y = initial_y.name
@@ -263,7 +262,7 @@ class KalmanRegression(object):
         trans_cov = delta / (1 - delta) * np.eye(2)
         obs_mat = np.expand_dims(
             np.vstack([[initial_x], [np.ones(initial_x.shape[0])]]).T, axis=1)
-        
+
         self.kf = KalmanFilter(n_dim_obs=1, n_dim_state=2,
                                initial_state_mean=np.zeros(2),
                                initial_state_covariance=np.ones((2, 2)),
@@ -272,30 +271,30 @@ class KalmanRegression(object):
                                observation_covariance=1.0,
                                transition_covariance=trans_cov)
         state_means, state_covs = self.kf.filter(initial_y.values)
-        self.means = pd.DataFrame(state_means, 
-                                  index=initial_y.index, 
+        self.means = pd.DataFrame(state_means,
+                                  index=initial_y.index,
                                   columns=['beta', 'alpha'])
         self.state_cov = state_covs[-1]
-        
+
     def update(self, observations):
         x = observations[self._x]
         y = observations[self._y]
         mu, self.state_cov = self.kf.filter_update(
-            self.state_mean, self.state_cov, y, 
+            self.state_mean, self.state_cov, y,
             observation_matrix=np.array([[x, 1.0]]))
-        mu = pd.Series(mu, index=['beta', 'alpha'], 
+        mu = pd.Series(mu, index=['beta', 'alpha'],
                        name=observations.name)
         self.means = self.means.append(mu)
         if self.means.shape[0] > self.maxlen:
             self.means = self.means.iloc[-self.maxlen:]
-        
+
     def get_spread(self, observations):
         x = observations[self._x]
         y = observations[self._y]
         return y - (self.means.beta[-1] * x + self.means.alpha[-1])
-        
+
     @property
     def state_mean(self):
         return self.means.iloc[-1]
-        
+
 

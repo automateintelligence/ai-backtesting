@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from quant_scenario_engine.config.factories import FactoryBase
-from quant_scenario_engine.data.yfinance import YFinanceDataSource
 from quant_scenario_engine.data.schwab_stub import SchwabDataSourceStub
+from quant_scenario_engine.data.yfinance import YFinanceDataSource
 from quant_scenario_engine.exceptions import DependencyError
 
 

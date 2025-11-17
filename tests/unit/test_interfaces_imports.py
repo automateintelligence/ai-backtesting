@@ -1,4 +1,4 @@
-from quant_scenario_engine.interfaces.candidate_selector import CandidateEpisode, CandidateSelector
+from quant_scenario_engine.interfaces.candidate_selector import CandidateSelector
 from quant_scenario_engine.interfaces.distribution import ReturnDistribution
 from quant_scenario_engine.interfaces.pricing import OptionPricer
 from quant_scenario_engine.interfaces.strategy import Strategy
