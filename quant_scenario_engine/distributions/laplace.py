@@ -7,7 +7,12 @@ from numpy.random import Generator, PCG64
 from scipy.stats import kurtosis, laplace
 
 from quant_scenario_engine.distributions.stationarity import check_stationarity
-from quant_scenario_engine.distributions.validation import enforce_convergence, enforce_heavy_tails, validate_params_bounds, validate_returns
+from quant_scenario_engine.distributions.validation import (
+    enforce_convergence,
+    heavy_tail_status,
+    validate_params_bounds,
+    validate_returns,
+)
 from quant_scenario_engine.exceptions import DistributionFitError
 from quant_scenario_engine.interfaces.distribution import DistributionMetadata, ReturnDistribution
 
@@ -30,7 +35,11 @@ class LaplaceDistribution(ReturnDistribution):
         enforce_convergence({"loc": self.loc, "scale": self.scale})
         validate_params_bounds({"scale": self.scale}, {"scale": (1e-9, 10.0)})
         excess_kurt = float(kurtosis(returns, fisher=True))
-        enforce_heavy_tails(excess_kurt)
+        ok, warn = heavy_tail_status(excess_kurt)
+        if not ok:
+            raise DistributionFitError(
+                f"Excess kurtosis {excess_kurt:.3f} below required heavy-tail threshold"
+            )
         self.metadata = DistributionMetadata(
             estimator="mle",
             loglik=float(laplace.logpdf(returns, loc=loc, scale=scale).sum()),
@@ -39,6 +48,7 @@ class LaplaceDistribution(ReturnDistribution):
             fit_status="success",
             min_samples=min_samples,
             excess_kurtosis=excess_kurt,
+            heavy_tail_warning=warn,
         )
 
     def sample(self, n_paths: int, n_steps: int, seed: int | None = None) -> np.ndarray:

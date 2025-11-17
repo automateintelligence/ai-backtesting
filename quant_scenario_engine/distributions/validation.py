@@ -27,11 +27,13 @@ def enforce_convergence(values: dict) -> None:
             raise DistributionFitError(f"Non-finite parameter {key}: {val}")
 
 
-def enforce_heavy_tails(excess_kurtosis: float) -> None:
+def heavy_tail_status(excess_kurtosis: float) -> tuple[bool, bool]:
+    """Return (ok, warning) based on heavy-tail threshold."""
+    if excess_kurtosis < 0.5:
+        return False, True
     if excess_kurtosis < 1.0:
-        raise DistributionFitError(
-            f"Excess kurtosis {excess_kurtosis:.3f} below required heavy-tail threshold (>= 1.0)"
-        )
+        return True, True  # allow but warn
+    return True, False
 
 
 def fallback_to_laplace(returns: np.ndarray):
@@ -41,4 +43,5 @@ def fallback_to_laplace(returns: np.ndarray):
     lap.fit(returns)
     lap.metadata.fallback_model = "laplace"
     lap.metadata.fit_status = "warn"
+    lap.metadata.heavy_tail_warning = True
     return lap

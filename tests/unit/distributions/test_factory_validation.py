@@ -3,7 +3,7 @@ import pytest
 
 from quant_scenario_engine.distributions.factory import distribution_factory, get_distribution
 from quant_scenario_engine.distributions.validation import (
-    enforce_heavy_tails,
+    heavy_tail_status,
     validate_params_bounds,
     validate_returns,
 )
@@ -28,6 +28,13 @@ def test_validate_returns_and_bounds():
     validate_params_bounds({"scale": 1.0}, bounds)
     with pytest.raises(DistributionFitError):
         validate_params_bounds({"scale": -1.0}, bounds)
+
+    ok, warn = heavy_tail_status(1.2)
+    assert ok and not warn
+    ok, warn = heavy_tail_status(0.7)
+    assert ok and warn
+    ok, warn = heavy_tail_status(0.3)
+    assert not ok and warn
 
 
 def test_enforce_convergence_and_bounds_in_models(monkeypatch):
