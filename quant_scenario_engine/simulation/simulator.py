@@ -21,17 +21,19 @@ class MarketSimulator:
     def simulate_stock(self, price_paths: np.ndarray, signals: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         # P&L from signed price deltas; prepend first bar to align dimensions
         deltas = np.diff(price_paths, axis=1, prepend=price_paths[:, :1])
-        pnl = (signals * deltas).sum(axis=1)
-        equity = price_paths[:, -1]
-        return pnl, equity
+        step_pnl = signals * deltas
+        pnl = step_pnl.sum(axis=1)
+        equity_paths = price_paths[:, :1] + np.cumsum(step_pnl, axis=1)
+        return pnl, equity_paths
 
     def simulate_option(self, price_paths: np.ndarray, signals: np.ndarray, option_spec) -> tuple[np.ndarray, np.ndarray]:
         pricer = self.pricer
         option_prices = np.vstack([pricer.price(path, option_spec) for path in price_paths])
         deltas = np.diff(option_prices, axis=1, prepend=option_prices[:, :1])
-        pnl = (signals * deltas).sum(axis=1)
-        equity = option_prices[:, -1]
-        return pnl, equity
+        step_pnl = signals * deltas
+        pnl = step_pnl.sum(axis=1)
+        equity_paths = option_prices[:, :1] + np.cumsum(step_pnl, axis=1)
+        return pnl, equity_paths
 
     def run(
         self,
@@ -50,22 +52,24 @@ class MarketSimulator:
             if bankruptcy_rate > 0.5:
                 raise BankruptcyError("More than half of simulated paths went bankrupt")
 
-        stock_pnl, stock_equity = self.simulate_stock(price_paths, signals.signals_stock)
+        stock_pnl, stock_equity_paths = self.simulate_stock(price_paths, signals.signals_stock)
         option_pnl = np.zeros_like(stock_pnl)
-        option_equity = np.zeros_like(stock_equity)
+        option_equity_paths = np.zeros_like(stock_equity_paths)
 
         early_exercise_events = 0
         if signals.option_spec is not None:
-            option_pnl, option_equity = self.simulate_option(
+            option_pnl, option_equity_paths = self.simulate_option(
                 price_paths, signals.signals_option, signals.option_spec
             )
             early_exercise_events = int(getattr(signals.option_spec, "early_exercise", False))
 
-        combined_equity = stock_equity + option_equity
+        combined_equity_paths = stock_equity_paths + option_equity_paths
+        equity_curve_mean = combined_equity_paths.mean(axis=0)
+
         combined_pnl = stock_pnl + option_pnl
         return compute_metrics(
             combined_pnl,
-            combined_equity,
+            equity_curve_mean,
             var_method=var_method,  # type: ignore[arg-type]
             covariance_estimator=covariance_estimator,  # type: ignore[arg-type]
             lookback_window=lookback_window,
