@@ -40,7 +40,7 @@ def compute_sma(series: pd.Series, length: int) -> pd.Series:
         raise ValueError("length must be positive")
 
     if ta is not None:
-        return ta.sma(series, length=length).fillna(method="bfill").fillna(series)
+        return ta.sma(series, length=length).bfill().fillna(series)
 
     _warn_once("pandas-ta not installed, falling back to pandas rolling mean for SMA")
     return series.rolling(window=length, min_periods=1).mean()
@@ -85,4 +85,3 @@ def ensure_columns_present(df: pd.DataFrame, required: Iterable[str]) -> None:
     missing = [c for c in required if c not in df.columns]
     if missing:
         raise ValueError(f"Missing required columns: {missing}")
-

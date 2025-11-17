@@ -50,7 +50,7 @@ def enrich_ohlcv(
     out["volume_z"] = compute_volume_z(out["volume"], window=int(volume_window))
 
     if fillna:
-        out = out.fillna(method="ffill").fillna(method="bfill")
+        out = out.ffill().bfill()
 
     log.info(
         "Feature pipeline complete",
@@ -58,4 +58,3 @@ def enrich_ohlcv(
     )
 
     return out
-
