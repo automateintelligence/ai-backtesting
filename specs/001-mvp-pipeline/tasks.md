@@ -321,8 +321,8 @@ def mock_run_config():
 
 #### Data Layer (US1)
 
-- [ ] T021 [P] [US1] Implement YFinanceDataSource adapter in quant-scenario-engine/data/yfinance.py with fetch(symbol, start, end, interval) and exponential backoff retries per FR-001/086 (3 retries with 1s/2s/4s backoff)
-- [ ] T021a [US1] Integrate YFinanceDataSource with DataLoader in quant-scenario-engine/data/data_loader.py per T020h (wire _fetch_from_source to use YFinanceDataSource, handle retries and errors)
+- [X] T021 [P] [US1] Implement YFinanceDataSource adapter in quant-scenario-engine/data/yfinance.py with fetch(symbol, start, end, interval) and exponential backoff retries per FR-001/086 (3 retries with 1s/2s/4s backoff)
+- [X] T021a [US1] Integrate YFinanceDataSource with DataLoader in quant-scenario-engine/data/data_loader.py per T020h (wire _fetch_from_source to use YFinanceDataSource, handle retries and errors)
 - [ ] T022 [P] [US1] Create SchwabDataSourceStub in quant-scenario-engine/data/schwab_stub.py with matching interface per FR-011/FR-017
 - [ ] T023 [P] [US1] Implement data validation in quant-scenario-engine/data/validation.py (check OHLCV columns, handle missing data per FR-010/029, validate timestamps for monotonicity and future dates per FR-057)
 - [ ] T023a [US1] Implement data fingerprinting in quant-scenario-engine/data/validation.py per T020a (compute content hash from OHLCV data, store in metadata, compare on load for drift detection per FR-019/028)

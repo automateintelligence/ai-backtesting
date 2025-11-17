@@ -19,6 +19,7 @@ class DataLoader:
         base_dir: Path,
         category: Literal["historical", "features"] = "historical",
         storage_format: Literal["parquet", "pickle"] = "parquet",
+        data_source=None,
     ) -> None:
         """Create a loader for OHLCV/feature data.
 
@@ -35,6 +36,7 @@ class DataLoader:
         self.base_dir = base_dir
         self.category = category
         self.storage_format = storage_format
+        self.data_source = data_source
         self.base_dir.mkdir(parents=True, exist_ok=True)
 
     def load_ohlcv(
@@ -120,7 +122,9 @@ class DataLoader:
         return df
 
     def _fetch_from_source(self, symbol: str, start: str, end: str, interval: str) -> pd.DataFrame:
-        raise DataSourceError("No data source configured; override _fetch_from_source in subclass")
+        if self.data_source is None:
+            raise DataSourceError("No data source configured; provide data_source or override")
+        return self.data_source.fetch(symbol=symbol, start=start, end=end, interval=interval)
 
     def _write_cache(
         self,
