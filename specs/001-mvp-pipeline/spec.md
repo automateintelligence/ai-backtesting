@@ -516,6 +516,7 @@ class BlackScholesPricer:
   - Distance metric selection MUST be configurable per run and logged in `run_meta.json`.
 - **FR-CAND-005:** System SHOULD support at least one non-parametric episode-resampling method and one parametric state-conditioned return model.
 - **FR-CAND-006:** System MUST ship at least one default selector (gap/volume spike rule) for MVP and allow selector swapping via configuration without code changes.
+- **FR-CAND-006a (Screen CLI inputs/caching):** The `screen` CLI SHALL accept either (a) a CSV universe (`symbol,date,open,high,low,close,volume`) or (b) a comma-delimited `symbols` list with `start/end/interval` inputs. When symbols are provided, the CLI MUST download OHLCV via the same functional path as `fetch`, storing Parquet at `data/historical/interval={interval}/symbol={symbol}/_v1/data.parquet`, updating when newer/longer ranges are requested. If the requested date window is shorter than an existing Parquet file, the CLI MUST serve the slice from the Parquet file (using Parquet time-series filtering) instead of refetching.
 
 ```python
 # interfaces/candidate_selector.py

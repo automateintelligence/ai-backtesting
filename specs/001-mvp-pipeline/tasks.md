@@ -419,8 +419,8 @@ def mock_run_config():
 
 #### CLI (US4)
 
-- [X] T063 [US4] Create screen command in quant-scenario-engine/cli/commands/screen.py with universe and selector arguments per contracts/openapi.yaml ScreenRequest and FR-033 CLI schema
-- [X] T064 [US4] Wire screen CLI to screening engine with validation per contracts/openapi.yaml ScreenResponse (FR-033)
+- [X] T063 [US4] Create screen command in quant-scenario-engine/cli/commands/screen.py with universe CSV or symbols list per contracts/openapi.yaml ScreenRequest and FR-033 CLI schema; reuse fetch path with Parquet caching/slicing per FR-CAND-006a
+- [X] T064 [US4] Wire screen CLI to screening engine with validation per contracts/openapi.yaml ScreenResponse (FR-033); ensure symbol input path auto-downloads/extends Parquet and slices shorter windows from existing data
 - [X] T065 [US4] Implement ScreenResponse serialization with candidate list (symbol, t0, state_features) per contracts/openapi.yaml (FR-033)
 
 **Checkpoint**: User Story 4 complete - can screen universe and generate candidate lists
