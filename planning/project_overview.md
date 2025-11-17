@@ -2418,3 +2418,5 @@ Looking at the current 8 user stories and the comprehensive requirements we just
   3. Config Management is addressed by version control (users can git their YAML configs)
   4. Cleanup is low-value compared to core backtesting features
   5. Error Diagnosis is sufficiently covered by structured errors per FR-042
+
+  /speckit.implement "Implement all phases until you cannot pass testing. Run the tests yourself until there are blocking issues that need my external intervention, then document the issue using 'gh issue create'. Once the issue is created, you may proceed to the next phase unless it is blocked by the untested phase. Be sure to follow the workflow in '.codex/speckit.implement.md' Be sure to commit with a message after each phase is completed."
