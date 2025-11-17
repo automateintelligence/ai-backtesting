@@ -378,9 +378,9 @@ def mock_run_config():
 - [X] T046 [US1] Implement config validation in quant-scenario-engine/cli/validation.py enforcing contracts/openapi.yaml CompareRequest schema (FR-033)
 - [X] T047 [US1] Wire compare CLI to run_compare() in quant-scenario-engine/cli/commands/compare.py with proper error handling per plan.md error policies (map exceptions to exit codes per plan.md lines 522-556; FR-041/FR-042)
 - [X] T048 [US1] Add CLI argument parsing for symbol, start, end, distribution, paths, steps, seed, data_source, option_pricer, strategies per contracts/openapi.yaml (FR-024/FR-033)
-- [ ] T049 [US1] Implement progress reporting for long-running operations per FR-039 (emit progress every 10 configs or 1 minute per plan.md lines 558-565)
-- [ ] T050 [US1] Add structured error handling with component-specific exit codes per FR-041/FR-042 (ConfigValidationError→1, InsufficientDataError→2, DistributionFitError→3, ResourceLimitError→4, KeyboardInterrupt→130 per plan.md lines 522-556)
-- [ ] T051 [US1] Implement CLI config precedence (CLI > ENV > YAML) per FR-024/FR-026 and plan.md (document precedence, log overrides per T020k)
+- [X] T049 [US1] Implement progress reporting for long-running operations per FR-039 (emit progress every 10 configs or 1 minute per plan.md lines 558-565)
+- [X] T050 [US1] Add structured error handling with component-specific exit codes per FR-041/FR-042 (ConfigValidationError→1, InsufficientDataError→2, DistributionFitError→3, ResourceLimitError→4, KeyboardInterrupt→130 per plan.md lines 522-556)
+- [X] T051 [US1] Implement CLI config precedence (CLI > ENV > YAML) per FR-024/FR-026 and plan.md (document precedence, log overrides per T020k)
 
 **Checkpoint**: User Story 1 MVP complete - can execute stock vs option comparison and produce artifacts
 
