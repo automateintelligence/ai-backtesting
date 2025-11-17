@@ -18,6 +18,9 @@ class DistributionMetadata:
     bic: Optional[float] = None
     fit_status: FitStatus = "warn"
     min_samples: int = 60
+    excess_kurtosis: Optional[float] = None
+    heavy_tail_warning: bool = False
+    fallback_model: Optional[str] = None
 
 
 class ReturnDistribution(ABC):
@@ -35,4 +38,3 @@ class ReturnDistribution(ABC):
     @abstractmethod
     def sample(self, n_paths: int, n_steps: int, seed: Optional[int] = None):
         """Produce log-return matrix of shape (n_paths, n_steps)."""
-

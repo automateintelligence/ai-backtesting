@@ -6,7 +6,7 @@ from quant_scenario_engine.exceptions import DistributionFitError
 
 
 def test_student_t_fit_and_sample_reproducible():
-    returns = np.random.normal(0, 0.01, size=200)
+    returns = np.random.standard_t(df=5, size=500) * 0.01
     dist = StudentTDistribution()
     dist.fit(returns)
     sample1 = dist.sample(10, 5, seed=123)

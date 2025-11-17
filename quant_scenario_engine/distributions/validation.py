@@ -20,3 +20,25 @@ def validate_params_bounds(params: dict, bounds: dict) -> None:
         if val < lower or val > upper:
             raise DistributionFitError(f"Parameter {key} out of bounds: {val}")
 
+
+def enforce_convergence(values: dict) -> None:
+    for key, val in values.items():
+        if val is None or not np.isfinite(val):
+            raise DistributionFitError(f"Non-finite parameter {key}: {val}")
+
+
+def enforce_heavy_tails(excess_kurtosis: float) -> None:
+    if excess_kurtosis < 1.0:
+        raise DistributionFitError(
+            f"Excess kurtosis {excess_kurtosis:.3f} below required heavy-tail threshold (>= 1.0)"
+        )
+
+
+def fallback_to_laplace(returns: np.ndarray):
+    from quant_scenario_engine.distributions.laplace import LaplaceDistribution
+
+    lap = LaplaceDistribution()
+    lap.fit(returns)
+    lap.metadata.fallback_model = "laplace"
+    lap.metadata.fit_status = "warn"
+    return lap

@@ -6,7 +6,7 @@ from quant_scenario_engine.exceptions import DistributionFitError
 
 
 def test_laplace_fit_and_sample_reproducible():
-    returns = np.random.normal(0, 0.01, size=100)
+    returns = np.random.laplace(0, 0.01, size=200)
     dist = LaplaceDistribution()
     dist.fit(returns)
     sample1 = dist.sample(10, 5, seed=42)

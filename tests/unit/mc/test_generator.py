@@ -7,7 +7,7 @@ from quant_scenario_engine.mc.generator import generate_price_paths
 
 
 def test_generate_price_paths_deterministic_seed():
-    returns = np.random.normal(0, 0.01, size=200)
+    returns = np.random.laplace(0, 0.01, size=300)
     dist = LaplaceDistribution()
     dist.fit(returns)
     p1 = generate_price_paths(s0=100.0, distribution=dist, n_paths=3, n_steps=5, seed=123)
@@ -24,4 +24,3 @@ def test_generate_price_paths_raises_on_bad_shape():
     dist.loc, dist.scale = 0.0, 1.0
     with pytest.raises(DistributionFitError):
         generate_price_paths(100.0, dist, 2, 2, seed=1)
-
