@@ -490,18 +490,18 @@ def mock_run_config():
 
 #### Conditional Sampling (US6)
 
-- [ ] T083 [US6] Implement episode bootstrapping sampler in backtesting/distributions/episode_bootstrap.py for non-parametric conditional MC per FR-CAND-005
+- [ ] T083 [US6] Implement episode bootstrapping sampler in backtesting/distributions/episode_bootstrap.py for non-parametric conditional MC per FR-CAND-005/SC-007
 - [ ] T084 [P] [US6] Implement state-conditioned distribution refit in backtesting/distributions/conditional.py for parametric conditional MC per FR-CAND-005 (reference T020l/T020m for stationarity/AR checks on conditional samples)
-- [ ] T085 [US6] Create conditional MC method selector in backtesting/mc/conditional.py (bootstrap vs refit) with fallback logic per FR-CAND-005 (try bootstrap → parametric refit → unconditional, log method selection per FR-036/038)
-- [ ] T086 [US6] Implement minimum episode threshold check with warning and fallback per spec.md US6 acceptance scenario 3 (warn when <30 episodes, trigger fallback)
-- [ ] T087 [US6] Create run_conditional_mc() in quant-scenario-engine/simulation/conditional_mc.py integrating conditional sampling with strategies per FR-CAND-004
-- [ ] T087a [US6] Log method selection and fallbacks (bootstrap → refit → unconditional) in run_meta/logs per FR-036/038 (record in run_meta.json, emit structured logs)
+- [ ] T085 [US6] Create conditional MC method selector in backtesting/mc/conditional.py (bootstrap vs refit) with fallback logic per FR-CAND-005/FR-036/FR-038 (try bootstrap → parametric refit → unconditional, log method selection)
+- [ ] T086 [US6] Implement minimum episode threshold check with warning and fallback per spec.md US6 acceptance scenario 3/FR-CAND-006 (warn when <30 episodes, trigger fallback)
+- [ ] T087 [US6] Create run_conditional_mc() in quant-scenario-engine/simulation/conditional_mc.py integrating conditional sampling with strategies per FR-CAND-004/FR-036
+- [ ] T087a [US6] Log method selection and fallbacks (bootstrap → refit → unconditional) in run_meta/logs per FR-036/FR-038/FR-CAND-004 (record in run_meta.json, emit structured logs)
 
 #### CLI (US6)
 
-- [ ] T088 [US6] Extend conditional CLI to support monte_carlo mode in quant-scenario-engine/cli/commands/conditional.py
-- [ ] T089 [US6] Add state_features input parsing and validation per contracts/openapi.yaml CandidateEpisode
-- [ ] T090 [US6] Wire conditional MC CLI to run_conditional_mc() with reproducibility guarantee per spec.md US6 acceptance scenario 2 (ensure seed propagation, validate deterministic output)
+- [ ] T088 [US6] Extend conditional CLI to support monte_carlo mode in quant-scenario-engine/cli/commands/conditional.py per contracts/openapi.yaml ConditionalRequest (FR-033)
+- [ ] T089 [US6] Add state_features input parsing and validation per contracts/openapi.yaml CandidateEpisode (FR-CAND-002)
+- [ ] T090 [US6] Wire conditional MC CLI to run_conditional_mc() with reproducibility guarantee per spec.md US6 acceptance scenario 2/SC-007 (ensure seed propagation, deterministic output)
 
 **Checkpoint**: User Story 6 complete - can generate conditional Monte Carlo paths from candidate states
 
@@ -517,25 +517,25 @@ def mock_run_config():
 
 #### Configuration Management (US7)
 
-- [ ] T091 [US7] Create YAML configuration schema in quant-scenario-engine/config/schema.py matching contracts/openapi.yaml request schemas
-- [ ] T092 [P] [US7] Implement YAML config loader in quant-scenario-engine/config/loader.py with validation
-- [ ] T093 [P] [US7] Add environment variable override support in quant-scenario-engine/config/env.py per plan.md onboarding
-- [ ] T094 [US7] Implement config validation with fail-fast on invalid values per spec.md US7 acceptance scenario 3 (structured ConfigValidationError per T008, clear fix guidance per FR-041)
-- [ ] T095 [US7] Wire all factories (data, distribution, pricer) to read from unified config per FR-009 (ensure T020k logging active on all component swaps)
-- [ ] T095a [US7] Enforce configuration precedence (CLI > ENV > YAML) and log overrides per FR-024/026 (document precedence in README, emit INFO logs on overrides per T020k)
+- [ ] T091 [US7] Create YAML configuration schema in quant-scenario-engine/config/schema.py matching contracts/openapi.yaml request schemas (FR-009/FR-033)
+- [ ] T092 [P] [US7] Implement YAML config loader in quant-scenario-engine/config/loader.py with validation per FR-033/FR-009
+- [ ] T093 [P] [US7] Add environment variable override support in quant-scenario-engine/config/env.py per plan.md onboarding (FR-024/FR-026 precedence)
+- [ ] T094 [US7] Implement config validation with fail-fast on invalid values per spec.md US7 acceptance scenario 3 (structured ConfigValidationError per T008, FR-041 guidance)
+- [ ] T095 [US7] Wire all factories (data, distribution, pricer) to read from unified config per FR-009/FR-043 (ensure T020k logging active on swaps)
+- [ ] T095a [US7] Enforce configuration precedence (CLI > ENV > YAML) and log overrides per FR-024/FR-026 (document precedence in README, emit INFO logs on overrides per T020k)
 - [ ] T095b [US7] Detect and block incompatible config combinations with structured errors per FR-025 (e.g., pricer not supported, conflicting resource limits, emit ConfigConflictError per T008)
 
 #### Advanced Components (US7)
 
 - [ ] T096 [P] [US7] Implement NormalDistribution in backtesting/distributions/normal.py for config comparison per FR-002 (include stationarity preflight per T025/T026 pattern)
-- [ ] T097 [P] [US7] Add optional PyVollibPricer in quant-scenario-engine/pricing/py_vollib.py per FR-016 advanced toggle
+- [ ] T097 [P] [US7] Add optional PyVollibPricer in quant-scenario-engine/pricing/py_vollib.py per FR-016 advanced toggle and SC-017
 - [ ] T098 [P] [US7] Create QuantLib pricer stub in quant-scenario-engine/pricing/quantlib_stub.py for future extension per FR-016
 
 #### CLI (US7)
 
-- [ ] T099 [US7] Add --config flag to all CLI commands to load YAML config file
-- [ ] T100 [US7] Implement CLI flag override of config values per plan.md onboarding workflow (CLI args override YAML values per T095a precedence)
-- [ ] T101 [US7] Document config file format in README.md with examples per spec.md US7 acceptance scenarios
+- [ ] T099 [US7] Add --config flag to all CLI commands to load YAML config file per FR-024/FR-033
+- [ ] T100 [US7] Implement CLI flag override of config values per plan.md onboarding workflow and FR-024/FR-026 precedence (CLI args override YAML values per T095a)
+- [ ] T101 [US7] Document config file format in README.md with examples per spec.md US7 acceptance scenarios and FR-024/FR-033 requirements
 
 **Checkpoint**: User Story 7 complete - component swapping via configuration verified
 
