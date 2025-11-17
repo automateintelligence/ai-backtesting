@@ -334,8 +334,8 @@ def mock_run_config():
 - [X] T026 [P] [US1] Implement StudentTDistribution in backtesting/distributions/student_t.py with fit() and sample() per FR-002 (include stationarity preflight via T020l, AR detection via T020m, capture estimator metadata per T013)
 - [X] T027 [P] [US1] Create distribution factory in backtesting/distributions/factory.py to select model by config (laplace default, student_t optional, extend FactoryBase from T020k)
 - [X] T028 [US1] Implement distribution parameter validation in backtesting/distributions/validation.py per data-model.md (len(returns) >= min_samples check, seed validation)
-- [ ] T028a [US1] Add parameter bounds checking and implausible parameter rejection in backtesting/distributions/validation.py per FR-020/037 (reject params outside reasonable ranges per model, trigger fallback warnings)
-- [ ] T028b [US1] Implement convergence limits and fallback model logic in backtesting/distributions/validation.py per FR-020 (detect fit failures, log warnings, fallback to simpler model with structured errors)
+- [ ] T028a [US1] Add parameter bounds checking and implausible parameter rejection in backtesting/distributions/validation.py per FR-020/FR-037 (heavy-tail threshold: excess kurtosis ≥1.0; warn <0.5; reject implausible params; trigger fallback warnings)
+- [ ] T028b [US1] Implement convergence limits and fallback model logic in backtesting/distributions/validation.py per FR-020/FR-037 (detect fit failures, log warnings, fallback to simpler model with structured errors and heavy_tail_warning metadata)
 
 #### Monte Carlo Engine (US1)
 
@@ -347,40 +347,40 @@ def mock_run_config():
 
 #### Option Pricing (US1)
 
-- [ ] T033 [US1] Implement BlackScholesPricer in quant-scenario-engine/pricing/black_scholes.py with price(spot, spec, ttm) per FR-016 and plan.md reference (handle maturity vs horizon edge cases, ATM precision, invalid IV with structured errors per FR-022)
-- [ ] T034 [P] [US1] Create OptionPricer factory in quant-scenario-engine/pricing/factory.py to select black_scholes (default) per FR-009/016 (extend FactoryBase from T020k, log pricer swaps)
+- [ ] T033 [US1] Implement BlackScholesPricer in quant-scenario-engine/pricing/black_scholes.py with price(spot, spec, ttm) per FR-016/FR-022 and plan.md reference (handle maturity vs horizon edge cases, ATM precision, invalid IV with structured errors)
+- [ ] T034 [P] [US1] Create OptionPricer factory in quant-scenario-engine/pricing/factory.py to select black_scholes (default) per FR-009/FR-016/FR-043 (extend FactoryBase from T020k, log pricer swaps)
 
 #### Strategy Framework (US1)
 
 - [ ] T035 [US1] Create example StockBasicStrategy in quant-scenario-engine/strategies/stock_basic.py implementing Strategy interface per data-model.md (dual-SMA baseline per FR-006, apply fees/slippage defaults per FR-041)
-- [ ] T036 [US1] Create example OptionCallStrategy in quant-scenario-engine/strategies/option_call.py implementing Strategy interface with OptionSpec per data-model.md (emit option_spec in StrategySignals, handle early_exercise when pricer supports)
-- [ ] T037 [US1] Implement StrategySignals dataclass in quant-scenario-engine/schema/signals.py (signals_stock, signals_option, option_spec, features_used) per data-model.md
+- [ ] T036 [US1] Create example OptionCallStrategy in quant-scenario-engine/strategies/option_call.py implementing Strategy interface with OptionSpec per data-model.md (emit option_spec in StrategySignals, handle early_exercise when pricer supports; FR-016/FR-041)
+- [ ] T037 [US1] Implement StrategySignals dataclass in quant-scenario-engine/schema/signals.py (signals_stock, signals_option, option_spec, features_used) per data-model.md and spec DM relationships
 
 #### Simulation Engine (US1)
 
-- [ ] T038 [US1] Implement MarketSimulator class in quant-scenario-engine/simulation/simulator.py with simulate_stock() and simulate_option() per FR-003/FR-004 and plan.md reference (handle bankruptcy paths per FR-050, record bankruptcy_rate in metrics)
-- [ ] T039 [US1] Implement metrics calculator in quant-scenario-engine/simulation/metrics.py (mean/median P&L, drawdown, Sharpe/Sortino per FR-003)
-- [ ] T039a [US1] Add VaR/CVaR calculation with parametric vs historical methods in quant-scenario-engine/simulation/metrics.py per FR-034 (support covariance_estimator: sample/ledoit_wolf/shrinkage_delta, var_method: parametric/historical, lookback_window, capture stability checks and method metadata in MetricsReport)
-- [ ] T040 [US1] Create SimulationRun orchestrator in quant-scenario-engine/simulation/run.py to coordinate MC, strategies, simulation per data-model.md (capture system_info: cpu_count/ram_gb/os, git_sha per T018a)
+- [ ] T038 [US1] Implement MarketSimulator class in quant-scenario-engine/simulation/simulator.py with simulate_stock() and simulate_option() per FR-003/FR-004/FR-050 and plan.md reference (handle bankruptcy paths, record bankruptcy_rate)
+- [ ] T039 [US1] Implement metrics calculator in quant-scenario-engine/simulation/metrics.py (mean/median P&L, drawdown, Sharpe/Sortino per FR-003/FR-034)
+- [ ] T039a [US1] Add VaR/CVaR calculation with parametric vs historical methods in quant-scenario-engine/simulation/metrics.py per FR-034 (support covariance_estimator: sample/ledoit_wolf/shrinkage_delta, var_method: parametric/historical, lookback_window, stability checks + metadata)
+- [ ] T040 [US1] Create SimulationRun orchestrator in quant-scenario-engine/simulation/run.py to coordinate MC, strategies, simulation per data-model.md (capture system_info: cpu_count/ram_gb/os, git_sha per T018a; FR-005)
 - [ ] T041 [US1] Implement run_compare() function in quant-scenario-engine/simulation/compare.py integrating all components for stock vs option comparison per FR-005
-- [ ] T041a [US1] Enforce CLI parameter validation against contracts/openapi.yaml for compare command (FR-033: validate CompareRequest schema, fail-fast on invalid fields)
+- [ ] T041a [US1] Enforce CLI parameter validation against contracts/openapi.yaml for compare command per FR-033 (validate CompareRequest schema, fail-fast on invalid fields)
 
 #### Artifacts & Persistence (US1)
 
-- [ ] T042 [P] [US1] Implement MetricsReport serialization in quant-scenario-engine/schema/metrics.py with JSON/CSV export per FR-008 (include var_method, lookback, bankruptcy_rate, early_exercise_events fields per data-model.md)
-- [ ] T043 [P] [US1] Create run artifact writer in quant-scenario-engine/utils/artifacts.py (metrics, plots, run_meta.json) per FR-008
-- [ ] T043a [P] [US1] Ensure run_meta/artifacts write atomically and include schema versions per FR-030/031/034 (atomic file writes, record persistence usage: storage_policy, covariance_estimator, var_method, drift_status, iv_source)
-- [ ] T044 [US1] Implement run_meta.json persistence in quant-scenario-engine/utils/run_meta.py with all required fields per FR-019/034 and data-model.md example (seeds, versions, git SHA, system info, data fingerprints, storage policy, fallbacks, covariance/VaR metadata, parameter stability)
+- [ ] T042 [P] [US1] Implement MetricsReport serialization in quant-scenario-engine/schema/metrics.py with JSON/CSV export per FR-008/FR-034 (include var_method, lookback, bankruptcy_rate, early_exercise_events fields per data-model.md)
+- [ ] T043 [P] [US1] Create run artifact writer in quant-scenario-engine/utils/artifacts.py (metrics, plots, run_meta.json) per FR-008/FR-030
+- [ ] T043a [P] [US1] Ensure run_meta/artifacts write atomically and include schema versions per FR-030/FR-031/FR-034 (atomic file writes, record persistence usage: storage_policy, covariance_estimator, var_method, drift_status, iv_source)
+- [ ] T044 [US1] Implement run_meta.json persistence in quant-scenario-engine/utils/run_meta.py with all required fields per FR-019/FR-034 and data-model.md example (seeds, versions, git SHA, system info, data fingerprints, storage policy, fallbacks, covariance/VaR metadata, parameter stability)
 
 #### CLI (US1)
 
 - [ ] T045 [US1] Create Typer CLI entrypoint in quant-scenario-engine/cli/main.py with compare command per FR-005
-- [ ] T046 [US1] Implement config validation in quant-scenario-engine/cli/validation.py enforcing contracts/openapi.yaml CompareRequest schema
-- [ ] T047 [US1] Wire compare CLI to run_compare() in quant-scenario-engine/cli/commands/compare.py with proper error handling per plan.md error policies (map exceptions to exit codes per plan.md lines 522-556)
-- [ ] T048 [US1] Add CLI argument parsing for symbol, start, end, distribution, paths, steps, seed, data_source, option_pricer, strategies per contracts/openapi.yaml
+- [ ] T046 [US1] Implement config validation in quant-scenario-engine/cli/validation.py enforcing contracts/openapi.yaml CompareRequest schema (FR-033)
+- [ ] T047 [US1] Wire compare CLI to run_compare() in quant-scenario-engine/cli/commands/compare.py with proper error handling per plan.md error policies (map exceptions to exit codes per plan.md lines 522-556; FR-041/FR-042)
+- [ ] T048 [US1] Add CLI argument parsing for symbol, start, end, distribution, paths, steps, seed, data_source, option_pricer, strategies per contracts/openapi.yaml (FR-024/FR-033)
 - [ ] T049 [US1] Implement progress reporting for long-running operations per FR-039 (emit progress every 10 configs or 1 minute per plan.md lines 558-565)
-- [ ] T050 [US1] Add structured error handling with component-specific exit codes per FR-041/042 (ConfigValidationError→1, InsufficientDataError→2, DistributionFitError→3, ResourceLimitError→4, KeyboardInterrupt→130 per plan.md lines 522-556)
-- [ ] T051 [US1] Implement CLI config precedence (CLI > ENV > YAML) per FR-024 and plan.md (document precedence, log overrides per T020k)
+- [ ] T050 [US1] Add structured error handling with component-specific exit codes per FR-041/FR-042 (ConfigValidationError→1, InsufficientDataError→2, DistributionFitError→3, ResourceLimitError→4, KeyboardInterrupt→130 per plan.md lines 522-556)
+- [ ] T051 [US1] Implement CLI config precedence (CLI > ENV > YAML) per FR-024/FR-026 and plan.md (document precedence, log overrides per T020k)
 
 **Checkpoint**: User Story 1 MVP complete - can execute stock vs option comparison and produce artifacts
 
@@ -398,30 +398,30 @@ def mock_run_config():
 
 #### Feature Engineering (US4)
 
-- [ ] T052 [P] [US4] Implement technical indicator wrapper in quant-scenario-engine/features/indicators.py using pandas-ta (SMA, RSI, volume_z) per FR-006 (reference T020l/T020m for stationarity-aware feature computation)
-- [ ] T053 [P] [US4] Create feature computation pipeline in quant-scenario-engine/features/pipeline.py to enrich OHLCV with indicators
-- [ ] T054 [US4] Implement gap percentage calculator in quant-scenario-engine/features/gap.py (open vs prev_close) for selector rules
+- [ ] T052 [P] [US4] Implement technical indicator wrapper in quant-scenario-engine/features/indicators.py using pandas-ta (SMA, RSI, volume_z) per FR-006/FR-066 (pandas-ta fallback logging; reference T020l/T020m for stationarity-aware feature computation)
+- [ ] T053 [P] [US4] Create feature computation pipeline in quant-scenario-engine/features/pipeline.py to enrich OHLCV with indicators per FR-006 (keep derived features separate per FR-029/DM005)
+- [ ] T054 [US4] Implement gap percentage calculator in quant-scenario-engine/features/gap.py (open vs prev_close) for selector rules per FR-056/FR-029 (track extreme gaps, log/tolerances)
 
 #### Candidate Selection (US4)
 
-- [ ] T055 [US4] Implement GapVolumeSelector in quant-scenario-engine/selectors/gap_volume.py extending CandidateSelector per FR-CAND-001/FR-CAND-006 (default MVP selector)
-- [ ] T056 [US4] Implement selector.score() and selector.select() methods per data-model.md CandidateSelector interface (warn on missing features per FR-CAND-006, enforce min_episodes threshold)
-- [ ] T057 [P] [US4] Create CandidateEpisode dataclass in quant-scenario-engine/schema/episode.py per data-model.md
-- [ ] T058 [US4] Implement build_candidate_episodes() in quant-scenario-engine/selectors/episodes.py per data-model.md reference code (validate horizon > 0, state_features captured, maturity_days >= horizon when paired with option specs per FR-035)
-- [ ] T058a [US4] Document and enforce candidate episode construction rules across backtest and conditional MC per FR-035 (horizon validation, state_features capture, episode metadata tracking)
+- [ ] T055 [US4] Implement GapVolumeSelector in quant-scenario-engine/selectors/gap_volume.py extending CandidateSelector per FR-CAND-001/FR-CAND-006 (default MVP selector, gap+volume rules) and SC-049
+- [ ] T056 [US4] Implement selector.score() and selector.select() methods per data-model.md CandidateSelector interface (log warnings for missing features per FR-CAND-006, enforce min_episodes threshold per SC-020)
+- [ ] T057 [P] [US4] Create CandidateEpisode dataclass in quant-scenario-engine/schema/episode.py per data-model.md and FR-CAND-002 (symbol, horizon, score)
+- [ ] T058 [US4] Implement build_candidate_episodes() in quant-scenario-engine/selectors/episodes.py per data-model.md reference (validate horizon > 0, state_features captured, maturity_days >= horizon for option specs per FR-035 and SC-010)
+- [ ] T058a [US4] Document and enforce candidate episode construction rules across backtest and conditional MC per FR-035 (horizon validation, state_features tracking, episode metadata for run_meta/scenario logging)
 
 #### Screening Engine (US4)
 
-- [ ] T059 [US4] Implement universe screening logic in quant-scenario-engine/simulation/screen.py to scan symbols and apply selector per FR-CAND-001
-- [ ] T060 [US4] Add parallel symbol processing with max_workers cap per FR-018 concurrency model (use ProcessPoolExecutor with worker clamping: min(max_workers, cores-2) per plan.md lines 329-367)
-- [ ] T061 [US4] Implement candidate ranking and top_n filtering in quant-scenario-engine/simulation/screen.py per contracts/openapi.yaml ScreenRequest
-- [ ] T062 [US4] Add error handling for missing/partial data per symbol per spec.md US4 acceptance scenario 2 (log warnings, continue with available symbols, report failures)
+- [ ] T059 [US4] Implement universe screening logic in quant-scenario-engine/simulation/screen.py to scan symbols and apply selector per FR-CAND-001/FR-033
+- [ ] T060 [US4] Add parallel symbol processing with max_workers cap per FR-018 concurrency model (ProcessPoolExecutor w/ worker clamping per plan.md lines 329-367)
+- [ ] T061 [US4] Implement candidate ranking and top_n filtering in quant-scenario-engine/simulation/screen.py per contracts/openapi.yaml ScreenRequest and FR-033
+- [ ] T062 [US4] Add error handling for missing/partial data per symbol per SC-020/FR-029 (log warnings, continue with available symbols, report failures in run_meta)
 
 #### CLI (US4)
 
-- [ ] T063 [US4] Create screen command in quant-scenario-engine/cli/commands/screen.py with universe and selector arguments per contracts/openapi.yaml ScreenRequest
-- [ ] T064 [US4] Wire screen CLI to screening engine with validation per contracts/openapi.yaml ScreenResponse
-- [ ] T065 [US4] Implement ScreenResponse serialization with candidate list (symbol, t0, state_features) per contracts/openapi.yaml
+- [ ] T063 [US4] Create screen command in quant-scenario-engine/cli/commands/screen.py with universe and selector arguments per contracts/openapi.yaml ScreenRequest and FR-033 CLI schema
+- [ ] T064 [US4] Wire screen CLI to screening engine with validation per contracts/openapi.yaml ScreenResponse (FR-033)
+- [ ] T065 [US4] Implement ScreenResponse serialization with candidate list (symbol, t0, state_features) per contracts/openapi.yaml (FR-033)
 
 **Checkpoint**: User Story 4 complete - can screen universe and generate candidate lists
 
@@ -437,17 +437,17 @@ def mock_run_config():
 
 #### Conditional Backtesting (US5)
 
-- [ ] T066 [US5] Implement conditional episode filtering in quant-scenario-engine/simulation/conditional.py to extract candidate-only windows per FR-CAND-003
-- [ ] T067 [US5] Extend MarketSimulator to support episode-level P&L tracking in quant-scenario-engine/simulation/simulator.py
-- [ ] T068 [US5] Implement episode-level metrics aggregation in quant-scenario-engine/simulation/metrics.py per spec.md SC-009 (per-episode P&L, aggregate stats)
-- [ ] T069 [US5] Create run_conditional_backtest() in quant-scenario-engine/simulation/conditional.py orchestrating selector → episodes → strategy evaluation per FR-CAND-003
-- [ ] T070 [US5] Add unconditional vs conditional metrics comparison reporting per spec.md US5 acceptance scenario 2
+- [ ] T066 [US5] Implement conditional episode filtering in quant-scenario-engine/simulation/conditional.py to extract candidate-only windows per FR-CAND-003 (conditional backtest episodes)
+- [ ] T067 [US5] Extend MarketSimulator to support episode-level P&L tracking in quant-scenario-engine/simulation/simulator.py per FR-CAND-003/FR-050 (bankruptcy tracking for episodes)
+- [ ] T068 [US5] Implement episode-level metrics aggregation in quant-scenario-engine/simulation/metrics.py per SC-009/FR-034 (per-episode P&L, aggregate stats, var_method metadata)
+- [ ] T069 [US5] Create run_conditional_backtest() in quant-scenario-engine/simulation/conditional.py orchestrating selector → episodes → strategy evaluation per FR-CAND-003/FR-CAND-004 (conditional MC/backtest integration)
+- [ ] T070 [US5] Add unconditional vs conditional metrics comparison reporting per SC-011/SC-009 (US5 acceptance scenario 2 requirements)
 
 #### CLI (US5)
 
-- [ ] T071 [US5] Create conditional command in quant-scenario-engine/cli/commands/conditional.py with selector parameter per contracts/openapi.yaml ConditionalRequest
-- [ ] T072 [US5] Wire conditional CLI to run_conditional_backtest() with proper artifact generation per FR-008
-- [ ] T073 [US5] Implement min_episodes validation and fallback warning per FR-CAND-006 and spec.md US5 acceptance scenario 3 (warn when <30 episodes, document selector sparsity fallback)
+- [ ] T071 [US5] Create conditional command in quant-scenario-engine/cli/commands/conditional.py with selector parameter per contracts/openapi.yaml ConditionalRequest and FR-033 schema
+- [ ] T072 [US5] Wire conditional CLI to run_conditional_backtest() with proper artifact generation per FR-008/FR-CAND-003
+- [ ] T073 [US5] Implement min_episodes validation and fallback warning per FR-CAND-006/SC-008 (warn when <30 episodes, document selector sparsity fallback)
 
 **Checkpoint**: User Story 5 complete - can run conditional backtests on historical candidate episodes
 

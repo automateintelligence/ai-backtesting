@@ -2419,4 +2419,6 @@ Looking at the current 8 user stories and the comprehensive requirements we just
   4. Cleanup is low-value compared to core backtesting features
   5. Error Diagnosis is sufficiently covered by structured errors per FR-042
 
-  /speckit.implement "Implement all phases until you cannot pass testing. Run the tests yourself until there are blocking issues that need my external intervention, then document the issue using 'gh issue create'. Once the issue is created, you may proceed to the next phase unless it is blocked by the untested phase. Be sure to follow the workflow in '.codex/speckit.implement.md' Be sure to commit with a message after each phase is completed."
+/speckit.implement "Implement incomplete phases until you cannot pass testing. Run the tests yourself until there are blocking issues that need my external intervention, then document the issue using 'gh issue create'. Once the issue is created, you may proceed to the next phase unless it is blocked by the untested phase. Be sure to commit with a detailed message after each phase is completed.  Be sure to follow the workflow in '.codex/speckit.implement.md' "
+
+Open needs (US1 still incomplete): artifacts/persistence (T042–T044), CLI (T045–T051), config precedence/error handling, and richer fallback logic for T028b if required by spec (auto fallback + heavy_tail_warning flag). Unstaged file: planning/project_overview.md untouched. Let me know if you want me to proceed with CLI/artifacts next.
