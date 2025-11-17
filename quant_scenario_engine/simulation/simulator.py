@@ -11,38 +11,64 @@ from quant_scenario_engine.simulation.metrics import MetricsReport, compute_metr
 
 
 class MarketSimulator:
-    def __init__(self) -> None:
-        self.pricer = BlackScholesPricer()
+    def __init__(self, pricer: BlackScholesPricer | None = None) -> None:
+        self.pricer = pricer or BlackScholesPricer()
+
+    def _detect_bankruptcy(self, price_paths: np.ndarray) -> tuple[np.ndarray, float]:
+        bankrupt_mask = (price_paths <= 0).any(axis=1)
+        return bankrupt_mask, float(bankrupt_mask.mean()) if price_paths.size else 0.0
 
     def simulate_stock(self, price_paths: np.ndarray, signals: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-        pnl = (signals * np.diff(price_paths, axis=1, prepend=price_paths[:, :1])).sum(axis=1)
+        # P&L from signed price deltas; prepend first bar to align dimensions
+        deltas = np.diff(price_paths, axis=1, prepend=price_paths[:, :1])
+        pnl = (signals * deltas).sum(axis=1)
         equity = price_paths[:, -1]
         return pnl, equity
 
     def simulate_option(self, price_paths: np.ndarray, signals: np.ndarray, option_spec) -> tuple[np.ndarray, np.ndarray]:
         pricer = self.pricer
-        option_prices = []
-        for path in price_paths:
-            option_prices.append(pricer.price(path, option_spec))
-        option_prices = np.vstack(option_prices)
-        pnl = (signals * np.diff(option_prices, axis=1, prepend=option_prices[:, :1])).sum(axis=1)
+        option_prices = np.vstack([pricer.price(path, option_spec) for path in price_paths])
+        deltas = np.diff(option_prices, axis=1, prepend=option_prices[:, :1])
+        pnl = (signals * deltas).sum(axis=1)
         equity = option_prices[:, -1]
         return pnl, equity
 
-    def run(self, price_paths: np.ndarray, signals: StrategySignals) -> MetricsReport:
-        if (price_paths <= 0).any():
-            raise BankruptcyError("Non-positive prices encountered")
+    def run(
+        self,
+        price_paths: np.ndarray,
+        signals: StrategySignals,
+        *,
+        var_method: str = "historical",
+        covariance_estimator: str = "sample",
+        lookback_window: int | None = None,
+    ) -> MetricsReport:
+        bankrupt_mask, bankruptcy_rate = self._detect_bankruptcy(price_paths)
+        if bankrupt_mask.any():
+            # Replace non-positive paths with epsilon to allow metrics to continue
+            price_paths = price_paths.copy()
+            price_paths[bankrupt_mask] = np.clip(price_paths[bankrupt_mask], 1e-9, None)
+            if bankruptcy_rate > 0.5:
+                raise BankruptcyError("More than half of simulated paths went bankrupt")
 
         stock_pnl, stock_equity = self.simulate_stock(price_paths, signals.signals_stock)
         option_pnl = np.zeros_like(stock_pnl)
         option_equity = np.zeros_like(stock_equity)
 
+        early_exercise_events = 0
         if signals.option_spec is not None:
             option_pnl, option_equity = self.simulate_option(
                 price_paths, signals.signals_option, signals.option_spec
             )
+            early_exercise_events = int(getattr(signals.option_spec, "early_exercise", False))
 
         combined_equity = stock_equity + option_equity
         combined_pnl = stock_pnl + option_pnl
-        return compute_metrics(combined_pnl, combined_equity)
-
+        return compute_metrics(
+            combined_pnl,
+            combined_equity,
+            var_method=var_method,  # type: ignore[arg-type]
+            covariance_estimator=covariance_estimator,  # type: ignore[arg-type]
+            lookback_window=lookback_window,
+            bankruptcy_rate=bankruptcy_rate,
+            early_exercise_events=early_exercise_events,
+        )

@@ -22,7 +22,16 @@ def compare(
     iv: float = typer.Option(0.2, help="Implied volatility"),
     rfr: float = typer.Option(0.01, help="Risk-free rate"),
 ) -> None:
-    validate_compare_inputs(paths, steps, seed)
+    validate_compare_inputs(
+        paths,
+        steps,
+        seed,
+        symbol=symbol,
+        strike=strike,
+        maturity_days=maturity_days,
+        implied_vol=iv,
+        distribution=distribution,
+    )
     dist = get_distribution(distribution)
     # fit dummy distribution to proceed; in practice supply real returns
     import numpy as np
@@ -45,4 +54,3 @@ def compare(
         option_spec=option_spec,
     )
     typer.echo(result.metrics)
-

@@ -347,23 +347,23 @@ def mock_run_config():
 
 #### Option Pricing (US1)
 
-- [ ] T033 [US1] Implement BlackScholesPricer in quant-scenario-engine/pricing/black_scholes.py with price(spot, spec, ttm) per FR-016/FR-022 and plan.md reference (handle maturity vs horizon edge cases, ATM precision, invalid IV with structured errors)
-- [ ] T034 [P] [US1] Create OptionPricer factory in quant-scenario-engine/pricing/factory.py to select black_scholes (default) per FR-009/FR-016/FR-043 (extend FactoryBase from T020k, log pricer swaps)
+- [X] T033 [US1] Implement BlackScholesPricer in quant-scenario-engine/pricing/black_scholes.py with price(spot, spec, ttm) per FR-016/FR-022 and plan.md reference (handle maturity vs horizon edge cases, ATM precision, invalid IV with structured errors)
+- [X] T034 [P] [US1] Create OptionPricer factory in quant-scenario-engine/pricing/factory.py to select black_scholes (default) per FR-009/FR-016/FR-043 (extend FactoryBase from T020k, log pricer swaps)
 
 #### Strategy Framework (US1)
 
-- [ ] T035 [US1] Create example StockBasicStrategy in quant-scenario-engine/strategies/stock_basic.py implementing Strategy interface per data-model.md (dual-SMA baseline per FR-006, apply fees/slippage defaults per FR-041)
-- [ ] T036 [US1] Create example OptionCallStrategy in quant-scenario-engine/strategies/option_call.py implementing Strategy interface with OptionSpec per data-model.md (emit option_spec in StrategySignals, handle early_exercise when pricer supports; FR-016/FR-041)
-- [ ] T037 [US1] Implement StrategySignals dataclass in quant-scenario-engine/schema/signals.py (signals_stock, signals_option, option_spec, features_used) per data-model.md and spec DM relationships
+- [X] T035 [US1] Create example StockBasicStrategy in quant-scenario-engine/strategies/stock_basic.py implementing Strategy interface per data-model.md (dual-SMA baseline per FR-006, apply fees/slippage defaults per FR-041)
+- [X] T036 [US1] Create example OptionCallStrategy in quant-scenario-engine/strategies/option_call.py implementing Strategy interface with OptionSpec per data-model.md (emit option_spec in StrategySignals, handle early_exercise when pricer supports; FR-016/FR-041)
+- [X] T037 [US1] Implement StrategySignals dataclass in quant-scenario-engine/schema/signals.py (signals_stock, signals_option, option_spec, features_used) per data-model.md and spec DM relationships
 
 #### Simulation Engine (US1)
 
-- [ ] T038 [US1] Implement MarketSimulator class in quant-scenario-engine/simulation/simulator.py with simulate_stock() and simulate_option() per FR-003/FR-004/FR-050 and plan.md reference (handle bankruptcy paths, record bankruptcy_rate)
-- [ ] T039 [US1] Implement metrics calculator in quant-scenario-engine/simulation/metrics.py (mean/median P&L, drawdown, Sharpe/Sortino per FR-003/FR-034)
-- [ ] T039a [US1] Add VaR/CVaR calculation with parametric vs historical methods in quant-scenario-engine/simulation/metrics.py per FR-034 (support covariance_estimator: sample/ledoit_wolf/shrinkage_delta, var_method: parametric/historical, lookback_window, stability checks + metadata)
-- [ ] T040 [US1] Create SimulationRun orchestrator in quant-scenario-engine/simulation/run.py to coordinate MC, strategies, simulation per data-model.md (capture system_info: cpu_count/ram_gb/os, git_sha per T018a; FR-005)
-- [ ] T041 [US1] Implement run_compare() function in quant-scenario-engine/simulation/compare.py integrating all components for stock vs option comparison per FR-005
-- [ ] T041a [US1] Enforce CLI parameter validation against contracts/openapi.yaml for compare command per FR-033 (validate CompareRequest schema, fail-fast on invalid fields)
+- [X] T038 [US1] Implement MarketSimulator class in quant-scenario-engine/simulation/simulator.py with simulate_stock() and simulate_option() per FR-003/FR-004/FR-050 and plan.md reference (handle bankruptcy paths, record bankruptcy_rate)
+- [X] T039 [US1] Implement metrics calculator in quant-scenario-engine/simulation/metrics.py (mean/median P&L, drawdown, Sharpe/Sortino per FR-003/FR-034)
+- [X] T039a [US1] Add VaR/CVaR calculation with parametric vs historical methods in quant-scenario-engine/simulation/metrics.py per FR-034 (support covariance_estimator: sample/ledoit_wolf/shrinkage_delta, var_method: parametric/historical, lookback_window, stability checks + metadata)
+- [X] T040 [US1] Create SimulationRun orchestrator in quant-scenario-engine/simulation/run.py to coordinate MC, strategies, simulation per data-model.md (capture system_info: cpu_count/ram_gb/os, git_sha per T018a; FR-005)
+- [X] T041 [US1] Implement run_compare() function in quant-scenario-engine/simulation/compare.py integrating all components for stock vs option comparison per FR-005
+- [X] T041a [US1] Enforce CLI parameter validation against contracts/openapi.yaml for compare command per FR-033 (validate CompareRequest schema, fail-fast on invalid fields)
 
 #### Artifacts & Persistence (US1)
 

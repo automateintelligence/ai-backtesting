@@ -14,14 +14,20 @@ class OptionCallStrategy(Strategy):
         self.option_spec = option_spec
 
     def generate_signals(self, price_paths, features, params: StrategyParams) -> StrategySignals:
-        closes = np.asarray(price_paths)
-        # Simple momentum: positive returns -> long call, else flat
-        rets = np.diff(closes, axis=1, prepend=closes[:, :1])
-        signal = np.where(rets >= 0, 1, 0).astype(np.int8)
+        closes = np.asarray(price_paths, dtype=float)
+        momentum_window = int(params.params.get("momentum_window", 3))
+        if momentum_window <= 0:
+            momentum_window = 1
+
+        # Rolling momentum: price above rolling mean -> long call else flat
+        kernel = np.ones(momentum_window) / momentum_window
+        rolling = np.vstack([np.convolve(row, kernel, mode="same") for row in closes])
+        signal = np.where(closes >= rolling, 1, 0).astype(np.int8)
+
+        features_used = list(features.keys()) if isinstance(features, dict) else []
         return StrategySignals(
             signals_stock=np.zeros_like(signal, dtype=np.int8),
             signals_option=signal,
             option_spec=self.option_spec,
-            features_used=[],
+            features_used=features_used,
         )
-
