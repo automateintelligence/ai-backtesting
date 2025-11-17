@@ -448,25 +448,25 @@ def mock_run_config():
 **Mode C (Conditional Strategy Screening)**:
 - [X] T067 [US5] Implement conditional episode filtering in quant-scenario-engine/simulation/conditional.py to extract candidate-only windows per FR-CAND-003 (conditional backtest episodes)
 - [X] T068 [US5] Extend run_strategy_screen() to support optional conditional filtering using selector from US4 per US5 acceptance scenario 2
-- [ ] T069 [US5] Extend MarketSimulator to support episode-level P&L tracking in quant-scenario-engine/simulation/simulator.py per FR-CAND-003/FR-050 (bankruptcy tracking for episodes)
+- [X] T069 [US5] Extend MarketSimulator to support episode-level P&L tracking in quant-scenario-engine/simulation/simulator.py per FR-CAND-003/FR-050 (bankruptcy tracking for episodes)
 - [X] T070 [US5] Implement episode-level metrics aggregation in quant-scenario-engine/simulation/metrics.py per SC-009/FR-034 (per-episode P&L, aggregate stats, var_method metadata)
 - [ ] T071 [US5] Add unconditional vs conditional metrics comparison reporting per SC-011/SC-009 (US5 acceptance scenario 6 requirements)
 - [X] T072 [US5] Implement low-confidence flagging for symbols with <10 episodes per US5 acceptance scenario 4
 
 #### Selector Definition (US5 Mode C)
 
-- [ ] T073 [US5] Define YAML schema for conditional selector files in selectors/ directory with fields: name, description, parameters, logic
+- [X] T073 [US5] Define YAML schema for conditional selector files in selectors/ directory with fields: name, description, parameters, logic
 - [X] T074 [US5] Implement selector file parser in quant-scenario-engine/selectors/loader.py to load YAML definitions
-- [ ] T075 [US5] Create example selector files: selectors/gap_down_volume_spike.yaml, selectors/breakout_momentum.yaml
+- [X] T075 [US5] Create example selector files: selectors/gap_down_volume_spike.yaml, selectors/breakout_momentum.yaml
 
 #### CLI (US5 Three Modes)
 
 - [X] T076 [US5] Extend screen command in quant-scenario-engine/cli/commands/screen.py to detect mode from flags (no --strategy = Mode A, --strategy only = Mode B, --strategy + --conditional-file = Mode C)
 - [X] T077 [US5] Add --strategy, --rank-by, --conditional-file parameters to screen CLI per contracts/openapi.yaml ScreenRequest schema
-- [ ] T078 [US5] Wire Mode B (unconditional) to run_strategy_screen() with proper artifact generation per FR-008
-- [ ] T079 [US5] Wire Mode C (conditional) to run_strategy_screen(conditional=True) with proper artifact generation per FR-008/FR-CAND-003
+- [X] T078 [US5] Wire Mode B (unconditional) to run_strategy_screen() with proper artifact generation per FR-008
+- [X] T079 [US5] Wire Mode C (conditional) to run_strategy_screen(conditional=True) with proper artifact generation per FR-008/FR-CAND-003
 - [X] T080 [US5] Implement min_episodes validation and fallback warning per FR-CAND-006/SC-008 (warn when <10 episodes per symbol)
-- [ ] T081 [US5] Add result file naming conventions to distinguish unconditional vs conditional runs per US5 acceptance scenario 6 (e.g., screen_results_unconditional.json vs screen_results_conditional.json)
+- [X] T081 [US5] Add result file naming conventions to distinguish unconditional vs conditional runs per US5 acceptance scenario 6 (e.g., screen_results_unconditional.json vs screen_results_conditional.json)
 
 **Checkpoint**: User Story 5 complete - can run three-mode screening: candidate selection (US4), unconditional strategy-symbol ranking, and conditional strategy-symbol ranking
 
