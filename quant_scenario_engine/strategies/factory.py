@@ -8,7 +8,9 @@ from quant_scenario_engine.exceptions import DependencyError
 from quant_scenario_engine.interfaces.strategy import Strategy
 from quant_scenario_engine.models.options import OptionSpec
 from quant_scenario_engine.strategies.option_call import OptionCallStrategy
+from quant_scenario_engine.strategies.stock_bollinger_reversion import StockBollingerReversionStrategy
 from quant_scenario_engine.strategies.stock_basic import StockBasicStrategy
+from quant_scenario_engine.strategies.stock_donchian_breakout import StockDonchianBreakoutStrategy
 from quant_scenario_engine.strategies.stock_sma_trend import StockSmaTrendStrategy
 from quant_scenario_engine.strategies.stock_rsi_reversion import StockRsiReversionStrategy
 from quant_scenario_engine.strategies.option_atm_call_momentum import OptionAtmCallMomentumStrategy
@@ -42,6 +44,12 @@ def get_strategy(name: str, kind: str, option_spec: Optional[OptionSpec] = None)
 
     if name == "stock_rsi_reversion":
         return StockRsiReversionStrategy()
+
+    if name == "stock_bollinger_reversion":
+        return StockBollingerReversionStrategy()
+
+    if name == "stock_donchian_breakout":
+        return StockDonchianBreakoutStrategy()
 
     # Option strategies
     if name in {"call_basic", "option_call"}:

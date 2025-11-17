@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import Literal, Optional
 
 import numpy as np
@@ -71,6 +71,33 @@ class MetricsReport:
     covariance_estimator: CovarianceEstimator
     bankruptcy_rate: float
     early_exercise_events: int
+
+    def _unit_label(self, field: str) -> str:
+        unit_map = {
+            "mean_pnl": "$",
+            "median_pnl": "$",
+            "max_drawdown": "%",
+            "var": "%",
+            "cvar": "%",
+            "bankruptcy_rate": "%",
+        }
+        return f"{field}{unit_map.get(field, '')}"
+
+    def to_formatted_dict(self, include_units: bool = True) -> dict[str, object]:
+        formatted: dict[str, object] = {}
+        for key, value in asdict(self).items():
+            label = self._unit_label(key) if include_units else key
+            if isinstance(value, float):
+                formatted[label] = round(value, 2)
+            else:
+                formatted[label] = value
+        return formatted
+
+    def __str__(self) -> str:  # pragma: no cover - presentation only
+        pairs = [f"{k}={v}" for k, v in self.to_formatted_dict(include_units=True).items()]
+        return ", ".join(pairs)
+
+    __repr__ = __str__
 
 
 def compute_metrics(
