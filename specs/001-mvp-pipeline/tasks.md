@@ -367,17 +367,17 @@ def mock_run_config():
 
 #### Artifacts & Persistence (US1)
 
-- [ ] T042 [P] [US1] Implement MetricsReport serialization in quant-scenario-engine/schema/metrics.py with JSON/CSV export per FR-008/FR-034 (include var_method, lookback, bankruptcy_rate, early_exercise_events fields per data-model.md)
-- [ ] T043 [P] [US1] Create run artifact writer in quant-scenario-engine/utils/artifacts.py (metrics, plots, run_meta.json) per FR-008/FR-030
-- [ ] T043a [P] [US1] Ensure run_meta/artifacts write atomically and include schema versions per FR-030/FR-031/FR-034 (atomic file writes, record persistence usage: storage_policy, covariance_estimator, var_method, drift_status, iv_source)
-- [ ] T044 [US1] Implement run_meta.json persistence in quant-scenario-engine/utils/run_meta.py with all required fields per FR-019/FR-034 and data-model.md example (seeds, versions, git SHA, system info, data fingerprints, storage policy, fallbacks, covariance/VaR metadata, parameter stability)
+- [X] T042 [P] [US1] Implement MetricsReport serialization in quant-scenario-engine/schema/metrics.py with JSON/CSV export per FR-008/FR-034 (include var_method, lookback, bankruptcy_rate, early_exercise_events fields per data-model.md)
+- [X] T043 [P] [US1] Create run artifact writer in quant-scenario-engine/utils/artifacts.py (metrics, plots, run_meta.json) per FR-008/FR-030
+- [X] T043a [P] [US1] Ensure run_meta/artifacts write atomically and include schema versions per FR-030/FR-031/FR-034 (atomic file writes, record persistence usage: storage_policy, covariance_estimator, var_method, drift_status, iv_source)
+- [X] T044 [US1] Implement run_meta.json persistence in quant-scenario-engine/utils/run_meta.py with all required fields per FR-019/FR-034 and data-model.md example (seeds, versions, git SHA, system info, data fingerprints, storage policy, fallbacks, covariance/VaR metadata, parameter stability)
 
 #### CLI (US1)
 
-- [ ] T045 [US1] Create Typer CLI entrypoint in quant-scenario-engine/cli/main.py with compare command per FR-005
-- [ ] T046 [US1] Implement config validation in quant-scenario-engine/cli/validation.py enforcing contracts/openapi.yaml CompareRequest schema (FR-033)
-- [ ] T047 [US1] Wire compare CLI to run_compare() in quant-scenario-engine/cli/commands/compare.py with proper error handling per plan.md error policies (map exceptions to exit codes per plan.md lines 522-556; FR-041/FR-042)
-- [ ] T048 [US1] Add CLI argument parsing for symbol, start, end, distribution, paths, steps, seed, data_source, option_pricer, strategies per contracts/openapi.yaml (FR-024/FR-033)
+- [X] T045 [US1] Create Typer CLI entrypoint in quant-scenario-engine/cli/main.py with compare command per FR-005
+- [X] T046 [US1] Implement config validation in quant-scenario-engine/cli/validation.py enforcing contracts/openapi.yaml CompareRequest schema (FR-033)
+- [X] T047 [US1] Wire compare CLI to run_compare() in quant-scenario-engine/cli/commands/compare.py with proper error handling per plan.md error policies (map exceptions to exit codes per plan.md lines 522-556; FR-041/FR-042)
+- [X] T048 [US1] Add CLI argument parsing for symbol, start, end, distribution, paths, steps, seed, data_source, option_pricer, strategies per contracts/openapi.yaml (FR-024/FR-033)
 - [ ] T049 [US1] Implement progress reporting for long-running operations per FR-039 (emit progress every 10 configs or 1 minute per plan.md lines 558-565)
 - [ ] T050 [US1] Add structured error handling with component-specific exit codes per FR-041/FR-042 (ConfigValidationError→1, InsufficientDataError→2, DistributionFitError→3, ResourceLimitError→4, KeyboardInterrupt→130 per plan.md lines 522-556)
 - [ ] T051 [US1] Implement CLI config precedence (CLI > ENV > YAML) per FR-024/FR-026 and plan.md (document precedence, log overrides per T020k)
@@ -816,31 +816,3 @@ With 3+ developers:
 | SC-019: Fit failure structured error | T008 (exceptions), T028b (validation) | Foundation + US1 |
 | SC-020: Data gap warnings | T023 (validation), T062 (screening) | US1 + US4 |
 | SC-021: Sufficient logs for debugging | T009 (logging), T044 (artifacts), T125a (diagnostics) | Foundation + US1 + Advanced |
-
----
-
-## Change Summary (vs tasks_round_2.md)
-
-**Phase 2 Additions** (6 new tasks):
-- T020h: DataLoader with cache-aside pattern, staleness detection, incremental updates
-- T020i: Corporate action detection via price divergence checking
-- T020j: Force refresh and allow_stale_cache flag support
-- T020k: Component swap logging infrastructure
-- T020l: Stationarity test utilities
-- T020m: AR detection utilities
-
-**Phase 3 (US1) Enhancements** (9 new sub-tasks):
-- T021a: DataLoader integration
-- T023a: Fingerprinting and drift detection
-- T028a: Parameter bounds checking
-- T028b: Convergence limits and fallback logic
-- T030a: estimated_gb tracking
-- T039a: VaR/CVaR with methods and stability
-- T049: Progress reporting
-- T050: Structured error handling
-- T051: Config precedence
-
-**Total**: ~150 tasks (up from 140), addressing all gaps in updated spec/plan/data-model
-- [X] T020k [P] Create component swap logging infrastructure in quant-scenario-engine/config/factories.py (FactoryBase with .create() logging at INFO: "Component loaded: type=X, name=Y, prior=Z" per FR-043 and plan.md lines 323-326)
-- [X] T020l [P] Implement stationarity test utilities in backtesting/distributions/stationarity.py (ADF test, KPSS test, transformation recommendations per FR-002/037 and plan.md lecture references)
-- [X] T020m [P] Implement AR detection utilities in backtesting/distributions/ar_detection.py (ACF/PACF analysis, AR preflight checks before IID fits per FR-002/037 and plan.md lecture references)
