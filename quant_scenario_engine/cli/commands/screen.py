@@ -10,8 +10,9 @@ import typer
 from quant_scenario_engine.cli.validation import validate_screen_inputs
 from quant_scenario_engine.features.pipeline import enrich_ohlcv
 from quant_scenario_engine.selectors.gap_volume import GapVolumeSelector
-from quant_scenario_engine.simulation.screen import screen_universe
+from quant_scenario_engine.simulation.screen import screen_universe, run_strategy_screen
 from quant_scenario_engine.data.cache import load_or_fetch, parse_symbol_list
+from quant_scenario_engine.selectors.loader import load_selector
 from quant_scenario_engine.utils.logging import get_logger
 
 log = get_logger(__name__, component="cli_screen")
@@ -27,6 +28,9 @@ def screen(
     gap_min: float = typer.Option(0.03, help="Minimum absolute gap percentage"),
     volume_z_min: float = typer.Option(1.5, help="Minimum volume z-score"),
     horizon: int = typer.Option(10, help="Episode horizon (bars)"),
+    strategy: str = typer.Option(None, help="Stock strategy for screening (Mode B/C)"),
+    rank_by: str = typer.Option("sharpe", help="Metric to rank symbols when strategy provided"),
+    conditional_file: str = typer.Option(None, help="Optional selector YAML for conditional mode"),
     top: int | None = typer.Option(None, help="Top N candidates to keep"),
     max_workers: int = typer.Option(4, help="Max workers for screening"),
 ) -> None:
@@ -65,20 +69,50 @@ def screen(
     # Enrich each symbol's data with features
     enriched = {sym: enrich_ohlcv(g) for sym, g in grouped.items()}
 
-    selector = GapVolumeSelector(gap_min=gap_min, volume_z_min=volume_z_min, horizon=horizon)
-    candidates = screen_universe(universe=enriched, selector=selector, max_workers=max_workers, top_n=top)
+    # Mode A: selector-only
+    if not strategy:
+        selector = GapVolumeSelector(gap_min=gap_min, volume_z_min=volume_z_min, horizon=horizon)
+        candidates = screen_universe(universe=enriched, selector=selector, max_workers=max_workers, top_n=top)
+        payload = [
+            {
+                "symbol": c.symbol,
+                "t0": c.t0.isoformat(),
+                "horizon": c.horizon,
+                "selector": c.selector_name,
+                "state_features": c.state_features,
+                "score": c.score,
+            }
+            for c in candidates
+        ]
+        typer.echo(json.dumps({"candidates": payload}, indent=2))
+        log.info("screen command completed", extra={"candidates": len(payload)})
+        return
 
-    payload = [
-        {
-            "symbol": c.symbol,
-            "t0": c.t0.isoformat(),
-            "horizon": c.horizon,
-            "selector": c.selector_name,
-            "state_features": c.state_features,
-            "score": c.score,
+    # Mode B/C: strategy screening
+    selector = None
+    if conditional_file:
+        selector = load_selector(Path(conditional_file))
+    results = run_strategy_screen(
+        universe=enriched,
+        strategy=strategy,
+        rank_by=rank_by,
+        selector=selector,
+        min_episodes=10,
+        top_n=top,
+    )
+
+    payload = []
+    for res in results:
+        entry = {
+            "symbol": res.symbol,
+            "rank_metric": res.rank_metric,
+            "metrics_unconditional": res.metrics_unconditional.to_formatted_dict(),
+            "low_confidence": res.low_confidence,
         }
-        for c in candidates
-    ]
+        if res.metrics_conditional:
+            entry["metrics_conditional"] = res.metrics_conditional.to_formatted_dict()
+            entry["episode_count"] = res.episode_count
+        payload.append(entry)
 
-    typer.echo(json.dumps({"candidates": payload}, indent=2))
-    log.info("screen command completed", extra={"candidates": len(payload)})
+    typer.echo(json.dumps({"results": payload}, indent=2))
+    log.info("strategy screen completed", extra={"symbols": len(payload)})
