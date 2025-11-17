@@ -578,22 +578,22 @@ def mock_run_config():
 
 #### Provenance Tracking (US8)
 
-- [ ] T111 [US8] Enhance run_meta.json to capture all provenance fields per spec.md US8 acceptance scenario 1 (symbol, timeframe, data_source, distribution, seeds, strategy_params, component_versions - already in T044, verify completeness)
-- [ ] T112 [P] [US8] Implement data version fingerprinting in quant-scenario-engine/data/versioning.py to detect Parquet schema/content changes per FR-019 (reference T023a fingerprinting, add version comparison logic)
-- [ ] T113 [US8] Add component version tracking in run_meta (package versions, git commit) per spec.md US8 acceptance scenario 1 (already in T018a, ensure git SHA capture working)
+- [ ] T111 [US8] Enhance run_meta.json to capture all provenance fields per spec.md US8 acceptance scenario 1/SC-015 (symbol, timeframe, data_source, distribution, seeds, strategy_params, component_versions; ensure T044 completeness)
+- [ ] T112 [P] [US8] Implement data version fingerprinting in quant-scenario-engine/data/versioning.py to detect Parquet schema/content changes per FR-019/SC-015 (reference T023a fingerprinting, add version comparison logic)
+- [ ] T113 [US8] Add component version tracking in run_meta (package versions, git commit) per spec.md US8 acceptance scenario 1/FR-021 (already in T018a, ensure git SHA capture working)
 
 #### Replay Functionality (US8)
 
-- [ ] T114 [US8] Implement replay mode in quant-scenario-engine/simulation/replay.py to reload run_meta and regenerate paths per FR-019 and spec.md US8 acceptance scenario 2
-- [ ] T115 [US8] Add data drift detection with warning/block per FR-019 (compare fingerprints from T112 vs current data, block unless allow_data_drift=true)
-- [ ] T116 [US8] Implement npz-backed replay to load persisted MC paths when available per spec.md US8 acceptance scenario 2 option 2 (check for .npz files, load if present, otherwise regenerate)
-- [ ] T117 [US8] Add replay metadata tagging (is_replay, original_run_id, data_drift_status) per FR-019 (extend run_meta schema, record drift decisions)
+- [ ] T114 [US8] Implement replay mode in quant-scenario-engine/simulation/replay.py to reload run_meta and regenerate paths per FR-019/FR-034 and spec.md US8 acceptance scenario 2
+- [ ] T115 [US8] Add data drift detection with warning/block per FR-019/SC-015 (compare fingerprints from T112 vs current data, block unless allow_data_drift=true)
+- [ ] T116 [US8] Implement npz-backed replay to load persisted MC paths when available per spec.md US8 acceptance scenario 2 option 2 (check for .npz files, load if present, otherwise regenerate; FR-014 alignment of storage)
+- [ ] T117 [US8] Add replay metadata tagging (is_replay, original_run_id, data_drift_status) per FR-019/FR-021 (extend run_meta schema, record drift decisions)
 
 #### CLI (US8)
 
-- [ ] T118 [US8] Create replay command in quant-scenario-engine/cli/commands/replay.py per contracts/openapi.yaml ReplayRequest
-- [ ] T119 [US8] Implement --replay flag or run_meta_path input with validation
-- [ ] T120 [US8] Wire replay CLI to replay mode with proper error handling per spec.md US8 acceptance scenario 3 (handle missing run_meta, data drift blocks, MC path missing)
+- [ ] T118 [US8] Create replay command in quant-scenario-engine/cli/commands/replay.py per contracts/openapi.yaml ReplayRequest (FR-033)
+- [ ] T119 [US8] Implement --replay flag or run_meta_path input with validation (FR-033/FR-019)
+- [ ] T120 [US8] Wire replay CLI to replay mode with proper error handling per spec.md US8 acceptance scenario 3/FR-041 (handle missing run_meta, data drift blocks, MC path missing)
 
 **Checkpoint**: User Story 8 complete - full provenance and replay capability verified
 
