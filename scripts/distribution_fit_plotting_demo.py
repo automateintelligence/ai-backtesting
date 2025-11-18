@@ -27,7 +27,7 @@ def demo_fit_plotting():
 
     # Generate synthetic log returns with fat tails (Student-t distribution)
     np.random.seed(42)
-    n_samples = 500
+    n_samples = 1000
 
     # Create Student-t distributed returns with heavy tails (df=5)
     from scipy.stats import t
