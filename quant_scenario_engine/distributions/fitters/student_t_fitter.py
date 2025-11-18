@@ -16,12 +16,14 @@ class StudentTFitter:
 
     def __init__(self) -> None:
         self.params: dict[str, float] | None = None
+        self._loglik: float | None = None
 
     def fit(self, returns: np.ndarray) -> FitResult:
         warnings: list[str] = []
         try:
             df, loc, scale = stats.t.fit(returns)
             loglik = float(stats.t.logpdf(returns, df=df, loc=loc, scale=scale).sum())
+            self._loglik = loglik
             params = {"df": float(df), "loc": float(loc), "scale": float(scale)}
             self.params = params
             return FitResult(
@@ -44,6 +46,11 @@ class StudentTFitter:
             raise DistributionFitError("StudentTFitter.sample called before fit")
         rng = np.random.default_rng()
         return rng.standard_t(self.params["df"], size=(n_paths, n_steps)) * self.params["scale"] + self.params["loc"]
+
+    def log_likelihood(self) -> float:
+        if self._loglik is None:
+            raise DistributionFitError("StudentTFitter.log_likelihood called before fit")
+        return self._loglik
 
 
 __all__ = ["StudentTFitter"]

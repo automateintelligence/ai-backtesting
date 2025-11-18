@@ -549,8 +549,8 @@ def mock_run_config():
 #### Goodness-of-Fit Metrics (US6a AS2)
 
 - [X] T143 [P] [US6a] Implement AIC/BIC computation in quant_scenario_engine/distributions/metrics/information_criteria.py calculating AIC = 2k - 2ℓ and BIC = k×log(n) - 2ℓ per spec.md US6a AS2 (check T137 stub for existing implementation)
-- [ ] T144 [P] [US6a] Create model ranking logic in quant_scenario_engine/distributions/metrics/model_ranking.py sorting models by AIC/BIC (lower is better) with interpretation guidance per spec.md US6a AS2
-- [ ] T145 [US6a] Add log-likelihood computation methods to each fitter class returning ℓ value per spec.md US6a AS2 (scipy.stats likelihood methods)
+- [X] T144 [P] [US6a] Create model ranking logic in quant_scenario_engine/distributions/metrics/model_ranking.py sorting models by AIC/BIC (lower is better) with interpretation guidance per spec.md US6a AS2
+- [X] T145 [US6a] Add log-likelihood computation methods to each fitter class returning ℓ value per spec.md US6a AS2 (scipy.stats likelihood methods)
 
 #### Tail Fit Diagnostics (US6a AS3)
 

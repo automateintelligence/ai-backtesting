@@ -20,5 +20,8 @@ class GarchTFitter:
     def sample(self, n_paths: int, n_steps: int):
         raise DistributionFitError("GARCH-T sampler not implemented")
 
+    def log_likelihood(self) -> float:
+        raise DistributionFitError("GARCH-T log-likelihood not available (not implemented)")
+
 
 __all__ = ["GarchTFitter"]

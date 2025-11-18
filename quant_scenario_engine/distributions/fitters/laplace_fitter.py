@@ -17,12 +17,14 @@ class LaplaceFitter:
 
     def __init__(self) -> None:
         self.params: dict[str, float] | None = None
+        self._loglik: float | None = None
 
     def fit(self, returns: np.ndarray) -> FitResult:
         warnings: list[str] = []
         try:
             loc, scale = laplace.fit(returns)
             loglik = float(laplace.logpdf(returns, loc=loc, scale=scale).sum())
+            self._loglik = loglik
             excess_kurt = float(kurtosis(returns, fisher=True))
             metadata = DistributionMetadata(
                 estimator="mle",
@@ -54,6 +56,11 @@ class LaplaceFitter:
             raise DistributionFitError("LaplaceFitter.sample called before fit")
         rng = np.random.default_rng()
         return rng.laplace(self.params["loc"], self.params["scale"], size=(n_paths, n_steps))
+
+    def log_likelihood(self) -> float:
+        if self._loglik is None:
+            raise DistributionFitError("LaplaceFitter.log_likelihood called before fit")
+        return self._loglik
 
 
 __all__ = ["LaplaceFitter"]
