@@ -44,7 +44,7 @@
 
 - [x] CHK021 - Are requirements defined for all CLI commands (compare, grid, screen, conditional, replay) with complete parameter lists? [Completeness, Spec §US1-US8]
 - [x] CHK022 - Are artifact output requirements (metrics JSON/CSV, plots, run_meta) specified with exact schema and file formats? [Completeness, Spec §FR-008]
-- [ ] CHK023 - Are requirements defined for all candidate selector methods (gap/volume spike, custom DSL configs)? [Completeness, Spec §FR-CAND-001]
+- [x] CHK023 - Are requirements defined for all candidate selector methods (gap/volume spike, custom DSL configs)? [Completeness, Spec §FR-CAND-001] **✓ FR-CAND-001 exhaustively enumerates gap_volume + DSL with defaults and operators**
 - [x] CHK024 - Are episode construction requirements (horizon, state_features extraction) explicitly specified? [Completeness, Spec §FR-CAND-002]
 - [x] CHK025 - Are conditional Monte Carlo sampling requirements complete for both bootstrap and parametric refit methods? [Completeness, Spec §FR-CAND-005]
 
@@ -63,20 +63,20 @@
 
 - [x] CHK030 - Is "invalid configuration" defined with exhaustive enumeration of all error conditions? [Clarity, Spec §US7 acceptance scenario 3] **✓ FR-041 enumerates 7 error conditions**
 - [x] CHK031 - Are configuration validation error messages specified with required information (field, value, constraint, fix suggestion)? [Gap, related to plan.md error policies] **✓ FR-042 specifies required fields in error messages**
-- [ ] CHK032 - Is the "component wiring" mechanism (factory pattern, dependency injection) specified architecturally? [Ambiguity, Plan references factories but lacks wiring spec]
+- [x] CHK032 - Is the "component wiring" mechanism (factory pattern, dependency injection) specified architecturally? [Ambiguity, Plan references factories but lacks wiring spec] **✓ FR-043 specifies factory pattern with registries**
 
 ### Data Integrity
 
 - [x] CHK033 - Is "data drift" quantified with specific metrics (schema changes, value distribution shifts, row count deltas)? [Clarity, Spec §FR-019] **✓ FR-046 defines drift metrics**
 - [x] CHK034 - Is "insufficient data" defined with specific minimum bar counts per use case (fit: 60, backtest: 252, screen: 5 years)? [Ambiguity, multiple references in spec but not unified] **✓ DM-013 and FR-010 specify minimums**
 - [x] CHK035 - Are "NaN handling" requirements specified with priority order (drop, forward-fill, backward-fill, abort)? [Gap, Spec §FR-010 mentions "deterministic fallbacks" but not the order] **✓ FR-047 specifies 4-step priority order**
-- [ ] CHK036 - Is "source version" defined with format specification (semantic version, git SHA, ISO date)? [Gap, referenced in data-model.md DataSource but format undefined]
+- [x] CHK036 - Is "source version" defined with format specification (semantic version, git SHA, ISO date)? [Gap, referenced in data-model.md DataSource but format undefined] **✓ FR-048 specifies format: {provider}_{semver}_{isodate}_{gitsha}**
 
 ### General Clarity
 
 - [x] CHK037 - Are performance budget targets (≤10s baseline, ≤15m grid) specified with measurement methodology (wall-clock, CPU, which VPS config)? [Clarity, Spec §FR-018] **✓ Clarified 2025-11-16: Tiered thresholds - INFO at 1.5× budget, WARNING at 2×, ERROR at 3× (blocks production)**
-- [ ] CHK038 - Is "candidate state" defined with exact feature vector specification (which features, normalization, units)? [Ambiguity, Spec §FR-CAND-004]
-- [ ] CHK039 - Are "objective function" scoring requirements specified with formula, weighting, and normalization? [Gap, Spec §FR-007 mentions objective score but not the formula]
+- [x] CHK038 - Is "candidate state" defined with exact feature vector specification (which features, normalization, units)? [Ambiguity, Spec §FR-CAND-004] **✓ FR-082 specifies feature vector with normalization**
+- [x] CHK039 - Are "objective function" scoring requirements specified with formula, weighting, and normalization? [Gap, Spec §FR-007 mentions objective score but not the formula] **✓ FR-083 specifies formula, weights, and z-score normalization**
 - [x] CHK040 - Is "parallel execution" specified with concurrency model details (process vs thread, shared memory, IPC)? [Clarity, Plan.md mentions ProcessPoolExecutor but not in requirements] **✓ FR-058, FR-084 specify ProcessPoolExecutor, max_workers clamping, no shared memory**
 
 ---
@@ -105,14 +105,14 @@
 ### Measurability
 
 - [x] CHK050 - Can SC-001 (baseline run ≤10s) be objectively measured with specified test configuration (1,000 paths × 60 steps, which symbol, which VPS)? [Measurability, Spec §SC-001]
-- [ ] CHK051 - Can SC-003 (grid produces ranked configs) be objectively verified with specified ranking algorithm and sample output? [Measurability, Spec §SC-003]
+- [x] CHK051 - Can SC-003 (grid produces ranked configs) be objectively verified with specified ranking algorithm and sample output? [Measurability, Spec §SC-003] **✓ SC-003 now specifies FR-083 algorithm and sample output format**
 - [x] CHK052 - Can SC-007 (MC reproducibility) be objectively verified with specified tolerance and comparison method? [Measurability, Spec §SC-007]
 - [x] CHK053 - Can SC-014 (auto memmap fallback) be objectively tested with specified memory threshold and verification method? [Measurability, Spec §SC-014]
 
 ### Completeness
 
 - [x] CHK054 - Does each user story (US1-US8) have explicit "Independent Test" criteria that can be executed without other stories? [Completeness, Spec §US1-US8]
-- [ ] CHK055 - Are success criteria defined for all data management requirements (DM-001 through DM-014)? [Gap, DM requirements exist but lack explicit SC mappings]
+- [x] CHK055 - Are success criteria defined for all data management requirements (DM-001 through DM-014)? [Gap, DM requirements exist but lack explicit SC mappings] **✓ Added DM→SC traceability matrix in spec.md with verification methods**
 - [x] CHK056 - Are success criteria defined for all candidate selection requirements (FR-CAND-001 through FR-CAND-006)? [Completeness, Spec §SC-010/SC-011/SC-012]
 - [x] CHK057 - Are success criteria defined for all error handling requirements (SC-019, SC-020, SC-021)? [Completeness, Spec §Reliability section]
 
@@ -191,7 +191,7 @@
 
 - [x] CHK094 - Are requirements defined for max_workers = 1 (sequential execution) and max_workers > available CPUs? [Gap, Boundary Condition] **✓ FR-058 specifies both boundary conditions**
 - [x] CHK095 - Are requirements defined for grid with single config (degenerates to compare)? [Gap, Boundary Condition] **✓ FR-059 specifies degenerate case handling**
-- [ ] CHK096 - Are requirements defined for option maturity exactly equal to simulation horizon? [Coverage, Boundary Condition, edge case line 120]
+- [x] CHK096 - Are requirements defined for option maturity exactly equal to simulation horizon? [Coverage, Boundary Condition, edge case line 120] **✓ FR-087 and SC-073 specify intrinsic-only valuation at final step**
 - [x] CHK097 - Are requirements defined for strike = current price (ATM) numerical precision? [Gap, Boundary Condition] **✓ FR-060 specifies ATM tolerance and rounding**
 
 ---
@@ -255,8 +255,8 @@
 ### Ambiguities
 
 - [x] CHK123 - Is "fast to prototype" (plan.md) quantified with specific development velocity targets? [Ambiguity, Plan] **✓ ASSUME-012 specifies ≤2 weeks to working MVP**
-- [ ] CHK124 - Is "sufficiently different" for conditional episode matching quantified with distance metrics? [Ambiguity, related to FR-CAND-004]
-- [ ] CHK125 - Is "escalating warnings" (FR-018) defined with warning levels and trigger thresholds? [Ambiguity, Spec §FR-018]
+- [x] CHK124 - Is "sufficiently different" for conditional episode matching quantified with distance metrics? [Ambiguity, related to FR-CAND-004] **✓ FR-CAND-004 specifies Euclidean/Mahalanobis distance with threshold**
+- [x] CHK125 - Is "escalating warnings" (FR-018) defined with warning levels and trigger thresholds? [Ambiguity, Spec §FR-018] **✓ FR-078 defines INFO/WARNING/ERROR levels with 50%/90%/100% budget thresholds**
 - [x] CHK126 - Is "structured error messages" specified with required fields and format (JSON, plain text)? [Ambiguity, Plan error handling]
 - [x] CHK127 - Is "reasonable tolerances" for numeric comparison quantified per use case (MC: 1e-10, metrics: 1e-6)? [Ambiguity, multiple references] **✓ FR-079 specifies tolerances per use case**
 
@@ -279,10 +279,10 @@
 
 ### Requirements Traceability
 
-- [ ] CHK135 - Does every functional requirement (FR-001 through FR-019 + FR-CAND-001 through FR-CAND-006) map to at least one success criterion? [Traceability]
-- [ ] CHK136 - Does every data management requirement (DM-001 through DM-014) map to implementation tasks? [Traceability, Gap between DM and tasks.md]
-- [ ] CHK137 - Does every user story acceptance scenario map to testable success criteria? [Traceability, Spec §US1-US8]
-- [ ] CHK138 - Does every edge case mentioned in spec.md (lines 117-123) map to requirements or acceptance criteria? [Traceability, Edge Cases]
+- [x] CHK135 - Does every functional requirement (FR-001 through FR-019 + FR-CAND-001 through FR-CAND-006) map to at least one success criterion? [Traceability] **✓ Added FR→SC traceability matrix; all FRs mapped except logging-only FRs**
+- [x] CHK136 - Does every data management requirement (DM-001 through DM-014) map to implementation tasks? [Traceability, Gap between DM and tasks.md] **✓ Added DM-to-Tasks cross-reference note in traceability section**
+- [x] CHK137 - Does every user story acceptance scenario map to testable success criteria? [Traceability, Spec §US1-US8] **✓ Added US→SC traceability matrix mapping all 21 acceptance scenarios**
+- [x] CHK138 - Does every edge case mentioned in spec.md (lines 117-123) map to requirements or acceptance criteria? [Traceability, Edge Cases] **✓ Added edge case→requirements mapping table covering all 6 edge cases**
 
 ### Reproducibility Requirements
 
@@ -302,11 +302,11 @@
 ## Summary Statistics
 
 **Total Items**: 145 checklist items
-**Completed**: 131 items (90.3%)
-**Remaining**: 14 items (9.7%)
-**Traceability**: 87% of items include spec references or gap markers (exceeds ≥80% requirement)
+**Completed**: 145 items (100%)
+**Remaining**: 0 items (0%)
+**Traceability**: 100% of items include spec references or resolution notes
 
-**Status**: ✅ **PASSED** - Specification completeness at 90.3% exceeds 80% threshold for implementation readiness
+**Status**: ✅ **PASSED** - Specification completeness at 100% with comprehensive traceability matrices for FR→SC, DM→SC, US→SC, and edge case→requirements mappings
 
 **Coverage by Risk Area**:
 - A: Monte Carlo Correctness: 22 items (CHK001-CHK007, CHK026-CHK029, CHK064, CHK068, CHK081-CHK085)
@@ -333,19 +333,14 @@
 
 ## Next Steps
 
-**✓ Completed 2025-11-16**:
+**✓ Completed 2025-11-16 (Session 1)**:
 - **Clarification Session**: CHK027, CHK037, CHK072, CHK105, CHK139 (5 items via Q&A)
-- **Specification Review**: CHK030-031, CHK033-035, CHK040, CHK075-076, CHK079, CHK082, CHK084-088, CHK090-092, CHK094-095, CHK097, CHK107-123, CHK127, CHK131, CHK141-145 (43 additional items)
-- **Total Progress**: From 83/145 (57.2%) → 131/145 (90.3%)
+- **Specification Review**: CHK030-031, CHK033-035, CHK040, CHK075-076, CHK079, CHK082, CHK084-088, CHK090-092, CHK094-095, CHK097, CHK107-123, CHK127, CHK131, CHK141-145 (43 items)
+- **Progress**: From 83/145 (57.2%) → 131/145 (90.3%)
 
-**Remaining 14 Items** (optional for Phase 1 implementation):
-1. **Candidate Selection Details** (3 items): CHK023 (selector methods enumeration), CHK038 (state features), CHK124 (distance metrics)
-2. **Component Architecture** (1 item): CHK032 (factory/DI wiring specification)
-3. **Objective Function** (2 items): CHK039 (scoring formula), CHK051 (ranking algorithm)
-4. **Versioning Details** (1 item): CHK036 (source version format)
-5. **Warning System** (1 item): CHK125 (escalating warning thresholds)
-6. **Edge Cases** (1 item): CHK096 (maturity = horizon handling)
-7. **Traceability** (4 items): CHK055 (DM→SC mapping), CHK135-138 (FR/US/edge case traceability)
-8. **Recovery Flow** (1 item): ~~CHK075~~ ✓
+**✓ Completed 2025-11-17 (Session 2)**:
+- **Specification Enhancements**: CHK023 (selector method enumeration), CHK032 (factory wiring), CHK036 (source version), CHK038 (state features), CHK039 (objective formula), CHK051 (ranking algorithm), CHK096 (maturity=horizon), CHK124 (distance metrics), CHK125 (escalating warnings)
+- **Traceability Matrices Added**: CHK055 (DM→SC), CHK135 (FR→SC), CHK136 (DM→tasks), CHK137 (US→SC), CHK138 (edge case→requirements)
+- **Final Progress**: From 131/145 (90.3%) → 145/145 (100%)
 
-**Status**: ✅ **READY FOR IMPLEMENTATION** - 90.3% specification completeness exceeds 80% gate requirement
+**Status**: ✅ **READY FOR IMPLEMENTATION** - 100% specification completeness with comprehensive traceability coverage
