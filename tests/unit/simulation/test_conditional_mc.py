@@ -64,3 +64,21 @@ def test_conditional_mc_falls_back_when_no_matching_episodes():
 
     assert result.selection.method == "unconditional"
     assert result.selection.episode_count == 0
+
+
+def test_conditional_mc_can_use_audit_distribution():
+    df = _make_df()
+    eps = _episodes(30, df["date"])
+
+    result = run_conditional_mc(
+        df=df,
+        episodes=eps,
+        paths=5,
+        steps=5,
+        seed=11,
+        distribution="audit",
+        stock_strategy="stock_basic",
+        use_audit=True,
+    )
+
+    assert result.selection.method == "bootstrap"

@@ -40,6 +40,7 @@ from quant_scenario_engine.distributions.fitters.student_t_fitter import Student
 from quant_scenario_engine.distributions.metrics.information_criteria import aic as calc_aic, bic as calc_bic
 from quant_scenario_engine.distributions.models import FitResult
 from quant_scenario_engine.exceptions import DistributionFitError
+from quant_scenario_engine.interfaces.distribution import ReturnDistribution
 from quant_scenario_engine.utils.logging import get_logger
 
 log = get_logger(__name__, component="distribution_audit")
@@ -123,6 +124,7 @@ class DistributionAuditResult:
     simulation_metrics: List[SimulationMetrics]
     scores: List[ModelScore]
     best_model: Optional[ModelSpec] = None
+    best_fit: Optional[FitResult] = None
 
 
 # ---------------------------------------------------------------------------
@@ -528,6 +530,19 @@ def select_best_model(
     return None
 
 
+def select_best_fit(
+    fit_results: Sequence[FitResult],
+    best_model: Optional[ModelSpec],
+) -> Optional[FitResult]:
+    """Return the FitResult for the chosen model, if available."""
+    if best_model is None:
+        return None
+    for fr in fit_results:
+        if fr.model_name == best_model.name:
+            return fr
+    return None
+
+
 # ---------------------------------------------------------------------------
 # High-level orchestration
 # ---------------------------------------------------------------------------
@@ -639,6 +654,7 @@ def audit_distributions_for_symbol(
         require_heavy_tails=require_heavy_tails,
         fit_results=fit_results,
     )
+    best_fit = select_best_fit(fit_results, best_model)
 
     return DistributionAuditResult(
         symbol=symbol,
@@ -649,4 +665,43 @@ def audit_distributions_for_symbol(
         simulation_metrics=sim_metrics,
         scores=scores,
         best_model=best_model,
+        best_fit=best_fit,
     )
+
+
+def fit_best_distribution_for_returns(
+    returns: np.ndarray,
+    require_heavy_tails: bool = True,
+) -> tuple[str, FitResult]:
+    """
+    Lightweight helper to select the best-fitting distribution on a log-return array.
+
+    Returns (model_name, FitResult) and NEVER silently falls back: failures raise DistributionFitError.
+    """
+    candidate_models = [
+        ModelSpec(name="laplace", cls=LaplaceFitter(), config={}),
+        ModelSpec(name="student_t", cls=StudentTFitter(), config={}),
+        ModelSpec(name="garch_t", cls=GarchTFitter(), config={}),
+    ]
+    fit_results = fit_candidate_models(returns, candidate_models)
+    scores = score_models(fit_results=fit_results, tail_metrics=[], var_backtests=[], sim_metrics=[])
+    best_model = select_best_model(candidate_models, scores, require_heavy_tails, fit_results)
+    best_fit = select_best_fit(fit_results, best_model)
+
+    if best_model is None or best_fit is None or not best_fit.fit_success:
+        raise DistributionFitError("No suitable distribution fit available for returns")
+
+    return best_model.name, best_fit
+
+
+def instantiate_distribution(model_name: str) -> ReturnDistribution:
+    """
+    Map model name to concrete ReturnDistribution implementation for US1/US6 integration.
+    """
+    if model_name == "laplace":
+        from quant_scenario_engine.distributions.laplace import LaplaceDistribution
+        return LaplaceDistribution()
+    if model_name in {"student_t", "student-t"}:
+        from quant_scenario_engine.distributions.student_t import StudentTDistribution
+        return StudentTDistribution()
+    raise DistributionFitError(f"Unsupported distribution model: {model_name}")
