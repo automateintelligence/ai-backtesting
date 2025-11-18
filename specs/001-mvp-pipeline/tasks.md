@@ -509,18 +509,18 @@ def mock_run_config():
 
 #### Conditional Sampling (US6)
 
-- [ ] T083 [US6] Implement episode bootstrapping sampler in backtesting/distributions/episode_bootstrap.py for non-parametric conditional MC per FR-CAND-005/SC-007
-- [ ] T084 [P] [US6] Implement state-conditioned distribution refit in backtesting/distributions/conditional.py for parametric conditional MC per FR-CAND-005 (reference T020l/T020m for stationarity/AR checks on conditional samples)
-- [ ] T085 [US6] Create conditional MC method selector in backtesting/mc/conditional.py (bootstrap vs refit) with fallback logic per FR-CAND-005/FR-036/FR-038 (try bootstrap → parametric refit → unconditional, log method selection)
-- [ ] T086 [US6] Implement minimum episode threshold check with warning and fallback per spec.md US6 acceptance scenario 3/FR-CAND-006 (warn when <30 episodes, trigger fallback)
-- [ ] T087 [US6] Create run_conditional_mc() in quant-scenario-engine/simulation/conditional_mc.py integrating conditional sampling with strategies per FR-CAND-004/FR-036
-- [ ] T087a [US6] Log method selection and fallbacks (bootstrap → refit → unconditional) in run_meta/logs per FR-036/FR-038/FR-CAND-004 (record in run_meta.json, emit structured logs)
+- [X] T083 [US6] Implement episode bootstrapping sampler in backtesting/distributions/episode_bootstrap.py for non-parametric conditional MC per FR-CAND-005/SC-007
+- [X] T084 [P] [US6] Implement state-conditioned distribution refit in backtesting/distributions/conditional.py for parametric conditional MC per FR-CAND-005 (reference T020l/T020m for stationarity/AR checks on conditional samples)
+- [X] T085 [US6] Create conditional MC method selector in backtesting/mc/conditional.py (bootstrap vs refit) with fallback logic per FR-CAND-005/FR-036/FR-038 (try bootstrap → parametric refit → unconditional, log method selection)
+- [X] T086 [US6] Implement minimum episode threshold check with warning and fallback per spec.md US6 acceptance scenario 3/FR-CAND-006 (warn when <30 episodes, trigger fallback)
+- [X] T087 [US6] Create run_conditional_mc() in quant-scenario-engine/simulation/conditional_mc.py integrating conditional sampling with strategies per FR-CAND-004/FR-036
+- [X] T087a [US6] Log method selection and fallbacks (bootstrap → refit → unconditional) in run_meta/logs per FR-036/FR-038/FR-CAND-004 (record in run_meta.json, emit structured logs)
 
 #### CLI (US6)
 
-- [ ] T088 [US6] Extend conditional CLI to support monte_carlo mode in quant-scenario-engine/cli/commands/conditional.py per contracts/openapi.yaml ConditionalRequest (FR-033)
-- [ ] T089 [US6] Add state_features input parsing and validation per contracts/openapi.yaml CandidateEpisode (FR-CAND-002)
-- [ ] T090 [US6] Wire conditional MC CLI to run_conditional_mc() with reproducibility guarantee per spec.md US6 acceptance scenario 2/SC-007 (ensure seed propagation, deterministic output)
+- [X] T088 [US6] Extend conditional CLI to support monte_carlo mode in quant-scenario-engine/cli/commands/conditional.py per contracts/openapi.yaml ConditionalRequest (FR-033)
+- [X] T089 [US6] Add state_features input parsing and validation per contracts/openapi.yaml CandidateEpisode (FR-CAND-002)
+- [X] T090 [US6] Wire conditional MC CLI to run_conditional_mc() with reproducibility guarantee per spec.md US6 acceptance scenario 2/SC-007 (ensure seed propagation, deterministic output)
 
 **Checkpoint**: User Story 6 complete - can generate conditional Monte Carlo paths from candidate states
 

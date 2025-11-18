@@ -1,4 +1,4 @@
-"""Conditional backtest CLI wiring."""
+"""Conditional backtest and conditional Monte Carlo CLI wiring."""
 
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ from quant_scenario_engine.data.cache import load_or_fetch, parse_symbol_list
 from quant_scenario_engine.features.pipeline import enrich_ohlcv
 from quant_scenario_engine.schema.episode import CandidateEpisode
 from quant_scenario_engine.simulation.conditional import run_conditional_backtest
+from quant_scenario_engine.simulation.conditional_mc import run_conditional_mc
 from quant_scenario_engine.selectors.gap_volume import GapVolumeSelector
 from quant_scenario_engine.utils.logging import get_logger
 
@@ -36,6 +37,13 @@ def conditional(
     maturity_days: int = typer.Option(30, help="Option maturity in days"),
     iv: float = typer.Option(0.25, help="Implied volatility"),
     rfr: float = typer.Option(0.01, help="Risk-free rate"),
+    mode: str = typer.Option("backtest", help="Mode: backtest or monte_carlo"),
+    paths: int = typer.Option(1000, help="Number of MC paths (monte_carlo mode)"),
+    steps: int = typer.Option(60, help="MC steps (monte_carlo mode)"),
+    seed: int = typer.Option(42, help="Random seed"),
+    distribution: str = typer.Option("laplace", help="Return distribution for MC"),
+    state: str = typer.Option("", help="JSON string of state features for conditioning"),
+    distance_threshold: float = typer.Option(2.0, help="Similarity threshold for state matching"),
 ) -> None:
     validate_screen_inputs(horizon=horizon, max_workers=1)
     valid_intervals = {"1m", "5m", "15m", "30m", "1h", "1d", "1wk", "1mo"}
@@ -54,6 +62,26 @@ def conditional(
             risk_free_rate=rfr,
             contracts=1,
         )
+
+    def _parse_state_features(raw: str) -> dict[str, float]:
+        if not raw:
+            return {}
+        payload = json.loads(raw)
+        if not isinstance(payload, dict):
+            raise typer.Exit(code=1)
+        features: dict[str, float] = {}
+        for k, v in payload.items():
+            try:
+                features[k] = float(v)
+            except (TypeError, ValueError):
+                log.error("state feature must be numeric", extra={"feature": k})
+                raise typer.Exit(code=1)
+        return features
+
+    state_features = _parse_state_features(state)
+    if mode not in {"backtest", "monte_carlo"}:
+        log.error("invalid mode", extra={"mode": mode})
+        raise typer.Exit(code=1)
 
     grouped: dict[str, pd.DataFrame] = {}
     if universe:
@@ -97,21 +125,48 @@ def conditional(
     for sym, df in grouped.items():
         enriched = enrich_ohlcv(df, log_output=False)
         episodes = selector.select(enriched)
-        result = run_conditional_backtest(
-            df=enriched,
-            episodes=episodes,
-            stock_strategy=stock_strategy,
-            option_strategy=option_strategy,
-            option_spec=option_spec,
-        )
-        outputs.append(
-            {
-                "symbol": sym,
-                "episode_count": result.episode_count,
-                "unconditional": result.unconditional.to_formatted_dict(),
-                "conditional": result.conditional.to_formatted_dict() if result.conditional else None,
-            }
-        )
+
+        if mode == "monte_carlo":
+            result_mc = run_conditional_mc(
+                df=enriched,
+                episodes=episodes,
+                paths=paths,
+                steps=steps,
+                seed=seed,
+                distribution=distribution,
+                stock_strategy=stock_strategy,
+                option_strategy=option_strategy,
+                option_spec=option_spec,
+                state_features=state_features,
+                distance_threshold=distance_threshold,
+            )
+            outputs.append(
+                {
+                    "symbol": sym,
+                    "mode": mode,
+                    "episode_count": result_mc.selection.episode_count,
+                    "method": result_mc.selection.method,
+                    "fallback_reason": result_mc.selection.fallback_reason,
+                    "state_features": state_features,
+                    "metrics": result_mc.metrics.to_formatted_dict(),
+                }
+            )
+        else:
+            result = run_conditional_backtest(
+                df=enriched,
+                episodes=episodes,
+                stock_strategy=stock_strategy,
+                option_strategy=option_strategy,
+                option_spec=option_spec,
+            )
+            outputs.append(
+                {
+                    "symbol": sym,
+                    "episode_count": result.episode_count,
+                    "unconditional": result.unconditional.to_formatted_dict(),
+                    "conditional": result.conditional.to_formatted_dict() if result.conditional else None,
+                }
+            )
 
     typer.echo(json.dumps(outputs, indent=2))
-    log.info("conditional command completed", extra={"symbols": list(grouped.keys())})
+    log.info("conditional command completed", extra={"symbols": list(grouped.keys()), "mode": mode})
