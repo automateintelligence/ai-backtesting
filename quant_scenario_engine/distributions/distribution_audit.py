@@ -34,13 +34,23 @@ from typing import Dict, List, Optional, Sequence
 import numpy as np
 import pandas as pd
 
+from quant_scenario_engine.distributions.diagnostics.tail_report import build_tail_report
 from quant_scenario_engine.distributions.fitters.garch_t_fitter import GarchTFitter
 from quant_scenario_engine.distributions.fitters.laplace_fitter import LaplaceFitter
 from quant_scenario_engine.distributions.fitters.student_t_fitter import StudentTFitter
 from quant_scenario_engine.distributions.metrics.information_criteria import aic as calc_aic, bic as calc_bic
-from quant_scenario_engine.distributions.models import FitResult
 from quant_scenario_engine.distributions.metrics.model_ranking import rank_by_information_criteria
-from quant_scenario_engine.distributions.diagnostics.tail_report import build_tail_report
+from quant_scenario_engine.distributions.models import FitResult
+from quant_scenario_engine.distributions.selection.model_selector import select_model
+from quant_scenario_engine.distributions.selection.selection_report import build_selection_report
+from quant_scenario_engine.distributions.selection.scorer import composite_score
+from quant_scenario_engine.distributions.selection.normalize import normalize_aic
+from quant_scenario_engine.distributions.validation.realism_report import build_realism_report
+from quant_scenario_engine.distributions.validation.historical_metrics import compute_historical_metrics
+from quant_scenario_engine.distributions.validation.mc_path_generator import generate_paths
+from quant_scenario_engine.distributions.validation.volatility_calc import annualized_volatility
+from quant_scenario_engine.distributions.validation.clustering_calc import autocorr_squared_returns
+from quant_scenario_engine.distributions.validation.extreme_moves import extreme_move_frequencies
 from quant_scenario_engine.exceptions import DistributionFitError
 from quant_scenario_engine.interfaces.distribution import ReturnDistribution
 from quant_scenario_engine.utils.logging import get_logger
@@ -128,6 +138,8 @@ class DistributionAuditResult:
     best_model: Optional[ModelSpec] = None
     best_fit: Optional[FitResult] = None
     tail_reports: Dict[str, dict] = field(default_factory=dict)
+    realism_reports: Dict[str, dict] = field(default_factory=dict)
+    selection_report: Dict[str, object] = field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------
@@ -554,7 +566,7 @@ def select_best_fit(
 def audit_distributions_for_symbol(
     symbol: str,
     price_series: pd.Series,
-    train_fraction: float = 0.8,  # TODO [T150]: Update default to 0.7 per spec.md US6a AS4
+    train_fraction: float = 0.7,
     candidate_models: Optional[Sequence[ModelSpec]] = None,
     s0_override: Optional[float] = None,
     require_heavy_tails: bool = True,
@@ -637,8 +649,6 @@ def audit_distributions_for_symbol(
 
     log_returns = np.log(prices / prices.shift(1)).dropna().values
 
-    # TODO [T150]: Update train_fraction default to 0.7 (70/30 split per spec.md US6a AS4)
-    # Currently defaults to 0.8 (80/20 split)
     n = len(log_returns)
     n_train = max(50, int(train_fraction * n))
     r_train = log_returns[:n_train]
@@ -691,6 +701,45 @@ def audit_distributions_for_symbol(
         except Exception as exc:
             log.warning("tail diagnostics failed", extra={"model": spec.name, "error": str(exc)})
 
+    # Simulation realism metrics per model
+    hist_metrics = compute_historical_metrics(r_train)
+    realism_reports: Dict[str, dict] = {}
+    for spec in candidate_models:
+        try:
+            fitter = spec.cls if hasattr(spec.cls, "sample") else spec.cls()
+            sim_paths = generate_paths(fitter, n_paths=500, n_steps=60, seed=42)  # type: ignore[arg-type]
+            sim_rets = sim_paths.reshape(sim_paths.shape[0], -1)
+            sim_metrics = {
+                "annualized_vol": annualized_volatility(sim_rets.flatten()),
+                "acf_sq_lag1": autocorr_squared_returns(sim_rets.flatten(), lag=1),
+                "extremes": extreme_move_frequencies(sim_rets.flatten()),
+            }
+            realism_reports[spec.name] = build_realism_report(sim_metrics, hist_metrics)
+        except Exception as exc:
+            log.warning("realism metrics failed", extra={"model": spec.name, "error": str(exc)})
+
+    # Selection report using simple constraints (heavy-tail & VaR pass)
+    constraints = {
+        fr.model_name: {
+            "heavy_tailed": fr.heavy_tailed,
+            "var_pass": any(vb.passed for vb in var_backtests if vb.model_name == fr.model_name),
+        }
+        for fr in fit_results
+    }
+    aic_norms = normalize_aic([fr.aic for fr in fit_results])
+    score_entries = []
+    for fr, aic_norm in zip(fit_results, aic_norms):
+        tail_entry = next((tm for tm in tail_metrics if tm.model_name == fr.model_name), None)
+        tail_err = 0.0
+        if tail_entry:
+            tail_err = (tail_entry.tail_error_95 + tail_entry.tail_error_99) / 2.0
+        var_penalty = 0.0 if constraints[fr.model_name]["var_pass"] else 1.0
+        cluster_err = 0.0
+        score_val = composite_score(aic_norm, tail_err, var_penalty, cluster_err)
+        score_entries.append({"model": fr.model_name, "score": score_val})
+    chosen_model = select_model(score_entries, constraints)
+    selection_report = build_selection_report(score_entries, chosen_model)
+
     # Generate fit diagnostic plots if requested
     if plot_fit:
         from pathlib import Path
@@ -727,6 +776,8 @@ def audit_distributions_for_symbol(
         best_model=best_model,
         best_fit=best_fit,
         tail_reports=tail_reports,
+        realism_reports=realism_reports,
+        selection_report=selection_report,
     )
 
 

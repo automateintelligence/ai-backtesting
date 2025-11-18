@@ -570,22 +570,22 @@ def mock_run_config():
 
 #### Simulation Realism Validation (US6a AS5)
 
-- [ ] T156 [US6a] Implement MC path generator for validation in quant_scenario_engine/distributions/validation/mc_path_generator.py generating 10,000 paths × 252 steps per model per spec.md US6a AS5
-- [ ] T157 [P] [US6a] Create annualized volatility calculator in quant_scenario_engine/distributions/validation/volatility_calc.py computing σ_annual = σ_daily × √252 per spec.md US6a AS5
-- [ ] T158 [P] [US6a] Implement autocorrelation calculator in quant_scenario_engine/distributions/validation/clustering_calc.py computing corr(r²_t, r²_{t-1}) for volatility clustering per spec.md US6a AS5
-- [ ] T159 [P] [US6a] Create maximum drawdown calculator in quant_scenario_engine/distributions/validation/drawdown_calc.py computing max percentage decline from peak per spec.md US6a AS5
-- [ ] T160 [P] [US6a] Implement extreme move counter in quant_scenario_engine/distributions/validation/extreme_moves.py counting |r_t| > 3% and |r_t| > 5% per spec.md US6a AS5
-- [ ] T161 [US6a] Create historical metrics calculator in quant_scenario_engine/distributions/validation/historical_metrics.py computing same statistics on 252-day rolling windows per spec.md US6a AS5
-- [ ] T162 [US6a] Implement distributional comparator in quant_scenario_engine/distributions/validation/distribution_compare.py comparing simulated vs historical metric distributions per spec.md US6a AS5
-- [ ] T163 [US6a] Create simulation realism report generator in quant_scenario_engine/distributions/validation/realism_report.py with histograms, systematic bias detection per spec.md US6a AS5
+- [X] T156 [US6a] Implement MC path generator for validation in quant_scenario_engine/distributions/validation/mc_path_generator.py generating 10,000 paths × 252 steps per model per spec.md US6a AS5
+- [X] T157 [P] [US6a] Create annualized volatility calculator in quant_scenario_engine/distributions/validation/volatility_calc.py computing σ_annual = σ_daily × √252 per spec.md US6a AS5
+- [X] T158 [P] [US6a] Implement autocorrelation calculator in quant_scenario_engine/distributions/validation/clustering_calc.py computing corr(r²_t, r²_{t-1}) for volatility clustering per spec.md US6a AS5
+- [X] T159 [P] [US6a] Create maximum drawdown calculator in quant_scenario_engine/distributions/validation/drawdown_calc.py computing max percentage decline from peak per spec.md US6a AS5
+- [X] T160 [P] [US6a] Implement extreme move counter in quant_scenario_engine/distributions/validation/extreme_moves.py counting |r_t| > 3% and |r_t| > 5% per spec.md US6a AS5
+- [X] T161 [US6a] Create historical metrics calculator in quant_scenario_engine/distributions/validation/historical_metrics.py computing same statistics on 252-day rolling windows per spec.md US6a AS5
+- [X] T162 [US6a] Implement distributional comparator in quant_scenario_engine/distributions/validation/distribution_compare.py comparing simulated vs historical metric distributions per spec.md US6a AS5
+- [X] T163 [US6a] Create simulation realism report generator in quant_scenario_engine/distributions/validation/realism_report.py with histograms, systematic bias detection per spec.md US6a AS5
 
 #### Model Selection and Scoring (US6a AS6)
 
-- [ ] T164 [US6a] Implement AIC normalization in quant_scenario_engine/distributions/selection/normalize.py computing AIC_norm = (AIC - AIC_min) / (AIC_max - AIC_min) per spec.md US6a AS6
-- [ ] T165 [US6a] Create composite scoring function in quant_scenario_engine/distributions/selection/scorer.py implementing score = w₁×(-AIC_norm) + w₂×(-tail_error_99) + w₃×(-VaR_backtest_penalty) + w₄×(-vol_cluster_error) with default weights (0.2, 0.4, 0.3, 0.1) per spec.md US6a AS6
-- [ ] T166 [US6a] Implement constraint validator in quant_scenario_engine/distributions/selection/constraints.py enforcing excess kurtosis ≥1.0 and VaR backtest pass (p ≥ 0.01 on at least one test) per spec.md US6a AS6
-- [ ] T167 [US6a] Create model selector in quant_scenario_engine/distributions/selection/model_selector.py choosing highest-scoring model meeting constraints per spec.md US6a AS6
-- [ ] T168 [US6a] Implement selection report generator in quant_scenario_engine/distributions/selection/selection_report.py documenting rationale with evidence and warnings per spec.md US6a AS6
+- [X] T164 [US6a] Implement AIC normalization in quant_scenario_engine/distributions/selection/normalize.py computing AIC_norm = (AIC - AIC_min) / (AIC_max - AIC_min) per spec.md US6a AS6
+- [X] T165 [US6a] Create composite scoring function in quant_scenario_engine/distributions/selection/scorer.py implementing score = w₁×(-AIC_norm) + w₂×(-tail_error_99) + w₃×(-VaR_backtest_penalty) + w₄×(-vol_cluster_error) with default weights (0.2, 0.4, 0.3, 0.1) per spec.md US6a AS6
+- [X] T166 [US6a] Implement constraint validator in quant_scenario_engine/distributions/selection/constraints.py enforcing excess kurtosis ≥1.0 and VaR backtest pass (p ≥ 0.01 on at least one test) per spec.md US6a AS6
+- [X] T167 [US6a] Create model selector in quant_scenario_engine/distributions/selection/model_selector.py choosing highest-scoring model meeting constraints per spec.md US6a AS6
+- [X] T168 [US6a] Implement selection report generator in quant_scenario_engine/distributions/selection/selection_report.py documenting rationale with evidence and warnings per spec.md US6a AS6
 
 #### Caching and Reproducibility (US6a AS7-8)
 
