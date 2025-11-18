@@ -555,6 +555,8 @@ def audit_distributions_for_symbol(
     candidate_models: Optional[Sequence[ModelSpec]] = None,
     s0_override: Optional[float] = None,
     require_heavy_tails: bool = True,
+    plot_fit: bool = False,
+    plot_output_path: Optional[str] = None,
 ) -> DistributionAuditResult:
     """
     Run the full audit pipeline for a single symbol:
@@ -566,6 +568,26 @@ def audit_distributions_for_symbol(
     5. Run VaR backtests on test window.
     6. Simulate paths and realism metrics.
     7. Score models and select the best.
+    8. Optionally generate fit diagnostic plots.
+
+    Parameters
+    ----------
+    symbol : str
+        Asset symbol for labeling
+    price_series : pd.Series
+        Historical price series
+    train_fraction : float, default=0.8
+        Fraction of data for training (remainder for test)
+    candidate_models : Optional[Sequence[ModelSpec]]
+        Models to fit; defaults to Laplace, Student-t, GARCH-t
+    s0_override : Optional[float]
+        Override initial price for simulations
+    require_heavy_tails : bool, default=True
+        Require selected model to have heavy tails (excess kurtosis >= 1.0)
+    plot_fit : bool, default=False
+        Generate diagnostic plots showing fit quality
+    plot_output_path : Optional[str]
+        Custom path for plot output; defaults to output/distribution_fits/{symbol}_fit_diagnostics.png
 
     TODO [T169-T172, AS7-8]: Add caching and reproducibility:
     - T169: Implement cache manager with 30-day TTL
@@ -655,6 +677,31 @@ def audit_distributions_for_symbol(
         fit_results=fit_results,
     )
     best_fit = select_best_fit(fit_results, best_model)
+
+    # Generate fit diagnostic plots if requested
+    if plot_fit:
+        from pathlib import Path
+        from quant_scenario_engine.distributions.plotting import plot_distribution_fits
+
+        output_path = None
+        if plot_output_path:
+            output_path = Path(plot_output_path)
+        else:
+            # Default to output/distribution_fits/{symbol}_fit_diagnostics.png
+            output_path = Path("output") / "distribution_fits" / f"{symbol}_fit_diagnostics.png"
+
+        try:
+            plot_distribution_fits(
+                returns=log_returns,
+                fit_results=fit_results,
+                candidate_models=candidate_models,
+                symbol=symbol,
+                output_path=output_path,
+                show_plot=False,  # Don't block in automated workflows
+            )
+            log.info(f"Generated fit diagnostic plots for {symbol}")
+        except Exception as exc:
+            log.warning(f"Failed to generate fit plots for {symbol}: {exc}")
 
     return DistributionAuditResult(
         symbol=symbol,
