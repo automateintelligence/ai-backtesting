@@ -1,5 +1,99 @@
 # Traceability Matrices
 
+### Functional Requirements → Success Criteria Traceability
+* **FR-001** (Data loading + on-demand fetch) → SC-054, SC-068
+* **FR-002** (Distributions) → SC-004, SC-016, SC-063
+* **FR-003** (Stock strategy) → SC-002
+* **FR-004** (Option strategy) → SC-002
+* **FR-005** (CLI) → SC-001, SC-005
+* **FR-006** (Features) → SC-043
+* **FR-007** (Grid) → SC-003, SC-052
+* **FR-008** (Artifacts) → SC-002, SC-021
+* **FR-009** (Config swapping) → SC-006, SC-017
+* **FR-010** (Missing data) → SC-020, SC-028
+* **FR-011** (Stubs) → SC-006
+* **FR-012** (Seeding) → SC-004, SC-007, SC-047
+* **FR-013** (Memory limits) → SC-014, SC-058
+* **FR-014** (Alignment) → SC-020
+* **FR-015** (Performance docs) → SC-061-SC-067
+* **FR-016** (Option pricing) → SC-017
+* **FR-017** (Data sources) → SC-006
+* **FR-018** (Resource limits) → SC-001, SC-003, SC-062, SC-065
+* **FR-019** (Replay) → SC-027, SC-059
+* **FR-020** (Distribution validation) → SC-019
+* **FR-021** (Reproducibility) → SC-007, SC-047, SC-048
+* **FR-022** (Overflow handling) → SC-031
+* **FR-023** (Memory estimator) → SC-014, SC-058
+* **FR-024** (Config precedence) → SC-022
+* **FR-025** (Fail-fast config) → SC-022
+* **FR-026** (Component logging) → SC-006
+* **FR-027** (Schema validation) → SC-026
+* **FR-028** (Data fingerprinting) → SC-027
+* **FR-029** (Missing data tolerances) → SC-028
+* **FR-030** (Metadata durability) → SC-046
+* **FR-031** (Storage policy) → SC-057, SC-058
+* **FR-032** (Minimum samples) → SC-019
+* **FR-033** (CLI validation) → SC-022
+* **FR-034** (Artifact formats) → SC-002, SC-046
+* **FR-035** (Episode construction) → SC-010
+* **FR-036** (Conditional MC methods) → SC-050, SC-051
+* **FR-037** (Implausible params) → SC-019
+* **FR-038** (Fail-fast vs fallback) → SC-019, SC-051
+* **FR-039** (Structured logging) → SC-021
+* **FR-040** (Performance budgets) → SC-061-SC-065
+* **FR-041** (Invalid config enumeration) → SC-022
+* **FR-042** (Error messages) → SC-022
+* **FR-043** (Component wiring) → SC-006, SC-017
+* **FR-044** (Config precedence) → SC-022
+* **FR-045** (Defaults) → SC-024
+* **FR-046** (Data drift) → SC-027
+* **FR-047** (NaN handling) → SC-028
+* **FR-048** (Source version format) → SC-046
+* **FR-049** (Small n_paths) → SC-030
+* **FR-050** (Bankruptcy) → SC-031
+* **FR-051** (Zero volatility) → SC-032
+* **FR-052** (Empty config) → SC-024
+* **FR-053** (Contradictory config) → SC-023
+* **FR-054** (Mid-grid config change) → SC-025
+* **FR-055** (Constant price) → SC-038
+* **FR-056** (Extreme gaps) → SC-029
+* **FR-057** (Timestamp anomalies) → SC-037
+* **FR-058** (max_workers boundaries) → SC-033, SC-034
+* **FR-059** (Single-config grid) → SC-035
+* **FR-060** (ATM precision) → SC-036
+* **FR-061** (Graceful shutdown) → SC-039
+* **FR-062** (Partial results) → SC-040
+* **FR-063** (Config versioning) → SC-041
+* **FR-064** (Backward compat) → SC-046
+* **FR-065** (Cleanup policies) → SC-042
+* **FR-066** (pandas-ta fallback) → SC-043
+* **FR-067** (numpy/scipy compat) → SC-044
+* **FR-068** (OS/Python constraints) → SC-046
+* **FR-069** (Task order) → (enforced by implementation DAG)
+* **FR-070** (Directory pre-existence) → SC-045
+* **FR-071** (Package pinning) → SC-046
+* **FR-072** (Git SHA capture) → SC-046
+* **FR-073** (System config capture) → SC-046
+* **FR-074** (Cross-arch repro) → SC-048
+* **FR-075** (Spec versioning) → SC-046
+* **FR-076** (Backward compat tests) → SC-048
+* **FR-077** (Migration paths) → SC-041
+* **FR-078** (Warning levels) → SC-065
+* **FR-079** (Numeric tolerances) → SC-047, SC-048
+* **FR-080** (Selector sparsity) → SC-051
+* **FR-081** (Grid partial failure) → SC-040
+* **FR-082** (Candidate state features) → SC-050
+* **FR-083** (Objective function) → SC-052, SC-053
+* **FR-084** (Parallel execution model) → SC-062
+* **FR-085** (Cache staleness detection) → SC-069, SC-070
+* **FR-086** (Data source failure handling) → SC-071, SC-072
+* **FR-CAND-001** (Selector abstraction) → SC-049
+* **FR-CAND-002** (Episode construction) → SC-010
+* **FR-CAND-003** (Conditional backtest) → SC-008, SC-009, SC-011
+* **FR-CAND-004** (Conditional MC) → SC-007, SC-050
+* **FR-CAND-005** (Methods) → SC-050, SC-051
+* **FR-CAND-006** (Default selector) → SC-049
+
 ### Data Management Requirements → Success Criteria Mapping
 
 | DM Requirement | Success Criteria | Verification Method |
