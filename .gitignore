@@ -27,3 +27,4 @@ output/distribution_fits/
 .idea/
 .DS_Store
 Thumbs.db
+output/distribution_fits/demo_fit_diagnostics.png

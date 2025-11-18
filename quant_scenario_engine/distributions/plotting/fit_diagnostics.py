@@ -67,8 +67,36 @@ def plot_distribution_fits(
     ax_qq = axes[1, 0]
     ax_tail = axes[1, 1]
 
-    # Color scheme for models
-    colors = {"laplace": "#1f77b4", "student_t": "#ff7f0e", "garch_t": "#2ca02c"}
+    # Colorblind-friendly color palette (Wong palette + line styles + markers)
+    # Each model gets a unique combination of color, line style, and marker
+    model_styles = {
+        "laplace": {
+            "color": "#0072B2",      # Blue
+            "linestyle": "-",         # Solid
+            "marker": "o",           # Circle
+            "markersize": 6,
+        },
+        "student_t": {
+            "color": "#E69F00",      # Orange
+            "linestyle": "--",        # Dashed
+            "marker": "s",           # Square
+            "markersize": 6,
+        },
+        "garch_t": {
+            "color": "#009E73",      # Green
+            "linestyle": "-.",        # Dash-dot
+            "marker": "^",           # Triangle up
+            "markersize": 6,
+        },
+    }
+
+    # Default style for unknown models
+    default_style = {
+        "color": "#CC79A7",      # Purple
+        "linestyle": ":",         # Dotted
+        "marker": "D",           # Diamond
+        "markersize": 6,
+    }
 
     # Empirical data
     hist_data = returns
@@ -91,9 +119,17 @@ def plot_distribution_fits(
             kde = gaussian_kde(samples)
             pdf_vals = kde(x_range)
 
-            color = colors.get(spec.name, "#333333")
+            # Get style for this model
+            style = model_styles.get(spec.name, default_style)
             label = _format_legend_label(spec.name, fr)
-            ax_pdf.plot(x_range, pdf_vals, label=label, color=color, linewidth=2, alpha=0.8)
+            ax_pdf.plot(
+                x_range, pdf_vals,
+                label=label,
+                color=style["color"],
+                linestyle=style["linestyle"],
+                linewidth=2.5,
+                alpha=0.9
+            )
         except Exception as e:
             log.warning(f"Failed to plot PDF for {spec.name}: {e}")
 
@@ -124,9 +160,16 @@ def plot_distribution_fits(
             # Interpolate to common x-range for plotting
             cdf_interp = np.interp(sorted_returns, sorted_samples, model_cdf)
 
-            color = colors.get(spec.name, "#333333")
-            ax_cdf.plot(sorted_returns, cdf_interp, label=spec.name.capitalize(),
-                       color=color, linewidth=2, alpha=0.8)
+            # Get style for this model
+            style = model_styles.get(spec.name, default_style)
+            ax_cdf.plot(
+                sorted_returns, cdf_interp,
+                label=spec.name.capitalize(),
+                color=style["color"],
+                linestyle=style["linestyle"],
+                linewidth=2.5,
+                alpha=0.9
+            )
         except Exception as e:
             log.warning(f"Failed to plot CDF for {spec.name}: {e}")
 
@@ -149,9 +192,18 @@ def plot_distribution_fits(
             samples = fitter.sample(n_paths=50000, n_steps=1).flatten()
             model_quantiles = np.quantile(samples, quantiles)
 
-            color = colors.get(spec.name, "#333333")
-            ax_qq.scatter(empirical_quantiles, model_quantiles, label=spec.name.capitalize(),
-                         color=color, alpha=0.6, s=20)
+            # Get style for this model
+            style = model_styles.get(spec.name, default_style)
+            ax_qq.scatter(
+                empirical_quantiles, model_quantiles,
+                label=spec.name.capitalize(),
+                color=style["color"],
+                marker=style["marker"],
+                s=50,
+                alpha=0.7,
+                edgecolors='black',
+                linewidths=0.5
+            )
         except Exception as e:
             log.warning(f"Failed to plot Q-Q for {spec.name}: {e}")
 
@@ -192,9 +244,16 @@ def plot_distribution_fits(
                 kde = gaussian_kde(tail_samples)
                 tail_pdf = kde(tail_x_range)
 
-                color = colors.get(spec.name, "#333333")
-                ax_tail.plot(tail_x_range, tail_pdf, label=spec.name.capitalize(),
-                            color=color, linewidth=2, alpha=0.8)
+                # Get style for this model
+                style = model_styles.get(spec.name, default_style)
+                ax_tail.plot(
+                    tail_x_range, tail_pdf,
+                    label=spec.name.capitalize(),
+                    color=style["color"],
+                    linestyle=style["linestyle"],
+                    linewidth=2.5,
+                    alpha=0.9
+                )
         except Exception as e:
             log.warning(f"Failed to plot tail for {spec.name}: {e}")
 
