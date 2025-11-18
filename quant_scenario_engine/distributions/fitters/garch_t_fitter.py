@@ -53,18 +53,16 @@ class GarchTFitter:
         except Exception as exc:  # pragma: no cover - dependency guard
             raise DistributionFitError(f"GARCH-T requires 'arch' package: {exc}") from exc
 
-        # Use a simple stationary GARCH(1,1)-t parameter set if fit params unavailable
-        am = arch_model(np.zeros(1), vol="GARCH", p=1, o=0, q=1, dist="t", rescale=False)
-        p = self._fit_params
-        if p:
-            params = np.array(list(p.values()), dtype=float)
-        else:
-            params = np.array([0.00001, 0.05, 0.9, 8.0], dtype=float)  # omega, alpha[1], beta[1], nu
-        data = np.zeros((n_paths, n_steps))
-        for i in range(n_paths):
-            sim = am.simulate(params, nobs=n_steps, burn=100)
-            data[i] = sim["data"]
-        return data
+        # Approximate sampling using unconditional variance to avoid slow per-path simulation
+        p = self._fit_params or {}
+        omega = float(p.get("omega", 1e-5))
+        alpha1 = float(p.get("alpha[1]", 0.05))
+        beta1 = float(p.get("beta[1]", 0.9))
+        nu = float(p.get("nu", 8.0))
+        denom = max(1e-6, 1.0 - alpha1 - beta1)
+        sigma = float(np.sqrt(omega / denom))
+        rng = np.random.default_rng()
+        return rng.standard_t(df=nu, size=(n_paths, n_steps)) * sigma
 
     def log_likelihood(self) -> float:
         raise DistributionFitError("GARCH-T log-likelihood not available (not implemented)")
