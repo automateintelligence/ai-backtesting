@@ -6,14 +6,14 @@ evaluating their suitability for financial returns, and selecting a "best" model
 for Monte Carlo simulation based on tail behavior, VaR backtests, and volatility
 clustering.
 
-ADAPTATION STATUS (Per T137 - User Story 6a):
+ADAPTATION STATUS:
 This sophisticated stub must be adapted to align with spec.md US6a (lines 131-271)
 and tasks.md Phase 7a (T137-T182). The core architecture is sound, but specific
 modifications are needed to meet all acceptance scenarios (AS1-AS12).
 
 KEY ADAPTATIONS NEEDED:
-1. Preprocessing pipeline (AS1, T138-T142): Add stationarity checks, outlier detection
-2. Goodness-of-fit enhancements (AS2, T143-T145): Add excess kurtosis validation (≥1.0)
+X 1. Preprocessing pipeline (AS1, T138-T142): Add stationarity checks, outlier detection
+X 2. Goodness-of-fit enhancements (AS2, T143-T145): Add excess kurtosis validation (≥1.0)
 3. Tail diagnostics (AS3, T146-T149): Add 99.5% quantile, comprehensive Q-Q plots
 4. VaR backtesting (AS4, T150-T155): Implement Kupiec/Christoffersen statistical tests
 5. Model selection scoring (AS6, T164-T168): Update weights to (0.2, 0.4, 0.3, 0.1)
@@ -28,7 +28,7 @@ See tasks.md Phase 7a for detailed implementation tasks.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Sequence
 
 import numpy as np
@@ -40,6 +40,7 @@ from quant_scenario_engine.distributions.fitters.student_t_fitter import Student
 from quant_scenario_engine.distributions.metrics.information_criteria import aic as calc_aic, bic as calc_bic
 from quant_scenario_engine.distributions.models import FitResult
 from quant_scenario_engine.distributions.metrics.model_ranking import rank_by_information_criteria
+from quant_scenario_engine.distributions.diagnostics.tail_report import build_tail_report
 from quant_scenario_engine.exceptions import DistributionFitError
 from quant_scenario_engine.interfaces.distribution import ReturnDistribution
 from quant_scenario_engine.utils.logging import get_logger
@@ -126,6 +127,7 @@ class DistributionAuditResult:
     scores: List[ModelScore]
     best_model: Optional[ModelSpec] = None
     best_fit: Optional[FitResult] = None
+    tail_reports: Dict[str, dict] = field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------
@@ -679,6 +681,16 @@ def audit_distributions_for_symbol(
     )
     best_fit = select_best_fit(fit_results, best_model)
 
+    # Tail diagnostics (QQ/tail errors/kurtosis) per model
+    tail_reports: Dict[str, dict] = {}
+    for spec in candidate_models:
+        try:
+            fitter = spec.cls if hasattr(spec.cls, "sample") else spec.cls()
+            samples = fitter.sample(n_paths=50_000, n_steps=1).reshape(-1)  # type: ignore[attr-defined]
+            tail_reports[spec.name] = build_tail_report(r_train, samples)
+        except Exception as exc:
+            log.warning("tail diagnostics failed", extra={"model": spec.name, "error": str(exc)})
+
     # Generate fit diagnostic plots if requested
     if plot_fit:
         from pathlib import Path
@@ -714,6 +726,7 @@ def audit_distributions_for_symbol(
         scores=scores,
         best_model=best_model,
         best_fit=best_fit,
+        tail_reports=tail_reports,
     )
 
 

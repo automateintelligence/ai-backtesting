@@ -554,10 +554,10 @@ def mock_run_config():
 
 #### Tail Fit Diagnostics (US6a AS3)
 
-- [ ] T146 [P] [US6a] Implement QQ plot generation in quant_scenario_engine/distributions/diagnostics/qq_plots.py comparing empirical vs model quantiles focusing on ±2σ tails per spec.md US6a AS3 (use matplotlib/seaborn, leverage T137 stub visualizations)
-- [ ] T147 [P] [US6a] Create tail error metric calculator in quant_scenario_engine/distributions/diagnostics/tail_metrics.py computing tail_error_99 = |VaR_model(0.99) - VaR_emp(0.99)| / |VaR_emp(0.99)| at 95%, 99%, 99.5% quantiles per spec.md US6a AS3
-- [ ] T148 [P] [US6a] Implement excess kurtosis validation in quant_scenario_engine/distributions/diagnostics/kurtosis.py comparing fitted vs empirical kurtosis with ≥1.0 requirement per spec.md US6a AS3/FR-037
-- [ ] T149 [US6a] Create tail diagnostic report generator in quant_scenario_engine/distributions/diagnostics/tail_report.py aggregating QQ plots, tail errors, kurtosis checks per spec.md US6a AS3
+- [X] T146 [P] [US6a] Implement QQ plot generation in quant_scenario_engine/distributions/diagnostics/qq_plots.py comparing empirical vs model quantiles focusing on ±2σ tails per spec.md US6a AS3 (use matplotlib/seaborn, leverage T137 stub visualizations)
+- [X] T147 [P] [US6a] Create tail error metric calculator in quant_scenario_engine/distributions/diagnostics/tail_metrics.py computing tail_error_99 = |VaR_model(0.99) - VaR_emp(0.99)| / |VaR_emp(0.99)| at 95%, 99%, 99.5% quantiles per spec.md US6a AS3
+- [X] T148 [P] [US6a] Implement excess kurtosis validation in quant_scenario_engine/distributions/diagnostics/kurtosis.py comparing fitted vs empirical kurtosis with ≥1.0 requirement per spec.md US6a AS3/FR-037
+- [X] T149 [US6a] Create tail diagnostic report generator in quant_scenario_engine/distributions/diagnostics/tail_report.py aggregating QQ plots, tail errors, kurtosis checks per spec.md US6a AS3
 
 #### VaR Backtesting (US6a AS4)
 
