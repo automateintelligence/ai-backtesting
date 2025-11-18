@@ -25,6 +25,8 @@ class GarchTFitter:
             res = am.fit(disp="off", update_freq=0, show_warning=False)
             params = {k: float(v) for k, v in res.params.items()}
             loglik = float(res.loglikelihood)
+            converged_attr = getattr(res, "converged", None)
+            converged = bool(converged_attr) if converged_attr is not None else bool(getattr(res, "convergence", 0) == 0)
             warnings: list[str] = []
             return FitResult(
                 model_name=self.name,
@@ -33,9 +35,9 @@ class GarchTFitter:
                 bic=float(res.bic),
                 params=params,
                 n=len(returns),
-                converged=bool(res.converged),
+                converged=converged,
                 heavy_tailed=True,
-                fit_success=bool(res.converged),
+                fit_success=converged,
                 warnings=warnings,
             )
         except Exception as exc:
