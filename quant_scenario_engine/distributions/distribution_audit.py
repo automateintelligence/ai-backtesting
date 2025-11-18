@@ -492,24 +492,36 @@ def select_best_model(
 ) -> Optional[ModelSpec]:
     """
     Select the best model by score, optionally requiring it to be heavy-tailed.
+    Falls back to best available fit if heavy-tailed models are unavailable.
     """
     score_by_name = {s.model_name: s for s in scores}
-    fit_by_name = {fr.model_name: fr for fr in fit_results}
+    fit_by_name = {fr.model_name: fr for fr in fit_results if fr.fit_success}
 
-    # Filter on heavy tail if required
+    def _best(names: List[str]) -> Optional[str]:
+        if not names:
+            return None
+        return max(names, key=lambda n: score_by_name[n].total_score)
+
     eligible_names: List[str] = []
-    for name in score_by_name.keys():
-        if not require_heavy_tails:
-            eligible_names.append(name)
-        else:
-            fr = fit_by_name.get(name)
-            if fr and fr.heavy_tailed and fr.fit_success:
-                eligible_names.append(name)
+    if require_heavy_tails:
+        eligible_names = [
+            name
+            for name, fr in fit_by_name.items()
+            if fr.heavy_tailed is True and name in score_by_name
+        ]
 
-    if not eligible_names:
+    best_name = _best(eligible_names)
+    if best_name is None:
+        # Fallback: any fit_success model
+        log.warning(
+            "no heavy-tailed models available; falling back to best available fit",
+            extra={"candidates": list(fit_by_name.keys())},
+        )
+        best_name = _best(list(fit_by_name.keys()))
+
+    if best_name is None:
         return None
 
-    best_name = max(eligible_names, key=lambda n: score_by_name[n].total_score)
     for spec in candidate_models:
         if spec.name == best_name:
             return spec

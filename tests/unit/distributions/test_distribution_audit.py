@@ -17,3 +17,12 @@ def test_audit_selects_best_model_and_reports_failures():
     # Best model should be chosen among successful fits
     assert result.best_model is not None
     assert result.best_model.name in {"laplace", "student_t"}
+
+
+def test_audit_falls_back_when_no_heavy_tail_available():
+    prices = pd.Series(np.linspace(100, 120, 100))
+    result = audit_distributions_for_symbol("TEST", prices, train_fraction=0.9, require_heavy_tails=True)
+
+    # Laplace may not meet heavy-tail check, but we should still select best available with warning fallback
+    assert result.best_model is not None
+    assert result.best_model.name in {"laplace", "student_t"}
