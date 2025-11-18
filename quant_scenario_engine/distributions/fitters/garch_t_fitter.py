@@ -53,7 +53,7 @@ class GarchTFitter:
         # Use a simple stationary GARCH(1,1)-t parameter set if fit params unavailable
         am = arch_model(None, vol="GARCH", p=1, o=0, q=1, dist="t", rescale=False)
         params = np.array([0.00001, 0.05, 0.9, 8.0])  # omega, alpha[1], beta[1], nu
-        sim = am.simulate(params, nobs=n_steps, repetitions=n_paths)
+        sim = am.simulate(params, nobs=n_steps, reps=n_paths)
         return sim["data"]
 
     def log_likelihood(self) -> float:
