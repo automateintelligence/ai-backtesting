@@ -2558,4 +2558,68 @@ OK.  I read through planning/Stock_Candidate_Screening_README.md.  We need to up
 
   /speckit.implement "Verify acceptance criteria for US5. Implement incomplete US6. Run the tests yourself until there are blocking issues that need my external intervention, then document the issue using 'gh issue create'. Once the issue is created, you may proceed to the next phase unless it is blocked by the untested phase. Be sure to commit with a detailed message after each phase is completed.  Be sure to follow the workflow in '.codex/speckit.implement.md'. "
 
+  Summary: US6a Tasks Added to tasks.md
+
+  Location
+
+  Phase 7a inserted between Phase 7 (US6) and Phase 8 (US7) at line 529
+
+  Task Range
+
+  T137 - T181 (45 new tasks total)
+
+  Task Breakdown by Component
+
+  1. Preprocessing and Model Fitting (T137-T141): 5 tasks
+    - LaplaceFitter, StudentTFitter, GARCHTFitter classes
+    - Stationarity validation, FitResult dataclass
+  2. Goodness-of-Fit Metrics (T142-T144): 3 tasks
+    - AIC/BIC computation, model ranking, log-likelihood
+  3. Tail Fit Diagnostics (T145-T148): 4 tasks
+    - QQ plots, tail error metrics, excess kurtosis, diagnostic reports
+  4. VaR Backtesting (T149-T154): 6 tasks
+    - Train/test split, Kupiec test, Christoffersen test, VaR predictor, breach counter, backtest report
+  5. Simulation Realism Validation (T155-T162): 8 tasks
+    - MC path generator, volatility/clustering/drawdown calculators, extreme moves, historical metrics, distribution compare,
+   realism report
+  6. Model Selection and Scoring (T163-T167): 5 tasks
+    - AIC normalization, composite scoring, constraint validation, model selector, selection report
+  7. Caching and Reproducibility (T168-T171): 4 tasks
+    - Cache manager, result serializer, --force-refit flag, deterministic seeding
+  8. Integration with US1/US6 (T172-T175): 4 tasks
+    - Model loader, metadata logger, cache age warning, fallback handler
+  9. CLI Command (T176-T178): 3 tasks
+    - audit-distributions command, orchestrator wiring, output formatter
+  10. Error Handling (T179-T181): 3 tasks
+    - Insufficient data handler, convergence failure handler, audit failure logic
+
+  Parallelization Opportunities
+
+  21 tasks marked with [P] can be executed in parallel:
+  - T137, T138, T140 (fitters)
+  - T142, T143 (metrics)
+  - T145, T146, T147 (diagnostics)
+  - T150, T151 (statistical tests)
+  - T156, T157, T158, T159 (calculators)
+  - T168, T169 (caching)
+  - T179, T180 (error handlers)
+
+  Key Features
+
+  - All tasks follow strict checklist format: - [ ] T### [P?] [US6a] Description with file path
+  - Each task maps to specific acceptance scenarios (AS1-AS12) from spec.md
+  - References relevant FRs (FR-002, FR-020, FR-032, FR-037, FR-034)
+  - Exact file paths specified for every implementation
+  - Clear checkpoint at end validates complete US6a delivery
+
+  Integration Points
+
+  The tasks properly integrate with:
+  - US1 (basic Monte Carlo): Auto-load validated models
+  - US6 (conditional Monte Carlo): State-conditioned with validated distributions
+  - Existing infrastructure: Uses data loading, log returns from Phase 2
+
+
    /speckit.implement "Implement Phase 7a: User Story 6a. Be sure to pay particular attention to how this development must be integrated into the repo in regards to US1 and US6. Run the tests after each stage of development. Be sure to commit with a detailed message after each phase is completed.  Be sure to follow the workflow in '.codex/speckit.implement.md'"
+
+   1) I committed the working tree, it is clean.  2) I want to be very careful with fallbacks for distribution fits.  If there is a reason that one of the models it not fitting, I want to see real-time feedback on that so it can be addressed, if possible.  Do not fall back to a poorly fit dictribution without any warnings.  
