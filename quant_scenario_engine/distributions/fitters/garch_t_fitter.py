@@ -23,14 +23,76 @@ class GarchTFitter:
             raise DistributionFitError(f"GARCH-T requires 'arch' package: {exc}") from exc
 
         try:
-            am = arch_model(returns, vol="GARCH", p=1, o=0, q=1, dist="t", rescale=False)
-            res = am.fit(disp="off", update_freq=0, show_warning=False)
+            # Use rescaling for numerical stability (arch auto-rescales to ~unit variance)
+            am = arch_model(
+                returns,
+                mean="Zero",  # Log returns should have near-zero mean
+                vol="GARCH",
+                p=1,
+                o=0,
+                q=1,
+                dist="t",
+                rescale=True,  # Enable auto-rescaling for numerical stability
+            )
+
+            # Fit with robust optimization settings
+            res = am.fit(
+                update_freq=0,
+                disp="off",
+                show_warning=False,
+                options={
+                    "maxiter": 1000,  # More iterations for convergence
+                    "ftol": 1e-8,     # Function tolerance
+                },
+            )
+
+            # Extract parameters
             params = {k: float(v) for k, v in res.params.items()}
             loglik = float(res.loglikelihood)
+
+            # Check convergence
             converged_attr = getattr(res, "converged", None)
             converged = bool(converged_attr) if converged_attr is not None else bool(getattr(res, "convergence", 0) == 0)
+
+            # Validate fitted parameters (detect degenerate solutions)
             warnings: list[str] = []
+            omega = params.get("omega", 0.0)
+            alpha1 = params.get("alpha[1]", 0.0)
+            beta1 = params.get("beta[1]", 0.0)
+            nu = params.get("nu", 5.0)
+
+            # Check for degenerate GARCH parameters
+            persistence = alpha1 + beta1
+            if persistence < 0.1:
+                warnings.append(
+                    f"Low GARCH persistence (α+β={persistence:.4f}). "
+                    "Model may not capture volatility clustering."
+                )
+                # Downgrade fit_success but don't fail completely
+                converged = False
+
+            if persistence >= 1.0:
+                warnings.append(
+                    f"Non-stationary GARCH (α+β={persistence:.4f} ≥ 1). "
+                    "Variance process is explosive."
+                )
+                converged = False
+
+            if omega <= 0 or alpha1 < 0 or beta1 < 0:
+                warnings.append(
+                    f"Invalid parameter signs: ω={omega:.6f}, α={alpha1:.6f}, β={beta1:.6f}"
+                )
+                converged = False
+
+            if nu <= 2.0:
+                warnings.append(
+                    f"Student-t degrees of freedom too low (ν={nu:.2f} ≤ 2). "
+                    "Variance may be undefined."
+                )
+
+            # Store fitted params for sampling
             self._fit_params = params
+
             return FitResult(
                 model_name=self.name,
                 log_likelihood=loglik,
@@ -39,8 +101,8 @@ class GarchTFitter:
                 params=params,
                 n=len(returns),
                 converged=converged,
-                heavy_tailed=True,
-                fit_success=converged,
+                heavy_tailed=True,  # Student-t always heavy-tailed if nu < 30
+                fit_success=converged and not warnings,
                 warnings=warnings,
             )
         except Exception as exc:
@@ -53,14 +115,34 @@ class GarchTFitter:
         except Exception as exc:  # pragma: no cover - dependency guard
             raise DistributionFitError(f"GARCH-T requires 'arch' package: {exc}") from exc
 
-        # Approximate sampling using unconditional variance to avoid slow per-path simulation
-        p = self._fit_params or {}
+        if not self._fit_params:
+            raise DistributionFitError("GarchTFitter.sample called before fit")
+
+        # Approximate sampling using unconditional variance
+        # NOTE: This doesn't capture time-varying volatility (conditional GARCH dynamics)
+        # but is much faster than per-path recursive simulation
+        p = self._fit_params
         omega = float(p.get("omega", 1e-5))
         alpha1 = float(p.get("alpha[1]", 0.05))
         beta1 = float(p.get("beta[1]", 0.9))
         nu = float(p.get("nu", 8.0))
-        denom = max(1e-6, 1.0 - alpha1 - beta1)
-        sigma = float(np.sqrt(omega / denom))
+
+        # Check for degenerate parameters
+        persistence = alpha1 + beta1
+        if persistence < 0.01:
+            # Degenerate GARCH: fall back to i.i.d. Student-t with empirical volatility
+            # Use omega as the variance estimate (since α+β ≈ 0 means σ² ≈ ω)
+            sigma = float(np.sqrt(max(omega, 1e-8)))
+        elif persistence >= 1.0:
+            # Non-stationary: no unconditional variance exists
+            # Use bounded approximation to avoid explosion
+            sigma = float(np.sqrt(omega / 0.01))  # Cap persistence at 0.99
+        else:
+            # Standard unconditional variance formula: σ² = ω / (1 - α - β)
+            denom = 1.0 - persistence
+            sigma = float(np.sqrt(omega / denom))
+
+        # Generate i.i.d. Student-t samples with unconditional volatility
         rng = np.random.default_rng(seed)
         return rng.standard_t(df=nu, size=(n_paths, n_steps)) * sigma
 
