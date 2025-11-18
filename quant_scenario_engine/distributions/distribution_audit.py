@@ -30,7 +30,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Sequence
-
+from pathlib import Path
 import numpy as np
 import pandas as pd
 
@@ -51,6 +51,8 @@ from quant_scenario_engine.distributions.validation.mc_path_generator import gen
 from quant_scenario_engine.distributions.validation.volatility_calc import annualized_volatility
 from quant_scenario_engine.distributions.validation.clustering_calc import autocorr_squared_returns
 from quant_scenario_engine.distributions.validation.extreme_moves import extreme_move_frequencies
+from quant_scenario_engine.distributions.cache.cache_manager import get_cache_path, is_fresh, load_cache, save_cache, TTL_DAYS
+from quant_scenario_engine.distributions.cache.serializer import serialize_payload, deserialize_payload, to_dict
 from quant_scenario_engine.exceptions import DistributionFitError
 from quant_scenario_engine.interfaces.distribution import ReturnDistribution
 from quant_scenario_engine.utils.logging import get_logger
@@ -572,6 +574,12 @@ def audit_distributions_for_symbol(
     require_heavy_tails: bool = True,
     plot_fit: bool = False,
     plot_output_path: Optional[str] = None,
+    cache_dir: str | None = None,
+    lookback_days: int | None = None,
+    end_date: str | None = None,
+    data_source: str | None = None,
+    force_refit: bool = False,
+    seed: int | None = None,
 ) -> DistributionAuditResult:
     """
     Run the full audit pipeline for a single symbol:
@@ -648,6 +656,20 @@ def audit_distributions_for_symbol(
         raise ValueError(f"Not enough data to audit distributions for {symbol}")
 
     log_returns = np.log(prices / prices.shift(1)).dropna().values
+
+    if seed is not None:
+        import random
+        np.random.seed(seed)
+        random.seed(seed)
+
+    cache_base = Path(cache_dir) if cache_dir else Path("output") / "distribution_audits"
+    cache_path = get_cache_path(cache_base, symbol, lookback_days, end_date, data_source)
+    if not force_refit and is_fresh(cache_path, ttl_days=TTL_DAYS):
+        cached = load_cache(cache_path)
+        if cached:
+            log.info("Loaded audit from cache", extra={"path": str(cache_path)})
+            data = deserialize_payload(json.dumps(cached))
+            return DistributionAuditResult(**data)  # type: ignore[arg-type]
 
     n = len(log_returns)
     n_train = max(50, int(train_fraction * n))
@@ -742,7 +764,6 @@ def audit_distributions_for_symbol(
 
     # Generate fit diagnostic plots if requested
     if plot_fit:
-        from pathlib import Path
         from quant_scenario_engine.distributions.plotting import plot_distribution_fits
 
         output_path = None
@@ -765,7 +786,7 @@ def audit_distributions_for_symbol(
         except Exception as exc:
             log.warning(f"Failed to generate fit plots for {symbol}: {exc}")
 
-    return DistributionAuditResult(
+    result = DistributionAuditResult(
         symbol=symbol,
         models=list(candidate_models),
         fit_results=fit_results,
@@ -779,6 +800,15 @@ def audit_distributions_for_symbol(
         realism_reports=realism_reports,
         selection_report=selection_report,
     )
+
+    # Save to cache if enabled
+    try:
+        payload = serialize_payload(result)
+        save_cache(cache_path, json.loads(payload))
+    except Exception as exc:
+        log.warning("Failed to cache audit result", extra={"error": str(exc)})
+
+    return result
 
 
 def fit_best_distribution_for_returns(
