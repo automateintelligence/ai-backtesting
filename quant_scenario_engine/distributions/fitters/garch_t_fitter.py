@@ -14,6 +14,8 @@ class GarchTFitter:
     k = 4  # omega, alpha, beta, nu (rough estimate for criteria)
     def __init__(self) -> None:
         self._fit_params = None
+        self._scale_factor = None  # Store scale factor for rescaling samples
+        self._fit_result = None  # Store arch model result for simulation
 
     def fit(self, returns: np.ndarray) -> FitResult:
         ensure_min_samples(returns, self.name)
@@ -23,33 +25,22 @@ class GarchTFitter:
             raise DistributionFitError(f"GARCH-T requires 'arch' package: {exc}") from exc
 
         try:
-            # Estimate good starting values
-            vol_estimate = float(np.std(returns))
-
-            # Build model WITHOUT rescaling (keeps parameters in original scale)
+            # Build model WITH rescaling for numerical stability
+            # rescale=True prevents false convergence due to tiny parameter values
             am = arch_model(
                 returns,
-                mean="Zero",  # Log returns should have near-zero mean
+                mean="Constant",  # Estimate mean parameter
                 vol="GARCH",
                 p=1,
                 o=0,
                 q=1,
                 dist="t",
-                rescale=False,  # Keep parameters in original scale
+                rescale=True,  # CRITICAL: Enables proper optimization
             )
 
-            # Provide reasonable starting values
-            # omega: ~0.01 * var, alpha: 0.05-0.15, beta: 0.80-0.90, nu: 5-10
-            starting_values = np.array([
-                0.01 * vol_estimate ** 2,  # omega (small constant)
-                0.10,  # alpha[1] (ARCH effect)
-                0.85,  # beta[1] (GARCH effect)
-                6.0,   # nu (degrees of freedom for t-dist)
-            ])
-
-            # Fit with robust optimization settings and good starting point
+            # Fit with robust optimization settings
+            # Let arch auto-initialize starting values (works better with rescaling)
             res = am.fit(
-                starting_values=starting_values,
                 update_freq=0,
                 disp="off",
                 show_warning=False,
@@ -59,15 +50,19 @@ class GarchTFitter:
                 },
             )
 
-            # Extract parameters (in original scale since rescale=False)
+            # Extract parameters (in rescaled units) and scale factor
             params = {k: float(v) for k, v in res.params.items()}
             loglik = float(res.loglikelihood)
+
+            # Store scale factor for converting samples back to original scale
+            self._scale_factor = float(res.scale)
 
             # Check convergence
             converged_attr = getattr(res, "converged", None)
             converged = bool(converged_attr) if converged_attr is not None else bool(getattr(res, "convergence", 0) == 0)
 
             # Validate fitted parameters (detect degenerate solutions)
+            # Note: Parameters are in rescaled units
             warnings: list[str] = []
             omega = params.get("omega", 0.0)
             alpha1 = params.get("alpha[1]", 0.0)
@@ -81,7 +76,6 @@ class GarchTFitter:
                     f"Low GARCH persistence (α+β={persistence:.4f}). "
                     "Model may not capture volatility clustering."
                 )
-                # Downgrade fit_success but don't fail completely
                 converged = False
 
             if persistence >= 1.0:
@@ -103,8 +97,9 @@ class GarchTFitter:
                     "Variance may be undefined."
                 )
 
-            # Store fitted params for sampling
+            # Store fitted params and model result for sampling
             self._fit_params = params
+            self._fit_result = res  # Store full result for simulate() method
 
             return FitResult(
                 model_name=self.name,
@@ -122,43 +117,43 @@ class GarchTFitter:
             raise DistributionFitError(f"GARCH-T fit failed: {exc}") from exc
 
     def sample(self, n_paths: int, n_steps: int, seed: int | None = None):
-        try:
-            from arch import arch_model  # type: ignore
-            import numpy as np
-        except Exception as exc:  # pragma: no cover - dependency guard
-            raise DistributionFitError(f"GARCH-T requires 'arch' package: {exc}") from exc
+        """
+        Sample from fitted GARCH-t distribution.
 
-        if not self._fit_params:
+        Uses arch model's simulate() method which properly handles conditional
+        volatility dynamics, then rescales back to original data scale.
+
+        Parameters
+        ----------
+        n_paths : int
+            Number of independent paths to generate
+        n_steps : int
+            Number of time steps per path
+        seed : int | None
+            Random seed for reproducibility
+
+        Returns
+        -------
+        np.ndarray
+            Simulated returns in original scale, shape (n_paths, n_steps)
+        """
+        if self._fit_result is None or self._scale_factor is None:
             raise DistributionFitError("GarchTFitter.sample called before fit")
 
-        # Approximate sampling using unconditional variance
-        # NOTE: This doesn't capture time-varying volatility (conditional GARCH dynamics)
-        # but is much faster than per-path recursive simulation
-        p = self._fit_params
-        omega = float(p.get("omega", 1e-5))
-        alpha1 = float(p.get("alpha[1]", 0.05))
-        beta1 = float(p.get("beta[1]", 0.9))
-        nu = float(p.get("nu", 8.0))
+        # Set random seed if provided
+        if seed is not None:
+            np.random.seed(seed)
 
-        # Check for degenerate parameters
-        persistence = alpha1 + beta1
-        if persistence < 0.01:
-            # Degenerate GARCH: fall back to i.i.d. Student-t with empirical volatility
-            # Use omega as the variance estimate (since α+β ≈ 0 means σ² ≈ ω)
-            sigma = float(np.sqrt(max(omega, 1e-8)))
-        elif persistence >= 1.0:
-            # Non-stationary: no unconditional variance exists
-            # Use bounded approximation to avoid explosion
-            sigma = float(np.sqrt(omega / 0.01))  # Cap persistence at 0.99
-        else:
-            # Standard unconditional variance formula: σ² = ω / (1 - α - β)
-            # Parameters are in original scale (rescale=False)
-            denom = 1.0 - persistence
-            sigma = float(np.sqrt(omega / denom))
+        # Generate paths using arch model's simulate method
+        # This properly handles GARCH conditional volatility dynamics
+        all_paths = []
+        for _ in range(n_paths):
+            sim = self._fit_result.model.simulate(self._fit_result.params, nobs=n_steps)
+            # Rescale back to original data scale
+            path = sim.data.values / self._scale_factor
+            all_paths.append(path)
 
-        # Generate i.i.d. Student-t samples with unconditional volatility
-        rng = np.random.default_rng(seed)
-        return rng.standard_t(df=nu, size=(n_paths, n_steps)) * sigma
+        return np.array(all_paths)
 
     def log_likelihood(self) -> float:
         raise DistributionFitError("GARCH-T log-likelihood not available (not implemented)")
