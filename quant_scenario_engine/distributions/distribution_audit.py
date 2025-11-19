@@ -370,8 +370,11 @@ def simulate_paths_and_metrics(
             fitter = spec.cls if isinstance(spec.cls, object) else spec.cls()
             r = fitter.sample(n_paths=paths, n_steps=steps)  # type: ignore[attr-defined]
             # Price paths
-            log_s = np.log(s0) + np.cumsum(r, axis=1)
+            log_s0 = np.log(max(s0, 1e-9))
+            log_s = log_s0 + np.cumsum(r, axis=1)
+            log_s = np.clip(log_s, -50, 50)  # prevent overflow
             prices = np.exp(log_s)
+            prices = np.clip(prices, 1e-8, None)
 
             # Daily returns on prices for metrics
             px = prices
