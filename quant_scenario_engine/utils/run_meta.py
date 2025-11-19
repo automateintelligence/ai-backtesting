@@ -19,6 +19,7 @@ def build_run_meta(
     drift_status: str | None = None,
     iv_source: str | None = None,
     parameter_stability: str | None = None,
+    distribution_audit: dict[str, Any] | None = None,
 ) -> RunMeta:
     return RunMeta.capture_context(
         run_id=run_id,
@@ -32,5 +33,5 @@ def build_run_meta(
         drift_status=drift_status,
         iv_source=iv_source,
         parameter_stability=parameter_stability,
+        distribution_audit=distribution_audit,
     )
-

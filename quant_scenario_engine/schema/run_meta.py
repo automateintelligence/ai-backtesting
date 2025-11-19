@@ -32,6 +32,7 @@ class RunMeta:
     var_method: str | None = None
     lookback_window: int | None = None
     reproducibility: ReproducibilityContext | None = None
+    distribution_audit: dict[str, Any] | None = None
 
     def to_json(self) -> str:
         return json.dumps(asdict(self), indent=2)
@@ -61,6 +62,7 @@ class RunMeta:
         drift_status: str | None = None,
         iv_source: str | None = None,
         parameter_stability: str | None = None,
+        distribution_audit: dict[str, Any] | None = None,
     ) -> RunMeta:
         reproducibility = ReproducibilityContext(
             seed=seed,
@@ -84,6 +86,7 @@ class RunMeta:
             var_method=var_method,
             lookback_window=lookback_window,
             reproducibility=reproducibility,
+            distribution_audit=distribution_audit,
         )
 
 
@@ -103,4 +106,3 @@ def _capture_git_sha() -> str | None:
         return subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
     except Exception:
         return None
-

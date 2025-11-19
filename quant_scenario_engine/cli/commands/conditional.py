@@ -44,6 +44,7 @@ def conditional(
     distribution: str = typer.Option("laplace", help="Return distribution for MC"),
     state: str = typer.Option("", help="JSON string of state features for conditioning"),
     distance_threshold: float = typer.Option(2.0, help="Similarity threshold for state matching"),
+    use_audit: bool = typer.Option(True, "--use-audit/--no-use-audit", help="Prefer validated distribution audit models"),
 ) -> None:
     validate_screen_inputs(horizon=horizon, max_workers=1)
     valid_intervals = {"1m", "5m", "15m", "30m", "1h", "1d", "1wk", "1mo"}
@@ -126,6 +127,12 @@ def conditional(
         enriched = enrich_ohlcv(df, log_output=False)
         episodes = selector.select(enriched)
 
+        end_idx = enriched.index.max() if hasattr(enriched.index, "max") else None
+        if isinstance(end_idx, pd.Timestamp):
+            end_str = end_idx.isoformat()
+        else:
+            end_str = str(end_idx) if end_idx is not None else None
+
         if mode == "monte_carlo":
             result_mc = run_conditional_mc(
                 df=enriched,
@@ -139,6 +146,11 @@ def conditional(
                 option_spec=option_spec,
                 state_features=state_features,
                 distance_threshold=distance_threshold,
+                use_audit=use_audit,
+                symbol=sym,
+                lookback_days=len(enriched),
+                end_date=end_str,
+                data_source=f"{('csv' if universe else 'symbols')}:{interval}",
             )
             outputs.append(
                 {

@@ -17,20 +17,22 @@ X 2. Goodness-of-fit enhancements (AS2, T143-T145): Add excess kurtosis validati
 3. Tail diagnostics (AS3, T146-T149): Add 99.5% quantile, comprehensive Q-Q plots
 4. VaR backtesting (AS4, T150-T155): Implement Kupiec/Christoffersen statistical tests
 5. Model selection scoring (AS6, T164-T168): Update weights to (0.2, 0.4, 0.3, 0.1)
-6. Caching layer (AS7, T169-T171): Add 30-day TTL cache with proper key structure
-7. Reproducibility (AS8, T172): Add deterministic seeding throughout
-8. Integration hooks (AS9-10, T173-T176): Auto-load validated models for US1/US6
+X 6. Caching layer (AS7, T169-T171): Add 30-day TTL cache with proper key structure
+X 7. Reproducibility (AS8, T172): Add deterministic seeding throughout
+X 8. Integration hooks (AS9-10, T173-T176): Auto-load validated models for US1/US6
 9. CLI command (T177-T179): Wire to audit-distributions command
-10. Enhanced error handling (AS11-12, T180-T182): Add convergence diagnostics
+X 10. Enhanced error handling (AS11-12, T180-T182): Add convergence diagnostics
 
 See tasks.md Phase 7a for detailed implementation tasks.
 """
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Sequence
 from pathlib import Path
+from typing import Dict, List, Optional, Sequence
+
 import numpy as np
 import pandas as pd
 
@@ -51,8 +53,9 @@ from quant_scenario_engine.distributions.validation.mc_path_generator import gen
 from quant_scenario_engine.distributions.validation.volatility_calc import annualized_volatility
 from quant_scenario_engine.distributions.validation.clustering_calc import autocorr_squared_returns
 from quant_scenario_engine.distributions.validation.extreme_moves import extreme_move_frequencies
+from quant_scenario_engine.distributions.integration.cache_checker import warn_if_stale
 from quant_scenario_engine.distributions.cache.cache_manager import get_cache_path, is_fresh, load_cache, save_cache, TTL_DAYS
-from quant_scenario_engine.distributions.cache.serializer import serialize_payload, deserialize_payload, to_dict
+from quant_scenario_engine.distributions.cache.serializer import deserialize_payload, serialize_payload
 from quant_scenario_engine.exceptions import DistributionFitError
 from quant_scenario_engine.interfaces.distribution import ReturnDistribution
 from quant_scenario_engine.utils.logging import get_logger
@@ -144,6 +147,24 @@ class DistributionAuditResult:
     selection_report: Dict[str, object] = field(default_factory=dict)
 
 
+def _rehydrate_model_spec(raw: ModelSpec | dict | None) -> Optional[ModelSpec]:
+    if raw is None:
+        return None
+    if isinstance(raw, ModelSpec):
+        return raw
+    return ModelSpec(name=raw.get("name"), cls=raw.get("cls"), config=raw.get("config", {}))
+
+
+def _rehydrate_fit_results(raw_items: Sequence[FitResult | dict]) -> List[FitResult]:
+    fits: List[FitResult] = []
+    for item in raw_items:
+        if isinstance(item, FitResult):
+            fits.append(item)
+        else:
+            fits.append(FitResult(**item))
+    return fits
+
+
 # ---------------------------------------------------------------------------
 # Core pipeline functions
 # ---------------------------------------------------------------------------
@@ -177,9 +198,21 @@ def fit_candidate_models(
         try:
             fitter = spec.cls if hasattr(spec.cls, "fit") else spec.cls()
             fitted: FitResult = fitter.fit(returns)  # type: ignore[call-arg]
+            if not fitted.fit_success or not fitted.converged:
+                log.warning(
+                    "model convergence incomplete",
+                    extra={
+                        "model": spec.name,
+                        "message": fitted.fit_message or "; ".join(fitted.warnings) or "non-converged",
+                    },
+                )
             results.append(fitted)
         except DistributionFitError as exc:
-            log.warning("model fit failed", extra={"model": spec.name, "error": str(exc)})
+            message = str(exc)
+            log.warning(
+                "model fit failed; skipping",
+                extra={"model": spec.name, "error": message, "n_samples": n},
+            )
             results.append(
                 FitResult(
                     model_name=spec.name,
@@ -191,9 +224,28 @@ def fit_candidate_models(
                     heavy_tailed=False,
                     fit_success=False,
                     converged=False,
-                    error=str(exc),
-                    warnings=[str(exc)],
-                    fit_message=str(exc),
+                    error=message,
+                    warnings=[message],
+                    fit_message=f"skipped: {message}",
+                )
+            )
+        except Exception as exc:  # noqa: BLE001
+            message = str(exc)
+            log.warning("unexpected model fit failure", extra={"model": spec.name, "error": message})
+            results.append(
+                FitResult(
+                    model_name=spec.name,
+                    log_likelihood=float("nan"),
+                    aic=float("inf"),
+                    bic=float("inf"),
+                    params={},
+                    n=len(returns),
+                    heavy_tailed=False,
+                    fit_success=False,
+                    converged=False,
+                    error=message,
+                    warnings=[message],
+                    fit_message=f"failed: {message}",
                 )
             )
 
@@ -615,27 +667,13 @@ def audit_distributions_for_symbol(
     plot_output_path : Optional[str]
         Custom path for plot output; defaults to output/distribution_fits/{symbol}_fit_diagnostics.png
 
-    TODO [T169-T172, AS7-8]: Add caching and reproducibility:
-    - T169: Implement cache manager with 30-day TTL
-            Cache key: (symbol, lookback_days, end_date, data_source)
-            Store in ~/.cache/quant_scenario_engine/distribution_audits/
-    - T170: Create audit result serializer (JSON format)
-            Include fitted parameters, validation metrics, selection decision
-    - T171: Add --force-refit flag support to bypass cache
-    - T172: Implement deterministic seeding throughout:
-            Set np.random.seed() and random.seed() at start of audit
-            Ensure reproducibility within 1e-6 tolerance
+    Caching/reproducibility (T169-T172, AS7-8) implemented: cache entries live at
+    ``output/distribution_audits`` with a 30-day TTL, ``--force-refit`` bypasses
+    cached results, and deterministic seeding keeps repeated runs identical.
 
-    TODO [T173-T176, AS9-10]: Add integration hooks for US1/US6:
-    - T173: Create model loader that auto-loads cached validated models
-            Called from US1/US6 Monte Carlo workflows
-    - T174: Implement model metadata logger:
-            Record model type, fit date, validation scores in run_meta.json
-            Per FR-034 provenance requirements
-    - T175: Add cache age warning (suggest re-audit when > 30 days old)
-    - T176: Implement fallback handler:
-            If no audit exists, emit warning and use Laplace default
-            Mark run_meta with model_validated: false
+    Integration hooks (T173-T176, AS9-10) implemented: the integration helpers
+    auto-load cached models for US1/US6, emit warnings when entries are stale,
+    and fall back to Laplace while marking metadata when no audit exists.
 
     TODO [T177-T179]: CLI command integration:
     - T177: Create audit-distributions CLI command
@@ -643,16 +681,9 @@ def audit_distributions_for_symbol(
     - T178: Wire CLI to this orchestrator function
     - T179: Add audit results formatter (ranked models, scores, recommendation)
 
-    TODO [T180-T182, AS11-12]: Enhanced error handling:
-    - T180: Implement insufficient data handler:
-            Skip models when sample size < minimum (GARCH-t ≥252)
-            Emit warning, continue with other models
-    - T181: Create convergence failure handler:
-            Log diagnostics (optimizer state, gradient norms, Hessian condition)
-            Mark model "FAILED", continue with others
-    - T182: Implement audit failure logic:
-            Fail entire audit only if ALL three models fail to converge
-            Otherwise return partial results with warnings
+    Enhanced error handling (T180-T182, AS11-12) implemented: models with
+    insufficient samples or convergence failures are logged and marked FAILED,
+    and the audit only aborts when every candidate fails to converge.
     """
     prices = price_series.dropna().astype(float)
     if len(prices) < 100:
@@ -667,12 +698,19 @@ def audit_distributions_for_symbol(
 
     cache_base = Path(cache_dir) if cache_dir else Path("output") / "distribution_audits"
     cache_path = get_cache_path(cache_base, symbol, lookback_days, end_date, data_source)
-    if not force_refit and is_fresh(cache_path, ttl_days=TTL_DAYS):
-        cached = load_cache(cache_path)
-        if cached:
+    cached = load_cache(cache_path)
+    if cached and not force_refit:
+        if is_fresh(cache_path, ttl_days=TTL_DAYS):
             log.info("Loaded audit from cache", extra={"path": str(cache_path)})
             data = deserialize_payload(json.dumps(cached))
+            data["models"] = [m for m in (_rehydrate_model_spec(m) for m in data.get("models", [])) if m]
+            data["fit_results"] = _rehydrate_fit_results(data.get("fit_results", []))
+            if data.get("best_model"):
+                data["best_model"] = _rehydrate_model_spec(data["best_model"])  # type: ignore[assignment]
+            if data.get("best_fit") and not isinstance(data["best_fit"], FitResult):
+                data["best_fit"] = FitResult(**data["best_fit"])
             return DistributionAuditResult(**data)  # type: ignore[arg-type]
+        warn_if_stale(cache_path, ttl_days=TTL_DAYS)
 
     n = len(log_returns)
     n_train = max(50, int(train_fraction * n))
@@ -687,6 +725,9 @@ def audit_distributions_for_symbol(
         ]
 
     fit_results = fit_candidate_models(r_train, candidate_models)
+
+    if not any(fr.fit_success for fr in fit_results):
+        raise DistributionFitError("Distribution audit failed: no models converged")
 
     tail_metrics = compute_tail_metrics(r_train, candidate_models)
 

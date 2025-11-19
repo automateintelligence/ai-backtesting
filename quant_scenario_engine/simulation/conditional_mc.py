@@ -11,7 +11,9 @@ import numpy as np
 import pandas as pd
 
 from quant_scenario_engine.distributions.factory import get_distribution
-from quant_scenario_engine.distributions.distribution_audit import fit_best_distribution_for_returns, instantiate_distribution
+from quant_scenario_engine.distributions.integration.metadata_logger import attach_metadata
+from quant_scenario_engine.distributions.integration.model_loader import load_validated_model
+from quant_scenario_engine.interfaces.distribution import ReturnDistribution
 from quant_scenario_engine.mc.conditional import ConditionalSelection, select_conditional_distribution
 from quant_scenario_engine.mc.generator import generate_price_paths
 from quant_scenario_engine.models.options import OptionSpec
@@ -86,7 +88,12 @@ def run_conditional_mc(
     option_spec: Optional[OptionSpec] = None,
     state_features: Dict[str, float] | None = None,
     distance_threshold: float = 2.0,
-    use_audit: bool = False,
+    use_audit: bool = True,
+    symbol: str | None = None,
+    lookback_days: int | None = None,
+    end_date: str | None = None,
+    data_source: str | None = None,
+    audit_cache_dir: str | None = None,
 ) -> ConditionalMCRun:
     """Run conditional Monte Carlo simulation from current state."""
 
@@ -99,6 +106,9 @@ def run_conditional_mc(
     prices = df_sorted["close"].to_numpy()
     log_returns = np.diff(np.log(prices))
 
+    if distribution == "audit":
+        use_audit = True
+
     def _force_laplace_fallback() -> ReturnDistribution:
         dist = get_distribution("laplace")
         # Manually set safe defaults to avoid heavy-tail fit constraints
@@ -106,18 +116,22 @@ def run_conditional_mc(
         dist.scale = 0.01  # type: ignore[attr-defined]
         return dist
 
-    if use_audit or distribution == "audit":
-        model_name, fit_result = fit_best_distribution_for_returns(log_returns, require_heavy_tails=True)
-        base_dist = instantiate_distribution(model_name)
-        try:
-            base_dist.fit(log_returns)
-        except Exception as exc:
-            log.warning(
-                "audit-selected distribution fit failed; falling back to Laplace with warning",
-                extra={"model": model_name, "error": str(exc)},
-            )
-            base_dist = _force_laplace_fallback()
-        log.info("distribution audit selected model", extra={"model": model_name, "aic": fit_result.aic, "bic": fit_result.bic})
+    audit_metadata: dict | None = None
+    if use_audit:
+        lookback_value = lookback_days or len(df_sorted)
+        loaded = load_validated_model(
+            symbol=symbol or "UNKNOWN",
+            lookback_days=lookback_value,
+            end_date=end_date,
+            data_source=data_source,
+            cache_dir=audit_cache_dir,
+        )
+        base_dist = loaded.distribution
+        audit_metadata = loaded.metadata
+        log.info(
+            "using validated distribution from audit",
+            extra={"symbol": symbol, "model": audit_metadata.get("model_name"), "validated": audit_metadata.get("model_validated")},
+        )
     else:
         base_dist = get_distribution(distribution)
         try:
@@ -150,6 +164,8 @@ def run_conditional_mc(
         "state_features": state_features or {},
         "distance_threshold": distance_threshold,
     }
+    if audit_metadata:
+        attach_metadata(run_meta, audit_metadata)
     log.info(
         "conditional MC completed",
         extra={

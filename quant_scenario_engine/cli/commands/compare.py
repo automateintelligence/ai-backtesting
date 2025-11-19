@@ -9,6 +9,7 @@ import typer
 from quant_scenario_engine.cli.validation import validate_compare_inputs
 from quant_scenario_engine.config.loader import load_config_with_precedence
 from quant_scenario_engine.distributions.factory import get_distribution
+from quant_scenario_engine.distributions.integration.model_loader import load_validated_model
 from quant_scenario_engine.exceptions import ConfigValidationError
 from quant_scenario_engine.models.options import OptionSpec
 from quant_scenario_engine.simulation.run import run_compare
@@ -34,6 +35,7 @@ def compare(
     maturity_days: int | None = typer.Option(None, help="Option maturity in days"),
     iv: float | None = typer.Option(None, help="Implied volatility"),
     rfr: float | None = typer.Option(None, help="Risk-free rate"),
+    use_audit: bool = typer.Option(True, "--use-audit/--no-use-audit", help="Prefer cached validated distribution models"),
 ) -> None:
     defaults = {
         "symbol": None,
@@ -48,6 +50,7 @@ def compare(
         "maturity_days": 30,
         "iv": 0.2,
         "rfr": 0.01,
+        "use_audit": True,
     }
     cli_values = {
         "symbol": symbol,
@@ -62,6 +65,7 @@ def compare(
         "maturity_days": maturity_days,
         "iv": iv,
         "rfr": rfr,
+        "use_audit": use_audit,
     }
     casters = {
         "symbol": str,
@@ -76,6 +80,7 @@ def compare(
         "maturity_days": int,
         "iv": float,
         "rfr": float,
+        "use_audit": lambda v: str(v).lower() in {"1", "true", "yes", "on"},
     }
 
     cfg = load_config_with_precedence(
@@ -102,11 +107,22 @@ def compare(
 
     progress = ProgressReporter(total=3, log=log, component="compare")
     log.info("Starting compare run", extra={"symbol": cfg["symbol"]})
-    dist = get_distribution(cfg["distribution"])
-    import numpy as np
+    dist = None
+    audit_metadata = None
+    if cfg.get("use_audit"):
+        loaded = load_validated_model(symbol=cfg["symbol"], lookback_days=None, end_date=None, data_source=None)
+        dist = loaded.distribution
+        audit_metadata = loaded.metadata
+        log.info(
+            "Using audit-driven distribution",
+            extra={"model": audit_metadata.get("model_name"), "validated": audit_metadata.get("model_validated")},
+        )
+    else:
+        dist = get_distribution(cfg["distribution"])
+        import numpy as np
 
-    dist.fit(np.random.laplace(0, 0.01, size=500))
-    progress.tick("Distribution fit complete")
+        dist.fit(np.random.laplace(0, 0.01, size=500))
+    progress.tick("Distribution ready")
 
     option_spec = OptionSpec(
         option_type="call",

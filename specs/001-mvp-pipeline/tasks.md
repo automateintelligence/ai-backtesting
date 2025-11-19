@@ -596,16 +596,16 @@ def mock_run_config():
 
 #### Integration with Monte Carlo Workflows (US6a AS9-10)
 
-- [ ] T173 [US6a] Create model loader in quant_scenario_engine/distributions/integration/model_loader.py auto-loading cached validated models for US1/US6 runs per spec.md US6a AS9
-- [ ] T174 [US6a] Implement model metadata logger in quant_scenario_engine/distributions/integration/metadata_logger.py recording model type, fit date, validation scores in run_meta.json per spec.md US6a AS9/FR-034
-- [ ] T175 [US6a] Add cache age warning in quant_scenario_engine/distributions/integration/cache_checker.py suggesting re-audit when cache > 30 days old per spec.md US6a AS9
-- [ ] T176 [US6a] Implement fallback handler in quant_scenario_engine/distributions/integration/fallback.py emitting warning and using Laplace default when no audit exists, marking run_meta with model_validated: false per spec.md US6a AS10
+- [X] T173 [US6a] Create model loader in quant_scenario_engine/distributions/integration/model_loader.py auto-loading cached validated models for US1/US6 runs per spec.md US6a AS9
+- [X] T174 [US6a] Implement model metadata logger in quant_scenario_engine/distributions/integration/metadata_logger.py recording model type, fit date, validation scores in run_meta.json per spec.md US6a AS9/FR-034
+- [X] T175 [US6a] Add cache age warning in quant_scenario_engine/distributions/integration/cache_checker.py suggesting re-audit when cache > 30 days old per spec.md US6a AS9
+- [X] T176 [US6a] Implement fallback handler in quant_scenario_engine/distributions/integration/fallback.py emitting warning and using Laplace default when no audit exists, marking run_meta with model_validated: false per spec.md US6a AS10
 
 #### CLI Command (US6a)
 
-- [ ] T177 [US6a] Create audit-distributions CLI command in quant_scenario_engine/cli/commands/audit_distributions.py accepting --symbol, --lookback-days, --end-date, --force-refit flags per spec.md US6a Independent Test
-- [ ] T178 [US6a] Wire audit CLI to DistributionAuditor orchestrator in quant_scenario_engine/distributions/distribution_audit.py coordinating all validation steps per spec.md US6a AS1-AS12
-- [ ] T179 [US6a] Add audit results output formatter in quant_scenario_engine/cli/formatters/audit_formatter.py displaying ranked models, scores, recommendation per spec.md US6a AS6
+- [X] T177 [US6a] Create audit-distributions CLI command in quant_scenario_engine/cli/commands/audit_distributions.py accepting --symbol, --lookback-days, --end-date, --force-refit flags per spec.md US6a Independent Test
+- [X] T178 [US6a] Wire audit CLI to DistributionAuditor orchestrator in quant_scenario_engine/distributions/distribution_audit.py coordinating all validation steps per spec.md US6a AS1-AS12
+- [X] T179 [US6a] Add audit results output formatter in quant_scenario_engine/cli/formatters/audit_formatter.py displaying ranked models, scores, recommendation per spec.md US6a AS6
 
 #### Error Handling (US6a AS11-12)
 
