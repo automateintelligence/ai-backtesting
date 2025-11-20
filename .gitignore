@@ -28,3 +28,6 @@ output/distribution_fits/
 .DS_Store
 Thumbs.db
 output/distribution_fits/demo_fit_diagnostics.png
+
+# WSL Artifacts
+Zone.Identifier

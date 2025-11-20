@@ -2372,7 +2372,7 @@ backtests."
 Current State: ASSUME-004 states data is pre-downloaded. FR-001/FR-017 cover loading from Parquet, but not the ingestion
 workflow itself.
 
-Question: Should there be an explicit US9 for data ingestion, or is this intentionally out of MVP scope (manual ingestion via
+Question: Should there be an explicit User Story for data ingestion, or is this intentionally out of MVP scope (manual ingestion via
 scripts)?
 
 2. Results Analysis & Comparison (Currently Manual)
