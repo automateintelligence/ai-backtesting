@@ -2354,70 +2354,70 @@ Clarifications:
 
 TO DO:
 Looking at the current 8 user stories and the comprehensive requirements we just added, I believe the existing user stories are
-   sufficient for the MVP scope, but let me validate this with you by examining potential gaps:
+  sufficient for the MVP scope, but let me validate this with you by examining potential gaps:
 
-  Current Coverage (Well-Addressed)
+Current Coverage (Well-Addressed)
 
-  ✅ Core Workflow: US1 (compare), US2 (grid), US3 (features)
-  ✅ Candidate-Driven Analysis: US4 (screening), US5 (conditional backtest), US6 (conditional MC)
-  ✅ Flexibility & Trust: US7 (config swapping), US8 (replay/provenance)
+✅ Core Workflow: US1 (compare), US2 (grid), US3 (features)
+✅ Candidate-Driven Analysis: US4 (screening), US5 (conditional backtest), US6 (conditional MC)
+✅ Flexibility & Trust: US7 (config swapping), US8 (replay/provenance)
 
-  Potential Gaps to Consider
+Potential Gaps to Consider
 
-  1. Data Ingestion & Preparation (Currently Pre-requisite)
+1. Data Ingestion & Preparation (Currently Pre-requisite)
 
-  Missing User Story: "As a user, I want to download and prepare historical OHLCV data for a universe of symbols so I can run
-  backtests."
+Missing User Story: "As a user, I want to download and prepare historical OHLCV data for a universe of symbols so I can run
+backtests."
 
-  Current State: ASSUME-004 states data is pre-downloaded. FR-001/FR-017 cover loading from Parquet, but not the ingestion
-  workflow itself.
+Current State: ASSUME-004 states data is pre-downloaded. FR-001/FR-017 cover loading from Parquet, but not the ingestion
+workflow itself.
 
-  Question: Should there be an explicit US9 for data ingestion, or is this intentionally out of MVP scope (manual ingestion via
-  scripts)?
+Question: Should there be an explicit US9 for data ingestion, or is this intentionally out of MVP scope (manual ingestion via
+scripts)?
 
-  2. Results Analysis & Comparison (Currently Manual)
+2. Results Analysis & Comparison (Currently Manual)
 
-  Missing User Story: "As a user, I want to compare metrics across multiple historical runs to identify which configuration
-  changes improved performance."
+Missing User Story: "As a user, I want to compare metrics across multiple historical runs to identify which configuration
+changes improved performance."
 
-  Current State: US1/US2/US8 generate artifacts, but cross-run analysis is left to manual inspection or external tools.
+Current State: US1/US2/US8 generate artifacts, but cross-run analysis is left to manual inspection or external tools.
 
-  Question: Is automated cross-run comparison needed for MVP, or acceptable as post-processing?
+Question: Is automated cross-run comparison needed for MVP, or acceptable as post-processing?
 
-  3. Configuration Management (Partially Covered)
+3. Configuration Management (Partially Covered)
 
-  Missing User Story: "As a user, I want to save, version, and share configuration templates for different strategy types."
+Missing User Story: "As a user, I want to save, version, and share configuration templates for different strategy types."
 
-  Current State: US7 covers component swapping, FR-063/FR-064 cover versioning, but no workflow for config library management.
+Current State: US7 covers component swapping, FR-063/FR-064 cover versioning, but no workflow for config library management.
 
-  Question: Is this a "nice-to-have" for post-MVP, or critical for user productivity?
+Question: Is this a "nice-to-have" for post-MVP, or critical for user productivity?
 
-  4. Artifact Cleanup & Maintenance (Policy-Driven)
+4. Artifact Cleanup & Maintenance (Policy-Driven)
 
-  Missing User Story: "As a user, I want to clean up old run artifacts to manage disk space without losing important results."
+Missing User Story: "As a user, I want to clean up old run artifacts to manage disk space without losing important results."
 
-  Current State: FR-065 defines cleanup policies, but no interactive workflow.
+Current State: FR-065 defines cleanup policies, but no interactive workflow.
 
-  Question: Is manual cleanup (or auto-cleanup on next run) sufficient for MVP?
+Question: Is manual cleanup (or auto-cleanup on next run) sufficient for MVP?
 
-  5. Error Diagnosis & Recovery (Implicitly Covered)
+5. Error Diagnosis & Recovery (Implicitly Covered)
 
-  Missing User Story: "As a user, I want to diagnose why my run failed and get actionable guidance to fix the issue."
+Missing User Story: "As a user, I want to diagnose why my run failed and get actionable guidance to fix the issue."
 
-  Current State: SC-019-SC-022 ensure structured errors with fix suggestions; logs provide traceability.
+Current State: SC-019-SC-022 ensure structured errors with fix suggestions; logs provide traceability.
 
-  Question: Is this adequately covered by error messages + logs, or does it need a dedicated "diagnostic mode" user story?
+Question: Is this adequately covered by error messages + logs, or does it need a dedicated "diagnostic mode" user story?
 
-  ---
-  My Recommendation
+---
+My Recommendation
 
-  Keep the existing 8 user stories for MVP because:
+Keep the existing 8 user stories for MVP because:
 
-  1. Data Ingestion can be a Phase 0 setup script (not interactive CLI workflow)
-  2. Results Comparison can be post-MVP (users can manually compare JSON outputs)
-  3. Config Management is addressed by version control (users can git their YAML configs)
-  4. Cleanup is low-value compared to core backtesting features
-  5. Error Diagnosis is sufficiently covered by structured errors per FR-042
+1. Data Ingestion can be a Phase 0 setup script (not interactive CLI workflow)
+2. Results Comparison can be post-MVP (users can manually compare JSON outputs)
+3. Config Management is addressed by version control (users can git their YAML configs)
+4. Cleanup is low-value compared to core backtesting features
+5. Error Diagnosis is sufficiently covered by structured errors per FR-042
 
 Open needs (US1 still incomplete): artifacts/persistence (T042–T044), CLI (T045–T051), config precedence/error handling, and richer fallback logic for T028b if required by spec (auto fallback + heavy_tail_warning flag). Unstaged file: planning/project_overview.md untouched. Let me know if you want me to proceed with CLI/artifacts next.
 
@@ -2425,204 +2425,203 @@ OK.  I read through planning/Stock_Candidate_Screening_README.md.  We need to up
 
 ✅ Completed User Stories
 
-  US1 - Basic Monte Carlo (Phase 3) - COMPLETE
-  - ✅ Distribution fitting (Laplace, Student-T)
-  - ✅ MC path generation
-  - ✅ Stock & option strategies
-  - ✅ Black-Scholes pricing
-  - ✅ Metrics calculation
-  - ✅ compare CLI command
+US1 - Basic Monte Carlo (Phase 3) - COMPLETE
+- ✅ Distribution fitting (Laplace, Student-T)
+- ✅ MC path generation
+- ✅ Stock & option strategies
+- ✅ Black-Scholes pricing
+- ✅ Metrics calculation
+- ✅ compare CLI command
 
-  US4 - Screening/Candidate Selection (Phase 4) - COMPLETE
-  - ✅ Gap/volume selector
-  - ✅ Feature engineering (SMA, RSI, volume_z)
-  - ✅ Universe screening
-  - ✅ screen CLI Mode A (candidate selection)
+US4 - Screening/Candidate Selection (Phase 4) - COMPLETE
+- ✅ Gap/volume selector
+- ✅ Feature engineering (SMA, RSI, volume_z)
+- ✅ Universe screening
+- ✅ screen CLI Mode A (candidate selection)
 
-  US5 - Conditional Backtesting (Phase 5) - COMPLETE
-  - ✅ Episode extraction
-  - ✅ Conditional vs unconditional comparison
-  - ✅ screen CLI Mode B/C (strategy screening)
-  - ✅ conditional CLI command
-  - ✅ Selector YAML loading
+US5 - Conditional Backtesting (Phase 5) - COMPLETE
+- ✅ Episode extraction
+- ✅ Conditional vs unconditional comparison
+- ✅ screen CLI Mode B/C (strategy screening)
+- ✅ conditional CLI command
+- ✅ Selector YAML loading
 
-  ❌ Still Needed - NOT Obsolete!
+❌ Still Needed - NOT Obsolete!
 
-  US2 - Parameter Grid Optimization (Phase 6)
+US2 - Parameter Grid Optimization (Phase 6)
 
-  Status: Not started (T074-T082)
+Status: Not started (T074-T082)
 
-  Why still needed: You haven't implemented parameter optimization yet! This is about finding the best strategy parameters.
+Why still needed: You haven't implemented parameter optimization yet! This is about finding the best strategy parameters.
 
-  Example:
-  # Not implemented - would test multiple parameter combinations
-  grid --strategy stock_sma_trend \
-    --params "short_window: [5,10,20], long_window: [50,100,200]" \
-    --objective sharpe --top 10
+Example:
+# Not implemented - would test multiple parameter combinations
+grid --strategy stock_sma_trend \
+  --params "short_window: [5,10,20], long_window: [50,100,200]" \
+  --objective sharpe --top 10
 
-  Different from US5 because: US5 screens symbols for a given strategy. US2 optimizes strategy parameters across all symbols.
+Different from US5 because: US5 screens symbols for a given strategy. US2 optimizes strategy parameters across all symbols.
 
-  ---
-  US6 - Conditional Monte Carlo (Phase 7)
+---
+US6 - Conditional Monte Carlo (Phase 7)
 
-  Status: Not started (T083-T090)
+Status: Not started (T083-T090)
 
-  Why still needed: You're doing historical backtests, NOT forward-looking Monte Carlo!
+Why still needed: You're doing historical backtests, NOT forward-looking Monte Carlo!
 
-  Critical difference:
-  - Current (US5): "How did this strategy perform on past gap-down events?"
-  - US6: "Given a gap-down is happening RIGHT NOW, what are 1000 possible outcomes over the next 60 days?"
+Critical difference:
+- Current (US5): "How did this strategy perform on past gap-down events?"
+- US6: "Given a gap-down is happening RIGHT NOW, what are 1000 possible outcomes over the next 60 days?"
 
-  Example:
-  # Not implemented - would simulate futures from current state
-  conditional --mode monte_carlo \
-    --state '{"gap_pct": -5.0, "volume_z": 2.5}' \
-    --paths 1000 --steps 60 \
-    --strategy stock_basic
+Example:
+# Not implemented - would simulate futures from current state
+conditional --mode monte_carlo \
+  --state '{"gap_pct": -5.0, "volume_z": 2.5}' \
+  --paths 1000 --steps 60 \
+  --strategy stock_basic
 
-  This is the core value proposition - forward-looking risk analysis, not backward-looking performance measurement!
+This is the core value proposition - forward-looking risk analysis, not backward-looking performance measurement!
 
-  ---
-  US7 - Config-Driven Components (Phase 8)
+---
+US7 - Config-Driven Components (Phase 8)
 
-  Status: Not started (T091-T101)
+Status: Not started (T091-T101)
 
-  Why still needed: You're hardcoding everything right now. Need:
-  - YAML config files for strategies
-  - Swappable data sources (yfinance → Schwab)
-  - Swappable distributions (Laplace → Student-T → Normal)
-  - Environment variable support
+Why still needed: You're hardcoding everything right now. Need:
+- YAML config files for strategies
+- Swappable data sources (yfinance → Schwab)
+- Swappable distributions (Laplace → Student-T → Normal)
+- Environment variable support
 
-  Example:
-  # config.yaml - NOT IMPLEMENTED
-  data_source: schwab
-  distribution: student_t
-  option_pricer: py_vollib
-  strategies:
-    - name: custom_sma
-      params: {short: 10, long: 50}
+Example:
+# config.yaml - NOT IMPLEMENTED
+data_source: schwab
+distribution: student_t
+option_pricer: py_vollib
+strategies:
+  - name: custom_sma
+    params: {short: 10, long: 50}
 
-  ---
-  US3 - Enhanced Feature Engineering (Phase 9)
+---
+US3 - Enhanced Feature Engineering (Phase 9)
 
-  Status: Partially done (T102-T110 not started)
+Status: Partially done (T102-T110 not started)
 
-  Why still needed: You have basic features (SMA, RSI), but not:
-  - Dynamic indicator registry (add new indicators via config)
-  - Macro series integration (VIX, interest rates, sector ETFs)
-  - Strategy feature usage tracking
+Why still needed: You have basic features (SMA, RSI), but not:
+- Dynamic indicator registry (add new indicators via config)
+- Macro series integration (VIX, interest rates, sector ETFs)
+- Strategy feature usage tracking
 
-  Example:
-  # indicators.yaml - NOT IMPLEMENTED
-  custom_indicators:
-    - name: vix_ratio
-      source: ^VIX
-      transform: rolling_zscore(20)
-    - name: sector_relative
-      source: XLF
-      transform: price_ratio(SPY)
+Example:
+# indicators.yaml - NOT IMPLEMENTED
+custom_indicators:
+  - name: vix_ratio
+    source: ^VIX
+    transform: rolling_zscore(20)
+  - name: sector_relative
+    source: XLF
+    transform: price_ratio(SPY)
 
-  ---
-  US8 - Replay & Provenance (Phase 10)
+---
+US8 - Replay & Provenance (Phase 10)
 
-  Status: Not started (T111-T120)
+Status: Not started (T111-T120)
 
-  Why still needed: You can't reproduce results yet!
-  - No --replay command to re-run old experiments
-  - No data drift detection
-  - No MC path persistence (regenerates every time)
+Why still needed: You can't reproduce results yet!
+- No --replay command to re-run old experiments
+- No data drift detection
+- No MC path persistence (regenerates every time)
 
-  Example:
-  # Not implemented - would exactly reproduce old run
-  replay --run-id 20241231_143022 \
-    --verify-data-fingerprint
+Example:
+# Not implemented - would exactly reproduce old run
+replay --run-id 20241231_143022 \
+  --verify-data-fingerprint
 
-  Summary: What's Actually Obsolete?
+Summary: What's Actually Obsolete?
 
-  NONE! The merging of US4 and US5 just means you have a unified screen command with three modes instead of separate commands. Every other
-   user story serves a distinct purpose:
+NONE! The merging of US4 and US5 just means you have a unified screen command with three modes instead of separate commands. Every other
+  user story serves a distinct purpose:
 
-  | Story | Purpose                          | Status                   | Obsolete?                                |
-  |-------|----------------------------------|--------------------------|------------------------------------------|
-  | US1   | Basic MC simulation              | ✅ Done                   | No                                       |
-  | US2   | Parameter optimization           | ❌ Not started            | No - completely different from screening |
-  | US3   | Enhanced features                | 🟡 Partial               | No - only basics done                    |
-  | US4   | Candidate selection              | ✅ Done (merged with US5) | No                                       |
-  | US5   | Strategy screening               | ✅ Done (merged with US4) | No                                       |
-  | US6   | Conditional MC (forward-looking) | ❌ Not started            | No - this is your killer feature!        |
-  | US7   | Config system                    | ❌ Not started            | No - needed for modularity               |
-  | US8   | Reproducibility                  | ❌ Not started            | No - needed for research discipline      |
+| Story | Purpose                          | Status                   | Obsolete?                                |
+|-------|----------------------------------|--------------------------|------------------------------------------|
+| US1   | Basic MC simulation              | ✅ Done                   | No                                       |
+| US2   | Parameter optimization           | ❌ Not started            | No - completely different from screening |
+| US3   | Enhanced features                | 🟡 Partial               | No - only basics done                    |
+| US4   | Candidate selection              | ✅ Done (merged with US5) | No                                       |
+| US5   | Strategy screening               | ✅ Done (merged with US4) | No                                       |
+| US6   | Conditional MC (forward-looking) | ❌ Not started            | No - this is your killer feature!        |
+| US7   | Config system                    | ❌ Not started            | No - needed for modularity               |
+| US8   | Reproducibility                  | ❌ Not started            | No - needed for research discipline      |
 
-  Key insight: You're doing historical backtesting right now. US6 (Conditional MC) is what gives you forward-looking risk analysis -
-  that's the whole point of Monte Carlo simulation!
+Key insight: You're doing historical backtesting right now. US6 (Conditional MC) is what gives you forward-looking risk analysis -
+that's the whole point of Monte Carlo simulation!
 
-  /speckit.implement "Verify acceptance criteria for US5. Implement incomplete US6. Run the tests yourself until there are blocking issues that need my external intervention, then document the issue using 'gh issue create'. Once the issue is created, you may proceed to the next phase unless it is blocked by the untested phase. Be sure to commit with a detailed message after each phase is completed.  Be sure to follow the workflow in '.codex/speckit.implement.md'. "
+/speckit.implement "Verify acceptance criteria for US5. Implement incomplete US6. Run the tests yourself until there are blocking issues that need my external intervention, then document the issue using 'gh issue create'. Once the issue is created, you may proceed to the next phase unless it is blocked by the untested phase. Be sure to commit with a detailed message after each phase is completed.  Be sure to follow the workflow in '.codex/speckit.implement.md'. "
 
-  Summary: US6a Tasks Added to tasks.md
+Summary: US6a Tasks Added to tasks.md
 
-  Location
+Location
 
-  Phase 7a inserted between Phase 7 (US6) and Phase 8 (US7) at line 529
+Phase 7a inserted between Phase 7 (US6) and Phase 8 (US7) at line 529
 
-  Task Range
+Task Range
 
-  T137 - T181 (45 new tasks total)
+T137 - T181 (45 new tasks total)
 
-  Task Breakdown by Component
+Task Breakdown by Component
 
-  1. Preprocessing and Model Fitting (T137-T141): 5 tasks
-    - LaplaceFitter, StudentTFitter, GARCHTFitter classes
-    - Stationarity validation, FitResult dataclass
-  2. Goodness-of-Fit Metrics (T142-T144): 3 tasks
-    - AIC/BIC computation, model ranking, log-likelihood
-  3. Tail Fit Diagnostics (T145-T148): 4 tasks
-    - QQ plots, tail error metrics, excess kurtosis, diagnostic reports
-  4. VaR Backtesting (T149-T154): 6 tasks
-    - Train/test split, Kupiec test, Christoffersen test, VaR predictor, breach counter, backtest report
-  5. Simulation Realism Validation (T155-T162): 8 tasks
-    - MC path generator, volatility/clustering/drawdown calculators, extreme moves, historical metrics, distribution compare,
-   realism report
-  6. Model Selection and Scoring (T163-T167): 5 tasks
-    - AIC normalization, composite scoring, constraint validation, model selector, selection report
-  7. Caching and Reproducibility (T168-T171): 4 tasks
-    - Cache manager, result serializer, --force-refit flag, deterministic seeding
-  8. Integration with US1/US6 (T172-T175): 4 tasks
-    - Model loader, metadata logger, cache age warning, fallback handler
-  9. CLI Command (T176-T178): 3 tasks
-    - audit-distributions command, orchestrator wiring, output formatter
-  10. Error Handling (T179-T181): 3 tasks
-    - Insufficient data handler, convergence failure handler, audit failure logic
+1. Preprocessing and Model Fitting (T137-T141): 5 tasks
+  - LaplaceFitter, StudentTFitter, GARCHTFitter classes
+  - Stationarity validation, FitResult dataclass
+2. Goodness-of-Fit Metrics (T142-T144): 3 tasks
+  - AIC/BIC computation, model ranking, log-likelihood
+3. Tail Fit Diagnostics (T145-T148): 4 tasks
+  - QQ plots, tail error metrics, excess kurtosis, diagnostic reports
+4. VaR Backtesting (T149-T154): 6 tasks
+  - Train/test split, Kupiec test, Christoffersen test, VaR predictor, breach counter, backtest report
+5. Simulation Realism Validation (T155-T162): 8 tasks
+  - MC path generator, volatility/clustering/drawdown calculators, extreme moves, historical metrics, distribution compare,
+  realism report
+6. Model Selection and Scoring (T163-T167): 5 tasks
+  - AIC normalization, composite scoring, constraint validation, model selector, selection report
+7. Caching and Reproducibility (T168-T171): 4 tasks
+  - Cache manager, result serializer, --force-refit flag, deterministic seeding
+8. Integration with US1/US6 (T172-T175): 4 tasks
+  - Model loader, metadata logger, cache age warning, fallback handler
+9. CLI Command (T176-T178): 3 tasks
+  - audit-distributions command, orchestrator wiring, output formatter
+10. Error Handling (T179-T181): 3 tasks
+  - Insufficient data handler, convergence failure handler, audit failure logic
 
-  Parallelization Opportunities
+Parallelization Opportunities
 
-  21 tasks marked with [P] can be executed in parallel:
-  - T137, T138, T140 (fitters)
-  - T142, T143 (metrics)
-  - T145, T146, T147 (diagnostics)
-  - T150, T151 (statistical tests)
-  - T156, T157, T158, T159 (calculators)
-  - T168, T169 (caching)
-  - T179, T180 (error handlers)
+21 tasks marked with [P] can be executed in parallel:
+- T137, T138, T140 (fitters)
+- T142, T143 (metrics)
+- T145, T146, T147 (diagnostics)
+- T150, T151 (statistical tests)
+- T156, T157, T158, T159 (calculators)
+- T168, T169 (caching)
+- T179, T180 (error handlers)
 
-  Key Features
+Key Features
 
-  - All tasks follow strict checklist format: - [ ] T### [P?] [US6a] Description with file path
-  - Each task maps to specific acceptance scenarios (AS1-AS12) from spec.md
-  - References relevant FRs (FR-002, FR-020, FR-032, FR-037, FR-034)
-  - Exact file paths specified for every implementation
-  - Clear checkpoint at end validates complete US6a delivery
+- All tasks follow strict checklist format: - [ ] T### [P?] [US6a] Description with file path
+- Each task maps to specific acceptance scenarios (AS1-AS12) from spec.md
+- References relevant FRs (FR-002, FR-020, FR-032, FR-037, FR-034)
+- Exact file paths specified for every implementation
+- Clear checkpoint at end validates complete US6a delivery
 
-  Integration Points
+Integration Points
 
-  The tasks properly integrate with:
-  - US1 (basic Monte Carlo): Auto-load validated models
-  - US6 (conditional Monte Carlo): State-conditioned with validated distributions
-  - Existing infrastructure: Uses data loading, log returns from Phase 2
+The tasks properly integrate with:
+- US1 (basic Monte Carlo): Auto-load validated models
+- US6 (conditional Monte Carlo): State-conditioned with validated distributions
+- Existing infrastructure: Uses data loading, log returns from Phase 2
+
+/speckit.implement "Implement incomplete tasks for Phase 7a: User Story 6a. Be sure to pay particular attention to how this development must be integrated into the repo in regards to US1 and US6. Run the tests after each stage of development. Be sure to commit with a detailed message after each phase is completed.  Be sure to follow the workflow in '.codex/speckit.implement.md'. For any development in distribution_audit.py, if there are 'TODO' items linked to tasks, be sure to mark them as completed.  Be sure to mark completed tasks in tasks.md."
+
+1) I committed the working tree, it is clean.  2) I want to be very careful with fallbacks for distribution fits.  If there is a reason that one of the models it not fitting, I want to see real-time feedback on that so it can be addressed, if possible.  Do not fall back to a poorly fit dictribution without any warnings.  
 
 
-   /speckit.implement "Implement incomplete tasks for Phase 7a: User Story 6a. Be sure to pay particular attention to how this development must be integrated into the repo in regards to US1 and US6. Run the tests after each stage of development. Be sure to commit with a detailed message after each phase is completed.  Be sure to follow the workflow in '.codex/speckit.implement.md'. For any development in distribution_audit.py, if there are 'TODO' items linked to tasks, be sure to mark them as completed.  Be sure to mark completed tasks in tasks.md."
-
-   1) I committed the working tree, it is clean.  2) I want to be very careful with fallbacks for distribution fits.  If there is a reason that one of the models it not fitting, I want to see real-time feedback on that so it can be addressed, if possible.  Do not fall back to a poorly fit dictribution without any warnings.  
-
-
-   FYI - I added --plot-fit flag to distribution_audit.py.  Please implement wire audit selection into US1 compare path and add CLI audit command per spec tasks (T173-T179).
+FYI - I added --plot-fit flag to distribution_audit.py.  Please implement wire audit selection into US1 compare path and add CLI audit command per spec tasks (T173-T179).
