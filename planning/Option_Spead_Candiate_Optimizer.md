@@ -1,4 +1,4 @@
-/superpowers:brainstorm "I have a new user story (US) for this project.  I want everything to remain modular because I have lots of different uses for this library and its capabilities.  My stated User Story 1 from 'specs/001-mvp-pipeline/spec.md' is to compare a stock trading strategy to an option trading strategy, assuming the same underlying and a given --stock-strategy and --option-strategy. The US1 stock-vs-option comparison already uses a concrete pricing model. The MarketSimulator (quant_scenario_engine/simulation/simulator.py (lines 10-90)) wires a BlackScholesPricer from quant_scenario_engine/pricing/black_scholes.py and, for every Monte Carlo path, reprices the option leg along that path to compute P&L/equity curves. So US1’s CLI compare command is evaluating stock signals directly on price paths while valuing the option strategy via closed-form Black–Scholes (European, CPU-friendly) with strike/IV/maturity pulled from OptionSpec. When you swap to a different pricer later (e.g., PyVollib), you’ll do it by supplying a different implementation of that same interface, but today the baseline Black–Scholes engine is what powers every option trade comparison.  
+/superpowers:brainstorm "I have a new user story (US) for this project.  I want everything to remain modular because I have lots of different uses for this library and its capabilities.  Later we will connect backend to a front-end UI.  My stated User Story 1 from 'specs/001-mvp-pipeline/spec.md' is to compare a stock trading strategy to an option trading strategy, assuming the same underlying and a given --stock-strategy and --option-strategy. The US1 stock-vs-option comparison already uses a concrete pricing model. The MarketSimulator (quant_scenario_engine/simulation/simulator.py (lines 10-90)) wires a BlackScholesPricer from quant_scenario_engine/pricing/black_scholes.py and, for every Monte Carlo path, reprices the option leg along that path to compute P&L/equity curves. So US1’s CLI compare command is evaluating stock signals directly on price paths while valuing the option strategy via closed-form Black–Scholes (European, CPU-friendly) with strike/IV/maturity pulled from OptionSpec. When you swap to a different pricer later (e.g., PyVollib), you’ll do it by supplying a different implementation of that same interface, but today the baseline Black–Scholes engine is what powers every option trade comparison.  
 
 However for User Story 9 (US9), I would like to start with an assumption about the underlying stock like: 'neutral', 'strong-neutral', 'low-volatility', 'volatility-dir-uncertain', 'mild-bearish', 'strong-bearish', 'mild-bullish', 'strong-bullish' - all based on expected price movements and ranges of standard deviations or expected $ movement. i.e. 'strong-bullish' would be a move of >6% price change or 3 stddev, 'neutral' would be < 2% price change or 50% probability, 'volatility-dir-uncertain' would be +/- 3% price change or +/- 1 stddev.  This with inputs of its strike price, volume, volatility, basically everthing needed to price options.  Then run through a library of option trading strategies to optimize based on a --strategy-score.  I want to answer the question, "Given an underlying stock, a price direction assumption, and my option trade optimization constraints, in the universe of option spread positions, which one(s) are the best?"
 
@@ -420,4 +420,251 @@ Generate:
 * The **complete spec** for US9 (SDD-ready) in specs/spec.md
 * A **unified StrategyScore interface** to plug into any strategy
 * Or the **English-to-code prompt template** for superpowers to generate the implementation.
-"
+
+
+🤔 Superpowers/brainstorm - Discovery Questions for US9 Refinement
+
+Your US9 proposal is comprehensive and well-architected. Before we formalize the spec,
+let me ask some clarifying questions to ensure we address the gaps I've identified:
+
+---
+1. Option Chain Data Sourcing
+
+Q1.1: Where will option chain data come from for US9?
+A: Schwab API - usage outlined in 'docs/*.pdf'
+
+Q1.2: What are your data freshness requirements?
+- Real-time (sub-second)?
+- 15-minute delayed (free tier APIs)?
+- End-of-day historical data?
+A: For code development, I really don't care.  For training, 5m bars.  For trading, real time - whatever is supported by Schwab API.
+
+Q1.3: How should the system handle missing/incomplete data?
+- Reject entire chain if >X% of strikes missing IV?
+- Interpolate missing IVs from surface?
+- Skip problematic strikes but continue?
+A: For MVP, Skip problematic strikes but continue.  Note later feature update to interpolate missing IVs from surface.
+
+---
+2. Regime-to-Distribution Mapping
+
+Q2.1: How should regime labels convert to distribution parameters?
+
+Option A: Hardcoded lookup table
+strong_bullish:
+mean_return: 0.03  # 3% expected move
+volatility: 0.02   # 2% std dev
+skew: 0.5          # positive skew
+
+Option B: Calibrate from historical data
+# Find all historical "strong bullish" days and fit distribution
+regime_spec = calibrate_from_history(ticker="NVDA", regime="strong-bullish",
+lookback_days=365)
+
+Option C: User provides explicit parameters each time
+
+Which approach(es) do you want to support?
+A: Start with a simple config-driven table (YAML/JSON or Python dict), with C as an optional explicit override.
+
+`regime_mode = "table" | "calibrated" | "explicit"`
+
+```yaml
+regimes:
+  strong_bullish:
+    mean_daily_return: 0.02   # 2% per day
+    daily_vol: 0.03           # 3% std dev
+    skew: 0.5
+    kurtosis_excess: 1.5
+  neutral:
+    mean_daily_return: 0.0
+    daily_vol: 0.01
+    skew: 0.0
+    kurtosis_excess: 1.0
+  volatility_dir_uncertain:
+    mean_daily_return: 0.0
+    daily_vol: 0.03
+    skew: 0.0
+    kurtosis_excess: 2.0
+  # etc.
+```
+We can note a future feature update to allow B: calibrate_from_history(ticker, regime, lookback_days) -> RegimeParams
+
+Q2.2: For multi-day horizons (trade_horizon=3), does "strong-bullish" mean:
+- 6% total move over 3 days? (2%/day compounded)
+- 6% move by end of day 1, then drift? (front-loaded)
+- User specifies path shape explicitly?
+A: Interpret regimes as daily params, compounded across trade_horizon via MC, not as a fixed total move with a pre-specified path shape.
+---
+3. IV Dynamics During Simulation
+
+Q3.1: How should implied volatility evolve during MC paths?
+For Black-Scholes/Bjerksund-Stensland (no stochastic vol):
+- Constant IV (same as entry)? ⚠️ Unrealistic but simple
+- Sticky-delta (IV adjusts for moneyness)? ✅ Industry standard
+- User-provided IV evolution function?
+For Heston: Already couples S_t and v_t stochastically.
+A: BS/Bjerksund: constant IV (simple), sticky-delta (recommended), plus optional custom function. Heston: let the model drive IV dynamics.
+
+Q3.2: Do you want to support IV surface interpolation?
+- If yes, what format? (Implied volatility matrix by strike/expiry? SABR/SVI
+parameters?)
+- If no, we can default to constant IV per strike and document the limitation.
+A: Yes, support IV surface interpolation via a grid and bilinear interpolation; SVI/SABR can be a future enhancement. Represent surfaces as a grid of (strike, expiry, iv) points, or (moneyness, expiry, iv) in normalized coordinates.
+
+```python
+class IVSurface:
+    # Under the hood, holds an array of (log_moneyness, tau, iv)
+    # and provides iv_at(underlying_price, strike, time_to_expiry).
+    def iv_at(self, S, K, T) -> float:
+        ...
+```
+And allow loading from: CSV: symbol, expiry, strike, iv Or direct broker API snapshots.
+
+---
+4. Transaction Costs & Slippage
+
+Q4.1: How should entry fills be modeled?
+- Optimistic: Fill at mid price (bid+ask)/2
+- Conservative: Pay the spread (buy at ask, sell at bid)
+- Realistic: Pay half-spread + fixed slippage (e.g., $0.05/contract)
+A: Pay the spread (buy at ask, sell at bid)
+
+Q4.2: What commission structure?
+A: $0 online trades + $0.65 per options contract
+
+Q4.3: Should costs impact candidate filtering?
+A: Apply filters on net P&L after costs.
+
+---
+5. Edge Cases & Diagnostics
+
+Q5.1: What should happen if no candidates pass filters?
+- Return empty result with diagnostic explaining why?
+- Iteratively relax constraints (e.g., increase max capital)?
+- Suggest alternative regime or config adjustments?
+A:Return an empty result with a diagnostic summary explaining which filters failed most often. Do not relax constraints automatically. Optionally suggest “try adjusting X” hints in diagnostics.
+
+Q5.2: How should the system handle pricing failures?
+- If Bjerksund-Stensland fails to converge for some parameters:
+- Fallback to Black-Scholes automatically?
+- Skip that candidate?
+- Raise error and halt?
+A: If Bjerksund–Stensland fails, fallback to Black–Scholes for that candidate and emit a warning. If BS also fails (extremely rare), skip that candidate but do not halt the run.
+
+Q5.3: Monte Carlo variance/convergence:
+- Fixed 5,000 paths always?
+- Adaptive (increase paths if variance is high)?
+- Report confidence intervals on E[PnL] and other metrics?
+A: Use a fixed baseline (e.g., 5,000 paths) but support adaptive path increases when variance is high or estimates are unstable. Always report confidence interval for E[PnL] and POP. Adaptive mode can cap at a max path count to protect runtime.
+
+---
+6. Output Format & Next Steps
+
+Q6.1: What should the optimizer return?
+- Top N trades (how many? 10? 20?)
+- All scored candidates (could be hundreds)?
+- Just the single best trade?
+A: Top-10 to interface, but cache Top-100.
+
+Q6.2: What details per trade?
+- Leg-by-leg breakdown (strike, type, side, quantity, estimated fill)?
+- All metrics (E[PnL], POP, ROC, Greeks, VaR, CVaR, score)?
+- Score breakdown (how each component contributed)?
+- Comparison to alternatives?
+A: Yes — show a full leg-by-leg breakdown, all metrics, and a score decomposition explaining contributions of POP, ROC, Greeks, and penalties. Include comparison against the next-best alternatives for context.
+
+Q6.3: Do you want broker-ready output?
+- JSON order specification for API submission?
+- Human-readable summary for manual entry?
+A: Produce human-readable summaries but also cache API-ready JSON orders for downstream trade-execution functions. The human output should clearly show execution price assumptions and risk parameters.
+
+---
+7. Configuration Complexity
+
+Q7.1: The config.yml scope is enormous. Should we:
+- Single flat file with all params? (risk: becomes unwieldy)
+- Modular configs (pricing.yml, scoring.yml, candidates.yml)? (more organized but more
+files)
+- Preset configs (conservative.yml, aggressive.yml, test.yml)? (user-friendly but less
+flexible)
+A: I don't think it will be that crazy.  Let's start with a single .yml file and see how it goes.
+
+Q7.2: CLI override pattern:
+Should users be able to override specific config values from CLI without editing
+files?
+--override "mc.num_paths=10000" --override "filters.max_capital=20000"
+A: Yes
+
+---
+8. Testing & Validation
+
+Q8.1: Do you want a reference test case included in the spec?
+- E.g., "Given this synthetic option chain and 'neutral' regime, optimizer MUST return
+this specific Iron Condor as top trade"
+- Helps ensure implementation correctness and prevent regressions
+A: Include at least one synthetic reference test case once available, because it prevents regressions and validates scoring consistency. The spec should note that reference cases are required as soon as a stable candidate generator is ready.
+
+Q8.2: Performance target:
+What's acceptable runtime for one optimization run?
+- <30 seconds? (fast, but may limit candidates/paths)
+- <2 minutes? (reasonable for interactive use)
+- <10 minutes? (batch mode, high accuracy)
+A: Target <30 seconds to recompute the Top-10 at market open using after-hours data; permit longer runtimes for nightly batch filtering.
+
+---
+9. Integration with US1
+
+Q9.1: Should US9 and US1 share the same pricing engines?
+- Yes: Extract common OptionPricer interface that both use ✅
+- No: Keep separate for simplicity (risk: code duplication)
+A: Yes — US1 and US9 should share the same OptionPricer interface to avoid duplication and guarantee consistent pricing across the system. Only the simulation/scoring layers differ.
+
+Q9.2: Can the same config.yml work for both US1 and US9?
+- Shared sections (pricing, distributions) + US-specific sections?
+- Or completely separate configs?
+A: A single config.yml can serve both if you use shared sections (pricing, distributions, regime mapping) + US-specific subsections (e.g., intraday-spreads vs stock-vs-option). No need for two separate configs.
+
+---
+10. CLI & User Workflow
+
+Q10.1: Primary invocation style:
+
+Option A - Single command:
+qse optimize-strategy --ticker NVDA --regime strong-bullish --config my.yml
+
+Option B - Interactive CLI:
+qse interactive
+> set ticker NVDA
+> set regime strong-bullish
+> run optimizer
+> adjust weight w_pop 0.40
+> rerun
+> select trade 1
+> export order.json
+
+Which style(s) do you prefer?
+A: Support both, but prioritize Option A (single command) for automation and reproducibility. Provide Option B’s interactive mode for exploration and tuning, not as the primary workflow.  Later we will connect backend to a front-end UI.
+
+Q10.2: Should the tool support "live monitoring"?
+- User selects a trade, then runs: qse monitor --position my_trade.json
+- System periodically reprices and alerts if early-exit conditions met?
+A: Yes — the tool should support live monitoring of a selected trade, periodically repricing and checking early-exit conditions. This can run in CLI or a lightweight daemon mode.
+
+---
+11. Future Extensibility
+
+Q11.1: Besides intraday-spreads, what other scoring functions are priority?
+- Directional-bullish/bearish (reward delta alignment)?
+- Volatility-play (reward vega)?
+- Gamma-scalping (reward gamma)?
+- Custom user-defined scorers?
+A: After intraday-spreads, next priority scorers are directional-bullish/bearish, volatility-play (vega), and gamma-scalping, in that order. Eventually allow multi-objective scorers (e.g., neutral theta + vega-positive combinations).
+
+Q11.2: Should scoring functions be plugin-style?
+- User can drop in a Python file: my_scorer.py defining MyScorer(StrategyScorer)?
+- Or all built-in only (simpler but less flexible)?
+A: Yes — scoring functions should be plugin-style, allowing users to drop in new scorer classes without modifying core code. This preserves modularity and aligns with US9’s role as a generic options strategy optimizer."
+
+
+
+
