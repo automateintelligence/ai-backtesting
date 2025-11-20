@@ -1,0 +1,6 @@
+name: gap_volume
+description: Breakout-like gap with higher confirmation thresholds
+parameters:
+  gap_min: 0.05
+  volume_z_min: 2.0
+  horizon: 15

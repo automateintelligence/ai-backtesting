@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.build/
+build/
+dist/
+.venv/
+venv/
+.env
+.env.*
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Project artifacts
+runs/
+data/historical/
+data/features/
+output/
+output/distribution_fits/
+
+# Editors
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+output/distribution_fits/demo_fit_diagnostics.png
+
+# WSL Artifacts
+Zone.Identifier
