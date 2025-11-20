@@ -472,7 +472,7 @@ def mock_run_config():
 
 ---
 
-## Phase 6: User Story 2 - Parameter grid exploration (Priority: P2)
+## Phase 6: User Story 2 - Strategy Parameter grid exploration (Priority: P2)
 
 **Goal**: Define parameter grid, run batch evaluations in parallel, receive aggregate metrics (mean, CVaR, drawdown) per configuration
 
