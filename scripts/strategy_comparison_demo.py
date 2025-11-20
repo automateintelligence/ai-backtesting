@@ -12,9 +12,9 @@ from __future__ import annotations
 
 import numpy as np
 
-from quant_scenario_engine.distributions.factory import get_distribution
-from quant_scenario_engine.models.options import OptionSpec
-from quant_scenario_engine.simulation.compare import run_compare
+from qse.distributions.factory import get_distribution
+from qse.models.options import OptionSpec
+from qse.simulation.compare import run_compare
 
 
 def run_strategy_comparison():

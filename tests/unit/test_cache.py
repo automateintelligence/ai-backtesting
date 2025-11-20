@@ -19,7 +19,7 @@ class _FakeTicker:
 fake_yf.Ticker = _FakeTicker
 sys.modules.setdefault("yfinance", fake_yf)
 
-from quant_scenario_engine.data import cache
+from qse.data import cache
 
 
 def test_parse_symbol_list_variants():

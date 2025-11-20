@@ -1,9 +1,9 @@
 import numpy as np
 
-from quant_scenario_engine.models.options import OptionSpec
-from quant_scenario_engine.schema.signals import StrategySignals
-from quant_scenario_engine.simulation.metrics import compute_metrics
-from quant_scenario_engine.simulation.simulator import MarketSimulator
+from qse.models.options import OptionSpec
+from qse.schema.signals import StrategySignals
+from qse.simulation.metrics import compute_metrics
+from qse.simulation.simulator import MarketSimulator
 
 
 def test_compute_metrics_basic():

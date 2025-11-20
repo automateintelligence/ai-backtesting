@@ -1,13 +1,13 @@
 import pandas as pd
 import pytest
 
-from quant_scenario_engine.data.validation import (
+from qse.data.validation import (
     compute_fingerprint,
     enforce_missing_tolerance,
     fingerprints_match,
     validate_ohlcv,
 )
-from quant_scenario_engine.exceptions import SchemaError, TimestampAnomalyError
+from qse.exceptions import SchemaError, TimestampAnomalyError
 
 
 def _frame():

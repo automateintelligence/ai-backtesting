@@ -1,7 +1,7 @@
 import pandas as pd
 
-from quant_scenario_engine.schema.episode import CandidateEpisode
-from quant_scenario_engine.simulation.conditional import run_conditional_backtest
+from qse.schema.episode import CandidateEpisode
+from qse.simulation.conditional import run_conditional_backtest
 
 
 def test_run_conditional_backtest_with_episode():

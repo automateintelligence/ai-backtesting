@@ -1,7 +1,7 @@
 import pytest
 
-from quant_scenario_engine.exceptions import ConfigValidationError
-from quant_scenario_engine.models.options import OptionSpec
+from qse.exceptions import ConfigValidationError
+from qse.models.options import OptionSpec
 
 
 def test_option_spec_valid():

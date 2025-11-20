@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-from quant_scenario_engine.distributions.validation.stationarity import ensure_min_samples
-from quant_scenario_engine.exceptions import DistributionFitError
+from qse.distributions.validation.stationarity import ensure_min_samples
+from qse.exceptions import DistributionFitError
 
 
 def test_ensure_min_samples_passes():

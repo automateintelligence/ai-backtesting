@@ -33,10 +33,10 @@ Step   Type       Before       After        Price      Change
 ### Method 2: Programmatic Analysis
 
 ```python
-from quant_scenario_engine.distributions.factory import get_distribution
-from quant_scenario_engine.models.options import OptionSpec
-from quant_scenario_engine.simulation.compare import run_compare
-from quant_scenario_engine.analysis.signals import (
+from qse.distributions.factory import get_distribution
+from qse.models.options import OptionSpec
+from qse.simulation.compare import run_compare
+from qse.analysis.signals import (
     generate_signal_summary,
     print_position_history,
 )
@@ -69,7 +69,7 @@ stock_signals = result.signals.signals_stock
 option_signals = result.signals.signals_option
 
 # Regenerate price paths (or store in RunResult)
-from quant_scenario_engine.mc.generator import generate_price_paths
+from qse.mc.generator import generate_price_paths
 price_paths = generate_price_paths(
     s0=100.0, distribution=dist, n_paths=100, n_steps=60, seed=42
 )
@@ -105,7 +105,7 @@ option_signals = data['option']
 prices = data['prices']
 
 # Analyze
-from quant_scenario_engine.analysis.signals import analyze_signals
+from qse.analysis.signals import analyze_signals
 
 stock_analysis = analyze_signals(stock_signals, prices, "stock")
 print(f"Stock strategy made {stock_analysis['total_changes']} trades")
@@ -135,7 +135,7 @@ stock_signals[0, 12] = 0     # Exited position (flat)
 
 ---
 
-### Key Functions in `quant_scenario_engine.analysis.signals`
+### Key Functions in `qse.analysis.signals`
 
 #### `analyze_signals(signals, price_paths, signal_type)`
 Returns dictionary with:
@@ -174,9 +174,9 @@ To see what happened in your TSLA run:
 **Step 1**: Modify the compare command to run programmatically and capture signals
 
 ```python
-from quant_scenario_engine.distributions.factory import get_distribution
-from quant_scenario_engine.models.options import OptionSpec
-from quant_scenario_engine.simulation.compare import run_compare
+from qse.distributions.factory import get_distribution
+from qse.models.options import OptionSpec
+from qse.simulation.compare import run_compare
 import numpy as np
 
 # Setup distribution
@@ -208,8 +208,8 @@ print("Metrics:", result.metrics)
 **Step 2**: Analyze signals
 
 ```python
-from quant_scenario_engine.analysis.signals import generate_signal_summary
-from quant_scenario_engine.mc.generator import generate_price_paths
+from qse.analysis.signals import generate_signal_summary
+from qse.mc.generator import generate_price_paths
 
 # Regenerate price paths with same seed
 price_paths = generate_price_paths(
@@ -228,7 +228,7 @@ print(summary)
 **Step 3**: Inspect specific paths
 
 ```python
-from quant_scenario_engine.analysis.signals import print_position_history
+from qse.analysis.signals import print_position_history
 
 # Look at paths with best/worst performance
 # (You'd need to calculate P&L per path to find these)

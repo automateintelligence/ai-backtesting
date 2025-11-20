@@ -1,7 +1,7 @@
 import pytest
 
-from quant_scenario_engine.exceptions import ConfigValidationError
-from quant_scenario_engine.schema.strategy import StrategyParams
+from qse.exceptions import ConfigValidationError
+from qse.schema.strategy import StrategyParams
 
 
 def test_strategy_params_valid():

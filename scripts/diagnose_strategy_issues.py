@@ -20,15 +20,15 @@ from __future__ import annotations
 
 import numpy as np
 
-from quant_scenario_engine.analysis.signals import (
+from qse.analysis.signals import (
     analyze_signals,
     generate_signal_summary,
     print_position_history,
 )
-from quant_scenario_engine.distributions.factory import get_distribution
-from quant_scenario_engine.mc.generator import generate_price_paths
-from quant_scenario_engine.models.options import OptionSpec
-from quant_scenario_engine.simulation.compare import run_compare
+from qse.distributions.factory import get_distribution
+from qse.mc.generator import generate_price_paths
+from qse.models.options import OptionSpec
+from qse.simulation.compare import run_compare
 
 
 def interpret_metrics(metrics) -> dict:

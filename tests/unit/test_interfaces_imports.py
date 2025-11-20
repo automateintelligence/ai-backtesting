@@ -1,7 +1,7 @@
-from quant_scenario_engine.interfaces.candidate_selector import CandidateSelector
-from quant_scenario_engine.interfaces.distribution import ReturnDistribution
-from quant_scenario_engine.interfaces.pricing import OptionPricer
-from quant_scenario_engine.interfaces.strategy import Strategy
+from qse.interfaces.candidate_selector import CandidateSelector
+from qse.interfaces.distribution import ReturnDistribution
+from qse.interfaces.pricing import OptionPricer
+from qse.interfaces.strategy import Strategy
 
 
 def test_interface_subclassing():

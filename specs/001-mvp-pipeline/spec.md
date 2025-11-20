@@ -252,7 +252,7 @@ Author runs an automated distribution audit for a given ticker symbol to fit mul
 
 10. **Given** no prior distribution audit exists for a symbol, **When** the user runs US1 or US6 without specifying a model, **Then** the system:
     - Emits a warning: "No validated model found for AAPL. Using default Laplace model."
-    - Suggests running distribution audit: "Run `python -m quant_scenario_engine.cli audit-distributions --symbol AAPL` to validate models."
+    - Suggests running distribution audit: "Run `python -m qse.cli audit-distributions --symbol AAPL` to validate models."
     - Proceeds with Laplace as safe default but marks run metadata with `model_validated: false`
 
 **Error Handling and Edge Cases:**

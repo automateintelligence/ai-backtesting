@@ -28,7 +28,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 
-from quant_scenario_engine.distributions.distribution_audit import audit_distributions_for_symbol
+from qse.distributions.distribution_audit import audit_distributions_for_symbol
 
 
 def fetch_real_data(symbol: str, lookback_days: int = 1000) -> tuple[pd.Series, dict]:

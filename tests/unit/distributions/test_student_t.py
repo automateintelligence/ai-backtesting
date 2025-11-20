@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-from quant_scenario_engine.distributions.student_t import StudentTDistribution
-from quant_scenario_engine.exceptions import DistributionFitError
+from qse.distributions.student_t import StudentTDistribution
+from qse.exceptions import DistributionFitError
 
 
 def test_student_t_fit_and_sample_reproducible():

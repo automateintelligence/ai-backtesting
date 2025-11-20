@@ -1,9 +1,9 @@
 import pytest
 
-from quant_scenario_engine.data.factory import data_source_factory, get_data_source
-from quant_scenario_engine.data.schwab_stub import SchwabDataSourceStub
-from quant_scenario_engine.data.yfinance import YFinanceDataSource
-from quant_scenario_engine.exceptions import DataSourceError, DependencyError
+from qse.data.factory import data_source_factory, get_data_source
+from qse.data.schwab_stub import SchwabDataSourceStub
+from qse.data.yfinance import YFinanceDataSource
+from qse.exceptions import DataSourceError, DependencyError
 
 
 def test_get_data_source_returns_providers():

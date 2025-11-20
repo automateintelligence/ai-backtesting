@@ -5,8 +5,8 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from quant_scenario_engine.data.data_loader import DataLoader
-from quant_scenario_engine.exceptions import DataSourceError
+from qse.data.data_loader import DataLoader
+from qse.exceptions import DataSourceError
 
 
 def _make_df(start: str, periods: int) -> pd.DataFrame:

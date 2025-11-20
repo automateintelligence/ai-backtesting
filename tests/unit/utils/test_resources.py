@@ -1,7 +1,7 @@
 import pytest
 
-from quant_scenario_engine.exceptions import ResourceLimitError
-from quant_scenario_engine.utils.resources import estimate_footprint_gb, select_storage_policy
+from qse.exceptions import ResourceLimitError
+from qse.utils.resources import estimate_footprint_gb, select_storage_policy
 
 
 def test_estimate_and_policy_memory():

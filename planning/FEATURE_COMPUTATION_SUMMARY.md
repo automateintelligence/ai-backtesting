@@ -7,7 +7,7 @@ Implemented comprehensive technical indicator calculation system to support RSI-
 ## What Was Implemented
 
 ### 1. Technical Indicators Module
-**File**: `quant_scenario_engine/features/technical.py`
+**File**: `qse/features/technical.py`
 
 **Functions**:
 - `compute_rsi()` - Relative Strength Index with Wilder's smoothing
@@ -26,7 +26,7 @@ Implemented comprehensive technical indicator calculation system to support RSI-
 - Flexible periods and parameters for all indicators
 
 ### 2. Automatic Feature Integration
-**Modified**: `quant_scenario_engine/simulation/compare.py`
+**Modified**: `qse/simulation/compare.py`
 
 **Changes**:
 - Added `compute_features` parameter (default: True)
@@ -160,7 +160,7 @@ No CLI changes needed - feature computation happens transparently:
 
 ```bash
 # RSI strategies work automatically
-python -m quant_scenario_engine.cli.main compare \
+python -m qse.cli.main compare \
   --symbol AAPL \
   --strategy stock_rsi_reversion \
   --option-strategy option_atm_put_rsi \
@@ -171,8 +171,8 @@ Features are computed internally; user doesn't need to specify anything.
 
 ## Files Modified
 
-1. ✅ **Created**: `quant_scenario_engine/features/technical.py` (398 lines)
-2. ✅ **Modified**: `quant_scenario_engine/simulation/compare.py` (+3 lines imports, +8 lines logic)
+1. ✅ **Created**: `qse/features/technical.py` (398 lines)
+2. ✅ **Modified**: `qse/simulation/compare.py` (+3 lines imports, +8 lines logic)
 3. ✅ **Created**: `tests/integration/test_strategies_with_features.py` (132 lines)
 4. ✅ **Created**: `examples/strategy_comparison_demo.py` (170 lines)
 5. ✅ **Updated**: `planning/STRATEGY_REFERENCE.md` (added feature documentation)

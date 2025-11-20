@@ -1,8 +1,8 @@
 import pytest
 
-from quant_scenario_engine.data.resolution import select_resolution
-from quant_scenario_engine.data.universe import UniverseConfig
-from quant_scenario_engine.exceptions import ConfigValidationError
+from qse.data.resolution import select_resolution
+from qse.data.universe import UniverseConfig
+from qse.exceptions import ConfigValidationError
 
 
 def test_select_resolution_defaults():

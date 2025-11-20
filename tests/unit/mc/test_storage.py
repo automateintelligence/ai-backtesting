@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-from quant_scenario_engine.mc.storage import PricePath, store_price_paths
-from quant_scenario_engine.utils.resources import estimate_footprint_gb
+from qse.mc.storage import PricePath, store_price_paths
+from qse.utils.resources import estimate_footprint_gb
 
 
 def test_store_price_paths_memory():

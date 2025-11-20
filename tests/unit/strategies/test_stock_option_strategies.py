@@ -1,9 +1,9 @@
 import numpy as np
 
-from quant_scenario_engine.models.options import OptionSpec
-from quant_scenario_engine.schema.strategy import StrategyParams
-from quant_scenario_engine.strategies.option_call import OptionCallStrategy
-from quant_scenario_engine.strategies.stock_basic import StockBasicStrategy
+from qse.models.options import OptionSpec
+from qse.schema.strategy import StrategyParams
+from qse.strategies.option_call import OptionCallStrategy
+from qse.strategies.stock_basic import StockBasicStrategy
 
 
 def _paths():

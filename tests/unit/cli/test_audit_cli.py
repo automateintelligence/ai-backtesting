@@ -4,8 +4,8 @@ import pytest
 pytest.importorskip("typer")
 from typer.testing import CliRunner
 
-from quant_scenario_engine.cli.main import app
-from quant_scenario_engine.distributions.distribution_audit import (
+from qse.cli.main import app
+from qse.distributions.distribution_audit import (
     DistributionAuditResult,
     FitResult,
     ModelScore,
@@ -77,11 +77,11 @@ def test_audit_cli_formats_output(monkeypatch, tmp_path):
     })
 
     monkeypatch.setattr(
-        "quant_scenario_engine.cli.commands.audit_distributions.load_or_fetch",
+        "qse.cli.commands.audit_distributions.load_or_fetch",
         lambda symbol, start, end, interval, target: df,
     )
     monkeypatch.setattr(
-        "quant_scenario_engine.cli.commands.audit_distributions.audit_distributions_for_symbol",
+        "qse.cli.commands.audit_distributions.audit_distributions_for_symbol",
         lambda **kwargs: _result(kwargs["symbol"]),
     )
 

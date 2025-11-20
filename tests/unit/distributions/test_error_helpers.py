@@ -1,6 +1,6 @@
 """Unit tests for distribution error helpers (US6a AS11-AS12)."""
 
-from quant_scenario_engine.distributions.errors import (
+from qse.distributions.errors import (
     handle_insufficient_data,
     has_minimum_samples,
     record_convergence_failure,

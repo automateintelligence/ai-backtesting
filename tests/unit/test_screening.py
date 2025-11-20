@@ -1,7 +1,7 @@
 import pandas as pd
 
-from quant_scenario_engine.simulation.screen import run_strategy_screen
-from quant_scenario_engine.selectors.gap_volume import GapVolumeSelector
+from qse.simulation.screen import run_strategy_screen
+from qse.selectors.gap_volume import GapVolumeSelector
 
 
 def _build_universe():

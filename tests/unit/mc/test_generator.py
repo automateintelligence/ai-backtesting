@@ -1,9 +1,9 @@
 import numpy as np
 import pytest
 
-from quant_scenario_engine.distributions.laplace import LaplaceDistribution
-from quant_scenario_engine.exceptions import DistributionFitError
-from quant_scenario_engine.mc.generator import generate_price_paths
+from qse.distributions.laplace import LaplaceDistribution
+from qse.exceptions import DistributionFitError
+from qse.mc.generator import generate_price_paths
 
 
 def test_generate_price_paths_deterministic_seed():

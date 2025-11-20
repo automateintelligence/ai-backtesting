@@ -1,9 +1,9 @@
 import pandas as pd
 import pytest
 
-from quant_scenario_engine.data.data_loader import DataLoader
-from quant_scenario_engine.data.yfinance import YFinanceDataSource
-from quant_scenario_engine.exceptions import DataSourceError
+from qse.data.data_loader import DataLoader
+from qse.data.yfinance import YFinanceDataSource
+from qse.exceptions import DataSourceError
 
 
 def test_yfinance_fetch_normalizes_columns(monkeypatch):

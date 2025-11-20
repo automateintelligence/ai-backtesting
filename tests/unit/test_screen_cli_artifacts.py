@@ -18,7 +18,7 @@ sys.modules.setdefault("typer", typer_stub)
 fake_yf = types.SimpleNamespace(Ticker=lambda *args, **kwargs: None)
 sys.modules.setdefault("yfinance", fake_yf)
 
-from quant_scenario_engine.cli.commands.screen import screen
+from qse.cli.commands.screen import screen
 
 
 def test_screen_writes_artifact(tmp_path, monkeypatch):

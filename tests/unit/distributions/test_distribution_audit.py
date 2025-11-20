@@ -3,7 +3,7 @@ import sys
 import numpy as np
 import pandas as pd
 
-from quant_scenario_engine.distributions.distribution_audit import audit_distributions_for_symbol
+from qse.distributions.distribution_audit import audit_distributions_for_symbol
 
 
 def test_audit_selects_best_model_and_reports_failures():

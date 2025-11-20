@@ -1,7 +1,7 @@
 import pandas as pd
 
-from quant_scenario_engine.schema.episode import CandidateEpisode
-from quant_scenario_engine.simulation.conditional_mc import run_conditional_mc
+from qse.schema.episode import CandidateEpisode
+from qse.simulation.conditional_mc import run_conditional_mc
 
 
 def _make_df(days: int = 120):
@@ -73,7 +73,7 @@ def test_conditional_mc_can_use_audit_distribution(monkeypatch):
     eps = _episodes(30, df["date"])
 
     from types import SimpleNamespace
-    from quant_scenario_engine.distributions.laplace import LaplaceDistribution
+    from qse.distributions.laplace import LaplaceDistribution
 
     laplace = LaplaceDistribution()
     laplace.loc = 0.0
@@ -82,7 +82,7 @@ def test_conditional_mc_can_use_audit_distribution(monkeypatch):
     def _fake_loader(**kwargs):
         return SimpleNamespace(distribution=laplace, metadata={"model_name": "laplace", "model_validated": True})
 
-    monkeypatch.setattr("quant_scenario_engine.simulation.conditional_mc.load_validated_model", _fake_loader)
+    monkeypatch.setattr("qse.simulation.conditional_mc.load_validated_model", _fake_loader)
 
     result = run_conditional_mc(
         df=df,

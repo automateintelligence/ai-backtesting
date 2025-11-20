@@ -1,9 +1,9 @@
 import numpy as np
 import pytest
 
-from quant_scenario_engine.exceptions import PricingError
-from quant_scenario_engine.models.options import OptionSpec
-from quant_scenario_engine.pricing.black_scholes import BlackScholesPricer
+from qse.exceptions import PricingError
+from qse.models.options import OptionSpec
+from qse.pricing.black_scholes import BlackScholesPricer
 
 
 def _spec():

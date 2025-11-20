@@ -1,7 +1,7 @@
 import json
 import logging
 
-from quant_scenario_engine.utils.logging import JSONFormatter, configure_logging, get_logger
+from qse.utils.logging import JSONFormatter, configure_logging, get_logger
 
 
 def test_json_formatter_includes_fields():

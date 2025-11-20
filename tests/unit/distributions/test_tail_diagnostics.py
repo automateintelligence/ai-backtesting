@@ -1,9 +1,9 @@
 import numpy as np
 
-from quant_scenario_engine.distributions.diagnostics.qq_plots import compute_qq_pairs
-from quant_scenario_engine.distributions.diagnostics.tail_metrics import tail_error
-from quant_scenario_engine.distributions.diagnostics.kurtosis import compare_kurtosis
-from quant_scenario_engine.distributions.diagnostics.tail_report import build_tail_report
+from qse.distributions.diagnostics.qq_plots import compute_qq_pairs
+from qse.distributions.diagnostics.tail_metrics import tail_error
+from qse.distributions.diagnostics.kurtosis import compare_kurtosis
+from qse.distributions.diagnostics.tail_report import build_tail_report
 
 
 def test_qq_pairs_shapes():

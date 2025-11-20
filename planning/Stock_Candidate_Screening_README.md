@@ -31,7 +31,7 @@ The `screen` command operates in three modes based on which flags you provide:
 ### Example: Find Gap-Down Stocks with Volume Spikes
 
 ```bash
-python -m quant_scenario_engine.cli.main screen \
+python -m qse.cli.main screen \
   --universe data/universes/sp500.csv \
   --gap-min 0.03 \
   --volume-z-min 1.5 \
@@ -43,7 +43,7 @@ python -m quant_scenario_engine.cli.main screen \
 ### Example: Use Inline Symbol List
 
 ```bash
-python -m quant_scenario_engine.cli.main screen \
+python -m qse.cli.main screen \
   --universe "['AAPL','MSFT','TSLA','NVDA','META']" \
   --gap-min 0.02 \
   --volume-z-min 2.0 \
@@ -98,7 +98,7 @@ python -m quant_scenario_engine.cli.main screen \
 ### Example: Find Best Stocks for SMA Trend Strategy
 
 ```bash
-python -m quant_scenario_engine.cli.main screen \
+python -m qse.cli.main screen \
   --universe data/universes/sp500.csv \
   --strategy stock_sma_trend \
   --rank-by sharpe \
@@ -111,7 +111,7 @@ python -m quant_scenario_engine.cli.main screen \
 ### Example: Rank by Mean P&L
 
 ```bash
-python -m quant_scenario_engine.cli.main screen \
+python -m qse.cli.main screen \
   --universe data/universes/nasdaq100.csv \
   --strategy stock_rsi_reversion \
   --rank-by mean_pnl \
@@ -178,7 +178,7 @@ python -m quant_scenario_engine.cli.main screen \
 ### Example: Best Stocks for SMA Trend During Gap-Downs
 
 ```bash
-python -m quant_scenario_engine.cli.main screen \
+python -m qse.cli.main screen \
   --universe data/universes/sp500.csv \
   --strategy stock_sma_trend \
   --rank-by sharpe \
@@ -191,7 +191,7 @@ python -m quant_scenario_engine.cli.main screen \
 ### Example: Using Inline Selector Parameters
 
 ```bash
-python -m quant_scenario_engine.cli.main screen \
+python -m qse.cli.main screen \
   --universe data/universes/tech_growth.csv \
   --strategy stock_rsi_reversion \
   --rank-by mean_pnl \
@@ -367,8 +367,8 @@ Metadata includes:
 
 ### Mode A (Python API)
 ```python
-from quant_scenario_engine.simulation.screen import screen_candidates
-from quant_scenario_engine.selectors.gap_volume import GapVolumeSelector
+from qse.simulation.screen import screen_candidates
+from qse.selectors.gap_volume import GapVolumeSelector
 
 selector = GapVolumeSelector(gap_min=0.03, volume_z_min=1.5)
 candidates = screen_candidates(
@@ -380,7 +380,7 @@ candidates = screen_candidates(
 
 ### Mode B (Python API)
 ```python
-from quant_scenario_engine.simulation.screen import run_strategy_screen
+from qse.simulation.screen import run_strategy_screen
 
 results = run_strategy_screen(
     universe=['AAPL', 'MSFT', 'NVDA', ...],  # or path to CSV
@@ -394,8 +394,8 @@ print(results.ranked_symbols)
 
 ### Mode C (Python API)
 ```python
-from quant_scenario_engine.simulation.screen import run_strategy_screen
-from quant_scenario_engine.selectors.loader import load_selector
+from qse.simulation.screen import run_strategy_screen
+from qse.selectors.loader import load_selector
 
 selector = load_selector('selectors/gap_down_volume_spike.yaml')
 results = run_strategy_screen(

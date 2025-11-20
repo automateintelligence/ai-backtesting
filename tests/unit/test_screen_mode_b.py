@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import pandas as pd
 
-from quant_scenario_engine.simulation.screen import run_strategy_screen
+from qse.simulation.screen import run_strategy_screen
 
 
 def _fake_df(symbol: str) -> pd.DataFrame:

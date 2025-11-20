@@ -2,8 +2,8 @@ import json
 import os
 from pathlib import Path
 
-from quant_scenario_engine.distributions.cache.cache_manager import get_cache_path
-from quant_scenario_engine.distributions.integration.model_loader import load_validated_model
+from qse.distributions.cache.cache_manager import get_cache_path
+from qse.distributions.integration.model_loader import load_validated_model
 
 
 def _write_payload(path: Path, loc: float = 0.25, scale: float = 0.05) -> None:

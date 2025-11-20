@@ -1,8 +1,8 @@
 import numpy as np
 
-from quant_scenario_engine.distributions.laplace import LaplaceDistribution
-from quant_scenario_engine.models.options import OptionSpec
-from quant_scenario_engine.simulation.run import run_compare
+from qse.distributions.laplace import LaplaceDistribution
+from qse.models.options import OptionSpec
+from qse.simulation.run import run_compare
 
 
 def test_run_compare_executes():

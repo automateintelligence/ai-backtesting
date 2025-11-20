@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-from quant_scenario_engine.distributions.laplace import LaplaceDistribution
-from quant_scenario_engine.exceptions import DistributionFitError
+from qse.distributions.laplace import LaplaceDistribution
+from qse.exceptions import DistributionFitError
 
 
 def test_laplace_fit_and_sample_reproducible():

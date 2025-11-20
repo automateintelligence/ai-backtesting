@@ -5,10 +5,10 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from quant_scenario_engine.distributions.factory import get_distribution
-from quant_scenario_engine.features.technical import compute_all_features, compute_rsi
-from quant_scenario_engine.models.options import OptionSpec
-from quant_scenario_engine.simulation.compare import run_compare
+from qse.distributions.factory import get_distribution
+from qse.features.technical import compute_all_features, compute_rsi
+from qse.models.options import OptionSpec
+from qse.simulation.compare import run_compare
 
 
 class TestStrategiesWithFeatures:
@@ -105,7 +105,7 @@ class TestStrategiesWithFeatures:
 
     def test_all_strategies_with_precomputed_features(self, base_config, option_spec, distribution):
         """Test strategies with pre-computed features."""
-        from quant_scenario_engine.mc.generator import generate_price_paths
+        from qse.mc.generator import generate_price_paths
 
         # Generate price paths
         price_paths = generate_price_paths(

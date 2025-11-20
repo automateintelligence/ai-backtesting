@@ -1,4 +1,4 @@
-from quant_scenario_engine.config.factories import FactoryBase
+from qse.config.factories import FactoryBase
 
 
 def test_factory_logs_and_creates(caplog):

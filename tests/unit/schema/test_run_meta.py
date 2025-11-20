@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from quant_scenario_engine.schema.run_meta import RunMeta
+from qse.schema.run_meta import RunMeta
 
 
 def test_run_meta_round_trip(tmp_path: Path):

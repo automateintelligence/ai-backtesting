@@ -14,13 +14,13 @@ CPU-only quant scenario engine for backtesting and Monte Carlo workflows across 
 ## Quickstart
 1) **Data prep (Parquet)**
    ```bash
-   python -m quant_scenario_engine.cli.main fetch --symbol AAPL --start 2018-01-01 --end 2024-12-31 --interval 1d --target data/
+   python -m qse.cli.main fetch --symbol AAPL --start 2018-01-01 --end 2024-12-31 --interval 1d --target data/
    ```
    Layout: `data/historical/interval=1d/symbol=AAPL/_v1/*.parquet`, features under `data/features/interval=1d/symbol=AAPL/`.
 
 2) **Run baseline stock vs option MC comparison**
    ```bash
-   python -m quant_scenario_engine.cli.compare \
+   python -m qse.cli.compare \
      --symbol AAPL --paths 1000 --steps 60 \
      --distribution laplace --strategy stock_basic \
      --option-strategy call_basic --iv 0.25 --seed 42
@@ -36,18 +36,18 @@ CPU-only quant scenario engine for backtesting and Monte Carlo workflows across 
 
 3) **Parameter grid exploration**
    ```bash
-   python -m quant_scenario_engine.cli.main grid --config configs/grid_aapl.yaml
+   python -m qse.cli.main grid --config configs/grid_aapl.yaml
    ```
 
 4) **Candidate screening + conditional runs**
    ```bash
-   python -m quant_scenario_engine.cli.main screen --universe configs/universe.yaml --selector configs/selector_gap.yaml --lookback 5y --top 20
-   python -m quant_scenario_engine.cli.main conditional --symbol AAPL --selector configs/selector_gap.yaml --paths 1000 --steps 60 --seed 99
+   python -m qse.cli.main screen --universe configs/universe.yaml --selector configs/selector_gap.yaml --lookback 5y --top 20
+   python -m qse.cli.main conditional --symbol AAPL --selector configs/selector_gap.yaml --paths 1000 --steps 60 --seed 99
    ```
 
 5) **Replay**
    ```bash
-   python -m quant_scenario_engine.cli.main compare --replay runs/<run_id>/run_meta.json
+   python -m qse.cli.main compare --replay runs/<run_id>/run_meta.json
    ```
 
 </details>

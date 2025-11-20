@@ -1,7 +1,7 @@
 import numpy as np
 
-from quant_scenario_engine.distributions.ar_detection import detect_ar_process
-from quant_scenario_engine.distributions.stationarity import check_stationarity
+from qse.distributions.ar_detection import detect_ar_process
+from qse.distributions.stationarity import check_stationarity
 
 
 def test_ar_detection_returns_order_suggestion():

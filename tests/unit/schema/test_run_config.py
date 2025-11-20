@@ -1,7 +1,7 @@
 import pytest
 
-from quant_scenario_engine.exceptions import ConfigValidationError
-from quant_scenario_engine.schema.run_config import RunConfig
+from qse.exceptions import ConfigValidationError
+from qse.schema.run_config import RunConfig
 
 
 def test_run_config_valid_and_to_dict():

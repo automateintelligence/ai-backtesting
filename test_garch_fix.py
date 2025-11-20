@@ -2,11 +2,11 @@
 
 import numpy as np
 import yfinance as yf
-from quant_scenario_engine.distributions.fitters.garch_t_fitter import GarchTFitter
-from quant_scenario_engine.distributions.fitters.laplace_fitter import LaplaceFitter
-from quant_scenario_engine.distributions.fitters.student_t_fitter import StudentTFitter
-from quant_scenario_engine.distributions.plotting.fit_diagnostics import plot_distribution_fits
-from quant_scenario_engine.distributions.distribution_audit import ModelSpec
+from qse.distributions.fitters.garch_t_fitter import GarchTFitter
+from qse.distributions.fitters.laplace_fitter import LaplaceFitter
+from qse.distributions.fitters.student_t_fitter import StudentTFitter
+from qse.distributions.plotting.fit_diagnostics import plot_distribution_fits
+from qse.distributions.distribution_audit import ModelSpec
 from pathlib import Path
 
 # Fetch AAPL data
