@@ -2377,8 +2377,7 @@ scripts)?
 
 2. Results Analysis & Comparison (Currently Manual)
 
-Missing User Story: "As a user, I want to compare metrics across multiple historical runs to identify which configuration
-changes improved performance."
+Missing User Story: "As a user, I want to compare metrics across multiple historical runs to identify which configuration changes improved performance."
 
 Current State: US1/US2/US8 generate artifacts, but cross-run analysis is left to manual inspection or external tools.
 
@@ -2625,3 +2624,23 @@ The tasks properly integrate with:
 
 
 FYI - I added --plot-fit flag to distribution_audit.py.  Please implement wire audit selection into US1 compare path and add CLI audit command per spec tasks (T173-T179).
+
+Because the OHLCV fetcher caches data on disk (see data/historical/interval=.../symbol=.../_v# in the plan/quickstart), a reload first checks whether a matching Parquet partition already exists. If you ask for a window that extends past what’s already cached, the loader reuses the cached portion and only requests the missing tail from the upstream source, then writes an updated partition (bumping the _v# suffix when schema/source changes). In other words, you don’t lose the cached history—you just add the newer bars on top—so reloading something “a little more recent” hits yfinance for the extra days, merges them with the existing data, and leaves the cache ready for the next run.
+
+Distribution-audit cache workflow – Every audit run serializes the full result (fits, scores, best-model metadata) under output/distribution_audits/<symbol>_<lookback>_<end-date>_<data-source>.json (managed by quant_scenario_engine/distributions/cache/cache_manager.py (lines 1-50) with a 30‑day TTL). When compare (or conditional MC) is executed with --use-audit (default), load_validated_model() at quant_scenario_engine/distributions/integration/model_loader.py (lines 81-164) looks for that exact cache entry, warns if it’s stale, and, if the exact key is missing, optionally falls back to the most recent cache for that symbol (_find_latest_cache_entry). The loaded payload rehydrates the best-fit model, applies the cached parameters, and hands back both the instantiated distribution and a metadata blob; if the cache is missing, stale-but-disallowed, or unsupported, the loader emits a warning and returns the Laplace fallback so you can see immediately that the audit wasn’t used.
+
+Option pricing in US1 – Yes, the stock-vs-option comparison already uses a concrete pricing model. The MarketSimulator (quant_scenario_engine/simulation/simulator.py (lines 10-90)) wires a BlackScholesPricer from quant_scenario_engine/pricing/black_scholes.py and, for every Monte Carlo path, reprices the option leg along that path to compute P&L/equity curves. So US1’s CLI compare command is evaluating stock signals directly on price paths while valuing the option strategy via closed-form Black–Scholes (European, CPU-friendly) with strike/IV/maturity pulled from OptionSpec. When you swap to a different pricer later (e.g., PyVollib), you’ll do it by supplying a different implementation of that same interface, but today the baseline Black–Scholes engine is what powers every option trade comparison.
+
+I think we might need a flag to force recalculation of the distribution, like --no-cache, particularly while we are still developing. Whenever I make a change to how the distributions are made, it is loading the cached version.
+
+
+Right now there are two knobs you can reach for, but they’re split across the audit and compare steps:
+
+audit-distributions already has --force-refit, so when you run the audit CLI you can blow away the cached entry and regenerate fresh fits/metrics. After that, the compare/conditional commands will pick up the new cache file automatically.
+
+The compare (and conditional MC) CLI has --use-audit/--no-use-audit. Flipping it to --no-use-audit ignores the cache entirely for that run and instead fits the configured distribution ad hoc.
+
+If what you need is “use the audit machinery but don’t trust the existing cache,” we can add a --force-refit equivalent on the compare side that either bypasses cache lookup or invokes the audit function inline. Let me know if you want me to wire that up; otherwise, the quickest workflow during development is:
+
+python -m quant_scenario_engine.cli audit-distributions --symbol AAPL --force-refit
+python -m quant_scenario_engine.cli compare --symbol AAPL --use-audit  # picks up fresh cache temporarily run compare with --no-use-audit until the code changes settle.
