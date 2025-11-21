@@ -80,7 +80,8 @@ def grid(
 
     strategy_grids = _parse_strategy_grids(cfg["grid"])
     distribution = get_distribution(cfg["distribution"])
-    distribution.fit(np.random.laplace(0, 0.01, size=500))
+    rng = np.random.default_rng(cfg["seed"])
+    distribution.fit(rng.laplace(0, 0.01, size=500))
 
     results = run_grid(
         strategy_grids=strategy_grids,
