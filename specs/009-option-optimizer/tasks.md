@@ -67,10 +67,10 @@
 **Goal**: OptionPricer interface with Bjerksund default, BS fallback, Heston hook; IV evolution modes.
 **Independent Test**: --pricing-model black_scholes vs bjerksund runs both successfully; fallback emits warning.
 
-- [ ] T022 [US4] Finalize OptionPricer interface and IV evolution modes (constant, sticky-delta, custom) in `src/qse/pricing/interfaces.py` (spec FR-017/FR-019)
-- [ ] T023 [P] [US4] Implement BjerksundStenslandPricer + fallback to BlackScholes in `src/qse/pricing/bjerksund.py` and `src/qse/pricing/black_scholes.py` (spec FR-018/FR-021/FR-022)
-- [ ] T024 [P] [US4] Add pricer factory and config wiring (shared with US1) in `src/qse/pricing/factory.py` (spec FR-071/FR-073)
-- [ ] T025 [US4] Add unit tests covering convergence failure fallback in `tests/unit/pricing/test_pricers.py` (spec FR-021/FR-022)
+- [X] T022 [US4] Finalize OptionPricer interface and IV evolution modes (constant, sticky-delta, custom) in `src/qse/pricing/interfaces.py` (spec FR-017/FR-019)
+- [X] T023 [P] [US4] Implement BjerksundStenslandPricer + fallback to BlackScholes in `src/qse/pricing/bjerksund.py` and `src/qse/pricing/black_scholes.py` (spec FR-018/FR-021/FR-022)
+- [X] T024 [P] [US4] Add pricer factory and config wiring (shared with US1) in `src/qse/pricing/factory.py` (spec FR-071/FR-073)
+- [X] T025 [US4] Add unit tests covering convergence failure fallback in `tests/unit/pricing/test_pricers.py` (spec FR-021/FR-022)
 
 ---
 
