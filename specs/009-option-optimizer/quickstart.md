@@ -14,7 +14,15 @@ qse optimize-strategy --ticker NVDA \
   --override "mc.num_paths=5000" \
   --override "filters.max_capital=15000"
 ```
-Expected: Top-10 trades with full metrics, score decomposition, diagnostics, and cached Top-100 + orders JSON.
+Expected: Top-10 trades with full metrics, score decomposition, diagnostics, and cached Top-100 + orders JSON. A full sweep over broad chains can run up to ~1 hour; for a fast retest, reuse cached Top-10 structures:
+```bash
+qse optimize-strategy --ticker NVDA \
+  --regime strong-bullish \
+  --trade-horizon 1 \
+  --config config.yml \
+  --retest top10.json
+```
+Retests should complete in <30 seconds.
 
 ## Interactive tuning (optional)
 ```bash

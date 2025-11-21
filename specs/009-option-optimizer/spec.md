@@ -515,8 +515,8 @@ This section defines the testing approach required by Constitution Section II.XV
 - **FR-029**: System MUST compute return on capital: ROC_H = E[PnL_H] / capital_used where capital_used is net debit or margin requirement per structure type
 - **FR-030**: System MUST compute tail-risk metrics: MaxLoss_trade (worst MC path), VaR_5% (5th percentile of PnL distribution), CVaR_5% (expected loss in worst 5% of paths)
 - **FR-031**: System MUST compute position Greeks at entry: Delta, Theta, Gamma, Vega using selected pricer's greeks() method summed across all legs
-- **FR-032**: System MUST use fixed baseline path count (e.g., 5,000 paths) but support adaptive path increases when variance is high or estimates are unstable, capped at max_paths (e.g., 20,000)
-- **FR-033**: System MUST report 95% confidence intervals for E[PnL] and POP based on MC sample variance (e.g., E[PnL] = $650 [CI: $580–$720])
+- **FR-032**: System MUST use fixed baseline path count (default 5,000 paths) and adaptive path doubling when instability is detected: if E[PnL] CI half-width > $100 or POP CI half-width > 3 percentage points after baseline, double paths until thresholds are met or max_paths (default 20,000) is reached; record final path_count
+- **FR-033**: System MUST report 95% confidence intervals for E[PnL] and POP based on MC sample variance (e.g., E[PnL] = $650 [CI: $580–$720]), and when max_paths reached with CI still above thresholds, emit uncertainty flag in diagnostics
 
 #### Composite Scoring
 
@@ -556,7 +556,7 @@ This section defines the testing approach required by Constitution Section II.XV
 - **FR-058**: System MUST allow --override "path.to.param=value" CLI flags to override any config parameter without editing files
 - **FR-059**: Primary invocation MUST be: qse optimize-strategy --ticker TICKER --regime REGIME --trade-horizon H [--config path] [--override key=val]...
 - **FR-060**: System MUST validate required parameters (ticker, regime) and provide clear error messages for missing or invalid inputs
-- **FR-061**: System MUST target <30 seconds runtime for Top-10 computation at market open using after-hours data (Stage 0-4 with 5k paths baseline)
+- **FR-061**: System MUST target two runtime modes: (a) full optimization sweep may take up to 1 hour for broad candidate sets, and (b) retesting an existing Top-10 list with refreshed market data MUST complete in <30 seconds (Stage 0-4 reuse with cached structures and 5k paths baseline)
 - **FR-062**: System MUST permit longer runtimes for batch/overnight modes with higher path counts (--override "mc.num_paths=20000") for increased accuracy
 
 #### Live Position Monitoring
@@ -611,7 +611,7 @@ This section defines the testing approach required by Constitution Section II.XV
 
 ### Measurable Outcomes
 
-- **SC-001**: Users can discover optimal option strategies from regime assumptions without manually enumerating candidates—optimizer returns Top-10 ranked trades with complete risk/reward analysis in <30 seconds for typical stock option chains (15 strikes × 4 expiries)
+- **SC-001**: Users can discover optimal option strategies from regime assumptions without manually enumerating candidates—optimizer returns Top-10 ranked trades with complete risk/reward analysis; full sweeps may run up to 1 hour for broad chains, while retesting cached Top-10 with refreshed data completes in <30 seconds
 - **SC-002**: Multi-stage filtering reduces candidate search space from ~1000 raw structures to <200 survivors for full MC scoring, enabling computational tractability within runtime targets
 - **SC-003**: Regime-driven distribution selection allows non-quant users to express market views naturally—specifying --regime strong-bullish correctly biases MC paths toward bullish outcomes with configurable statistical rigor
 - **SC-004**: Pluggable pricing architecture enables swapping between Black-Scholes (baseline), Bjerksund-Stensland (default American), Heston (stochastic vol), and future SLV/SVI models without changing simulation/scoring code
@@ -622,7 +622,7 @@ This section defines the testing approach required by Constitution Section II.XV
 - **SC-009**: Shared OptionPricer interface with US1 ensures pricing consistency—identical option legs priced in 009-option-optimizer optimizer and US1 stock-vs-option comparison produce identical valuations within numerical tolerance
 - **SC-010**: Empty result diagnostics accelerate user learning—when no candidates pass filters, diagnostic summary explains rejection breakdowns (e.g., "87% rejected by capital filter") and suggests concrete adjustments without automatically relaxing constraints
 - **SC-011**: Plugin architecture enables extensibility—users can develop custom StrategyScorer subclasses (e.g., directional-bullish rewarding +delta, volatility-play rewarding +vega) and system auto-discovers and applies them without core code changes
-- **SC-012**: Performance scales to batch processing—optimizer can process 10 underlyings sequentially within 5 minutes (<30 sec per ticker) using default 5k paths, enabling pre-market screening workflows
+- **SC-012**: Performance scales to batch processing—retesting 10 cached Top-10 lists completes within 5 minutes (<30 sec per ticker) using default 5k paths; full fresh sweeps may be scheduled separately (allowing up to 1 hour per sweep)
 
 ## Assumptions
 

@@ -130,8 +130,8 @@
 
 ## Phase 12: Quality, Contracts, and Resilience
 
-- [ ] T043 [P] Update `specs/009-option-optimizer/spec.md` FR-061 language to distinguish full-sweep runtime (≤1 hour) vs retest mode (<30s) and align quickstart examples (spec FR-061)
-- [ ] T044 [P] Define adaptive path thresholds (CI width, doubling policy, max cap handling) in config defaults and implement in `src/qse/optimizers/metrics.py` with docstring references (spec FR-032/FR-033)
+- [X] T043 [P] Update `specs/009-option-optimizer/spec.md` FR-061 language to distinguish full-sweep runtime (≤1 hour) vs retest mode (<30s) and align quickstart examples (spec FR-061)
+- [X] T044 [P] Define adaptive path thresholds (CI width, doubling policy, max cap handling) in config defaults and implement in `qse/optimizer/metrics.py` with docstring references (spec FR-032/FR-033)
 - [ ] T045 [P] Add contract tests for optimize-strategy and monitor responses against `contracts/openapi-qse.yaml` in `tests/contract/test_optimize_contract.py` and `tests/contract/test_monitor_contract.py` (contracts alignment, FR-048–FR-055)
 - [ ] T046 [P] Add resilience tests covering Schwab outage/fallback and pricer convergence failures in `tests/integration/test_resilience.py` (Edge cases, FR-005, FR-021/FR-022)
 - [ ] T047 [P] Add property-based tests (hypothesis) for candidate filtering invariants (monotonicity of filters, width limits) in `tests/property/test_candidate_filtering.py` (FR-006–FR-011 robustness)
