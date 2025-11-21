@@ -57,8 +57,7 @@ class StrategyOptimizer:
                 - top100: List of top 100 cached candidates (FR-049)
                 - diagnostics: Stage counts, rejection breakdowns, runtime (FR-054, FR-055, FR-075)
 
-        Spec: US1 acceptance scenarios 1-4, FR-048 to FR-055
-        """
+        Spec: US1 acceptance scenarios 1        """
         start_time = time.time()
         self.log.info(f"Starting full optimization: {ticker} regime={regime} horizon={trade_horizon}d")
 
