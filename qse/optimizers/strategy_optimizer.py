@@ -1,78 +1,160 @@
-"""Stage 4 integration: trigger MC scoring for filtered candidates."""
+"""Strategy Optimizer - Core optimization engine for discovering optimal option structures (US1/T013)."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime
-from typing import Dict, Tuple
+import time
+from typing import Any
 
-import pandas as pd
-
-from qse.optimizer.metrics import AdaptiveCISettings
-from qse.optimizers.candidate_filter import Stage0Config, Stage1Config, filter_strikes, select_expiries
-from qse.optimizers.candidate_generator import CandidateGenerator, GeneratorConfig
-from qse.optimizers.models import CandidateStructure
-from qse.optimizers.prefilter import Prefilter, Stage3Config
-
-
-@dataclass(frozen=True)
-class StrategyOptimizerResult:
-    """Result bundle for staged optimization."""
-
-    survivors: Tuple[CandidateStructure, ...]
-    stage_counts: Dict[str, int]
+from qse.utils.logging import Logger
 
 
 class StrategyOptimizer:
-    """Orchestrate Stage 0-4 filtering and MC scoring trigger."""
+    """
+    Main optimizer coordinating Stage 0-4 filtering and Top-10/Top-100 ranking.
 
-    def __init__(
-        self,
-        stage0_config: Stage0Config | None = None,
-        stage1_config: Stage1Config | None = None,
-        generator: CandidateGenerator | None = None,
-        prefilter: Prefilter | None = None,
-    ) -> None:
-        self.stage0_config = stage0_config or Stage0Config()
-        self.stage1_config = stage1_config or Stage1Config()
-        self.generator = generator or CandidateGenerator(GeneratorConfig())
-        self.prefilter = prefilter or Prefilter(Stage3Config())
-        self.ci_settings = AdaptiveCISettings()
+    Spec References: FR-048 to FR-055, FR-061
+    Tasks: T013 (Phase 3), T014-T018 (Phase 4)
+    """
 
-    def run(self, option_chain: pd.DataFrame, as_of: datetime, spot: float) -> StrategyOptimizerResult:
-        """Run staged filtering and tag survivors for Monte Carlo pricing.
-
-        Stage 4 does not perform simulations; it only annotates the survivors
-        with the default Monte Carlo path budget so a downstream pricing engine
-        can consume them without additional bookkeeping.
+    def __init__(self, config: dict[str, Any], data_provider: Any, logger: Logger):
         """
-        expiries = select_expiries(option_chain, as_of, self.stage0_config)
-        filtered = filter_strikes(option_chain, spot, expiries, self.stage1_config)
-        candidates = self.generator.generate(filtered, spot)
-        survivors = self.prefilter.evaluate(candidates, spot)
-        mc_prepared = self._trigger_mc_scoring(survivors)
+        Initialize optimizer with config and data provider.
 
-        counts = {
-            "stage0_expiries": len(expiries),
-            "stage1_candidates": len(filtered),
-            "stage2_structures": len(candidates),
-            "stage3_survivors": len(survivors),
-            "stage4_mc": len(mc_prepared),
-        }
-        return StrategyOptimizerResult(survivors=tuple(mc_prepared), stage_counts=counts)
-
-    def _trigger_mc_scoring(self, survivors: Tuple[CandidateStructure, ...] | list[CandidateStructure]) -> Tuple[CandidateStructure, ...]:
-        """Attach baseline Monte Carlo configuration to survivor metrics.
-
-        The returned candidates are considered "MC-ready" because each
-        carries the default path count expected by the downstream simulation
-        layer. No pricing is executed here.
+        Args:
+            config: Merged configuration with regimes, mc, filters, scoring sections
+            data_provider: Data source for fetching option chains (Schwab/yfinance with fallback)
+            logger: Structured logger for diagnostics
         """
-        baseline_paths = self.ci_settings.baseline_paths
-        for candidate in survivors:
-            if candidate.metrics:
-                candidate.metrics.mc_paths = baseline_paths
-        return tuple(survivors)
+        self.config = config
+        self.data_provider = data_provider
+        self.log = logger
 
+        # Extract config sections
+        self.regimes = config.get("regimes", {})
+        self.mc_config = config.get("mc", {})
+        self.filter_config = config.get("filters", {})
+        self.scoring_config = config.get("scoring", {})
 
-__all__ = ["StrategyOptimizer", "StrategyOptimizerResult"]
+        self.log.info(
+            f"StrategyOptimizer initialized: num_paths={self.mc_config.get('num_paths', 5000)} "
+            f"max_capital={self.filter_config.get('max_capital', 15000)}"
+        )
+
+    def optimize(self, ticker: str, regime: str, trade_horizon: int) -> dict[str, Any]:
+        """
+        Full optimization sweep (Stage 0-4) returning Top-10 ranked strategies.
+
+        Runtime: Up to 1 hour for broad candidate search (FR-061 mode a).
+
+        Args:
+            ticker: Stock ticker symbol (e.g., NVDA)
+            regime: Regime label from config (e.g., strong-bullish)
+            trade_horizon: Trade horizon in days (e.g., 1)
+
+        Returns:
+            Dictionary with:
+                - top10: List of top 10 ranked CandidateStructure dicts (FR-048)
+                - top100: List of top 100 cached candidates (FR-049)
+                - diagnostics: Stage counts, rejection breakdowns, runtime (FR-054, FR-055, FR-075)
+
+        Spec: US1 acceptance scenarios 1-4, FR-048 to FR-055
+        """
+        start_time = time.time()
+        self.log.info(f"Starting full optimization: {ticker} regime={regime} horizon={trade_horizon}d")
+
+        try:
+            # Phase 4 implementation (T014-T018) will replace this stub with:
+            # 1. Fetch option chain via data_provider (FR-004)
+            # 2. Stage 0: Expiry selection (T014, FR-006)
+            # 3. Stage 1: Strike filtering by moneyness/liquidity (T015, FR-007)
+            # 4. Stage 2: Structure generation with width limits (T016, FR-008)
+            # 5. Stage 3: Analytic prefilter + hard constraints (T017, FR-009-FR-011)
+            # 6. Stage 4: MC scoring on survivors (T018, FR-012)
+            # 7. Rank by composite score and return Top-10/Top-100
+
+            # Stub: Return empty result with diagnostic hint
+            result = {
+                "top10": [],
+                "top100": [],
+                "diagnostics": {
+                    "stage_counts": {
+                        "Stage 0 (expiries)": 0,
+                        "Stage 1 (strikes)": 0,
+                        "Stage 2 (structures)": 0,
+                        "Stage 3 (survivors)": 0,
+                        "Stage 4 (MC scored)": 0,
+                    },
+                    "rejections": {
+                        "capital_filter": 0,
+                        "maxloss_filter": 0,
+                        "epnl_filter": 0,
+                        "pop_filter": 0,
+                    },
+                    "hints": (
+                        "STUB: Phase 4 (T014-T018) will implement Stage 0-4 filtering. "
+                        "Currently returning empty results."
+                    ),
+                    "runtime_seconds": time.time() - start_time,
+                },
+            }
+
+            self.log.info(
+                f"Optimization complete (STUB): runtime={result['diagnostics']['runtime_seconds']:.1f}s"
+            )
+            return result
+
+        except Exception as exc:
+            self.log.exception(f"Optimization failed for {ticker}: {exc}")
+            raise
+
+    def retest_top10(
+        self, ticker: str, regime: str, trade_horizon: int, cached_top10: list[dict]
+    ) -> dict[str, Any]:
+        """
+        Retest existing Top-10 list with fresh market data (<30s target, FR-061 mode b).
+
+        Reuses cached candidate structures from previous optimization run.
+        Only fetches fresh option chain and reprices + re-scores survivors.
+
+        Args:
+            ticker: Stock ticker symbol
+            regime: Regime label
+            trade_horizon: Trade horizon in days
+            cached_top10: Previously cached Top-10 list from optimize() output
+
+        Returns:
+            Same structure as optimize() with refreshed metrics
+
+        Spec: FR-061 mode b, Independent Test for US1
+        """
+        start_time = time.time()
+        self.log.info(f"Retesting Top-10: {ticker} regime={regime} horizon={trade_horizon}d")
+
+        try:
+            # Phase 4 implementation will:
+            # 1. Fetch fresh option chain
+            # 2. Reprice cached structures with updated market data
+            # 3. Re-run Stage 4 MC scoring only (skip Stage 0-3)
+            # 4. Re-rank and return Top-10
+
+            # Stub: Return cached input as-is with updated timestamp
+            result = {
+                "top10": cached_top10,
+                "top100": [],  # Not cached in retest mode
+                "diagnostics": {
+                    "stage_counts": {
+                        "Retest (cached structures)": len(cached_top10),
+                    },
+                    "hints": "STUB: Retest mode will reprice cached structures with fresh market data",
+                    "runtime_seconds": time.time() - start_time,
+                },
+            }
+
+            self.log.info(
+                f"Retest complete (STUB): runtime={result['diagnostics']['runtime_seconds']:.1f}s"
+            )
+            return result
+
+        except Exception as exc:
+            self.log.exception(f"Retest failed for {ticker}: {exc}")
+            raise
