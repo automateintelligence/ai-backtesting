@@ -67,6 +67,17 @@ def load_config_with_precedence(
     merged = _deep_merge(merged, env_values)
     merged = _deep_merge(merged, cli_values)
 
+    # Log overrides
+    for key, val in cli_values.items():
+        if val is not None and key in defaults and defaults.get(key) != val:
+            _log_override(key, "CLI", defaults.get(key), val)
+    for key, val in env_values.items():
+        if key in defaults and defaults.get(key) != val and key not in cli_values:
+            _log_override(key, "ENV", defaults.get(key), val)
+    for key, val in file_values.items():
+        if key in defaults and defaults.get(key) != val and key not in cli_values and key not in env_values:
+            _log_override(key, "YAML", defaults.get(key), val)
+
     return merged
 
 
@@ -90,3 +101,13 @@ def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any
             # Override non-dict values or add new keys
             result[key] = value
     return result
+
+
+def _log_override(field: str, source: str, old: Any, new: Any) -> None:
+    try:
+        import logging
+
+        log = logging.getLogger(__name__)
+        log.info("Config override", extra={"field": field, "source": source, "old": old, "new": new})
+    except Exception:
+        return

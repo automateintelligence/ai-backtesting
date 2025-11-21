@@ -627,24 +627,24 @@ def mock_run_config():
 
 #### Configuration Management (US7)
 
-- [ ] T091 [US7] Create YAML configuration schema in qse/config/schema.py matching contracts/openapi.yaml request schemas (FR-009/FR-033)
-- [ ] T092 [P] [US7] Implement YAML config loader in qse/config/loader.py with validation per FR-033/FR-009
-- [ ] T093 [P] [US7] Add environment variable override support in qse/config/env.py per plan.md onboarding (FR-024/FR-026 precedence)
-- [ ] T094 [US7] Implement config validation with fail-fast on invalid values per spec.md US7 acceptance scenario 3 (structured ConfigValidationError per T008, FR-041 guidance)
-- [ ] T095 [US7] Wire all factories (data, distribution, pricer) to read from unified config per FR-009/FR-043 (ensure T020k logging active on swaps)
-- [ ] T095a [US7] Enforce configuration precedence (CLI > ENV > YAML) and log overrides per FR-024/FR-026 (document precedence in README, emit INFO logs on overrides per T020k)
-- [ ] T095b [US7] Detect and block incompatible config combinations with structured errors per FR-025 (e.g., pricer not supported, conflicting resource limits, emit ConfigConflictError per T008)
+- [X] T091 [US7] Create YAML configuration schema in qse/config/schema.py matching contracts/openapi.yaml request schemas (FR-009/FR-033)
+- [X] T092 [P] [US7] Implement YAML config loader in qse/config/loader.py with validation per FR-033/FR-009
+- [X] T093 [P] [US7] Add environment variable override support in qse/config/env.py per plan.md onboarding (FR-024/FR-026 precedence)
+- [X] T094 [US7] Implement config validation with fail-fast on invalid values per spec.md US7 acceptance scenario 3 (structured ConfigValidationError per T008, FR-041 guidance)
+- [X] T095 [US7] Wire all factories (data, distribution, pricer) to read from unified config per FR-009/FR-043 (ensure T020k logging active on swaps)
+- [X] T095a [US7] Enforce configuration precedence (CLI > ENV > YAML) and log overrides per FR-024/FR-026 (document precedence in README, emit INFO logs on overrides per T020k)
+- [X] T095b [US7] Detect and block incompatible config combinations with structured errors per FR-025 (e.g., pricer not supported, conflicting resource limits, emit ConfigConflictError per T008)
 
 #### Advanced Components (US7)
 
-- [ ] T096 [P] [US7] Implement NormalDistribution in qse/distributions/normal.py for config comparison per FR-002 (include stationarity preflight per T025/T026 pattern)
-- [ ] T097 [P] [US7] Add optional PyVollibPricer in qse/pricing/py_vollib.py per FR-016 advanced toggle and SC-017
-- [ ] T098 [P] [US7] Create QuantLib pricer stub in qse/pricing/quantlib_stub.py for future extension per FR-016
+- [X] T096 [P] [US7] Implement NormalDistribution in qse/distributions/normal.py for config comparison per FR-002 (include stationarity preflight per T025/T026 pattern)
+- [X] T097 [P] [US7] Add optional PyVollibPricer in qse/pricing/py_vollib.py per FR-016 advanced toggle and SC-017
+- [X] T098 [P] [US7] Create QuantLib pricer stub in qse/pricing/quantlib_stub.py for future extension per FR-016
 
 #### CLI (US7)
 
-- [ ] T099 [US7] Add --config flag to all CLI commands to load YAML config file per FR-024/FR-033
-- [ ] T100 [US7] Implement CLI flag override of config values per plan.md onboarding workflow and FR-024/FR-026 precedence (CLI args override YAML values per T095a)
+- [X] T099 [US7] Add --config flag to all CLI commands to load YAML config file per FR-024/FR-033
+- [X] T100 [US7] Implement CLI flag override of config values per plan.md onboarding workflow and FR-024/FR-026 precedence (CLI args override YAML values per T095a)
 - [ ] T101 [US7] Document config file format in README.md with examples per spec.md US7 acceptance scenarios and FR-024/FR-033 requirements
 
 **Checkpoint**: User Story 7 complete - component swapping via configuration verified

@@ -8,6 +8,7 @@ import pandas as pd
 import typer
 
 from qse.cli.validation import validate_screen_inputs
+from qse.config.loader import load_config_with_precedence
 from qse.features.pipeline import enrich_ohlcv
 from qse.selectors.gap_volume import GapVolumeSelector
 from qse.simulation.screen import screen_universe, run_strategy_screen
@@ -19,6 +20,7 @@ log = get_logger(__name__, component="cli_screen")
 
 
 def screen(
+    config: Path | None = typer.Option(None, "--config", help="Optional YAML/JSON config path"),
     universe: str = typer.Option("", help="Path to CSV file with OHLCV data"),
     symbols: str = typer.Option("", help="Symbol list: ['AAPL','MSFT'] or AAPL,MSFT"),
     start: str = typer.Option(None, help="Start date YYYY-MM-DD when using symbols input"),
@@ -36,6 +38,67 @@ def screen(
     output: Path = typer.Option(Path("runs"), help="Output directory for artifacts"),
     lookback_years: float = typer.Option(None, help="Optional lookback horizon in years for universe data"),
 ) -> None:
+    defaults = {
+        "universe": universe,
+        "symbols": symbols,
+        "start": start,
+        "end": end,
+        "interval": interval,
+        "target": str(target),
+        "gap_min": gap_min,
+        "volume_z_min": volume_z_min,
+        "horizon": horizon,
+        "strategy": strategy,
+        "rank_by": rank_by,
+        "conditional_file": conditional_file,
+        "top": top,
+        "max_workers": max_workers,
+        "output": str(output),
+        "lookback_years": lookback_years,
+    }
+    casters = {
+        "universe": str,
+        "symbols": str,
+        "start": str,
+        "end": str,
+        "interval": str,
+        "target": str,
+        "gap_min": float,
+        "volume_z_min": float,
+        "horizon": int,
+        "strategy": str,
+        "rank_by": str,
+        "conditional_file": str,
+        "top": int,
+        "max_workers": int,
+        "output": str,
+        "lookback_years": float,
+    }
+    cli_vals = defaults.copy()
+    merged = load_config_with_precedence(
+        config_path=config,
+        env_prefix="QSE_",
+        cli_values=cli_vals,
+        defaults=defaults,
+        casters=casters,
+    )
+    universe = merged["universe"]
+    symbols = merged["symbols"]
+    start = merged["start"]
+    end = merged["end"]
+    interval = merged["interval"]
+    target = Path(merged["target"])
+    gap_min = merged["gap_min"]
+    volume_z_min = merged["volume_z_min"]
+    horizon = merged["horizon"]
+    strategy = merged["strategy"]
+    rank_by = merged["rank_by"]
+    conditional_file = merged["conditional_file"]
+    top = merged["top"]
+    max_workers = merged["max_workers"]
+    output = Path(merged["output"])
+    lookback_years = merged["lookback_years"]
+
     validate_screen_inputs(horizon=horizon, max_workers=max_workers)
     valid_intervals = {"1m", "5m", "15m", "30m", "1h", "1d", "1wk", "1mo"}
     if interval not in valid_intervals:
