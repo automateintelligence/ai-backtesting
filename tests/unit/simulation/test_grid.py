@@ -10,6 +10,7 @@ from qse.schema.strategy import StrategyParams
 from qse.simulation.grid import (
     GridResult,
     StrategyGridDefinition,
+    _clamp_workers,
     _preflight_resources,
     _score_results,
     expand_strategy_grid,
@@ -41,6 +42,16 @@ def test_expand_strategy_grid_cross_product() -> None:
     windows = {(p.params["short_window"], p.params["long_window"]) for p in params}
     assert windows == {(3, 10), (3, 15), (5, 10), (5, 15)}
     assert all(isinstance(p, StrategyParams) for p in params)
+
+
+def test_expand_strategy_grid_empty_returns_default() -> None:
+    grid_def = StrategyGridDefinition(name="stock_basic", kind="stock", grid={}, shared={"fees": 0.001})
+
+    params = expand_strategy_grid(grid_def)
+
+    assert len(params) == 1
+    assert params[0].params == {}
+    assert params[0].fees == pytest.approx(0.001)
 
 
 def test_score_results_ranks_objective() -> None:
@@ -92,6 +103,12 @@ def test_score_results_ranks_objective() -> None:
     assert ranked[0].objective_score is not None
     assert ranked[0].objective_score >= ranked[1].objective_score  # winner first
     assert ranked[0].normalized_metrics is not None
+
+
+def test_clamp_workers_caps_to_contract_limit(monkeypatch) -> None:
+    monkeypatch.setattr("os.cpu_count", lambda: 16)
+
+    assert _clamp_workers(12) == 6
 
 
 def test_preflight_resource_limit_exceeds_budget() -> None:
