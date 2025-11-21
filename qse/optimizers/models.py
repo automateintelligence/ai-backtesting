@@ -22,6 +22,8 @@ class Leg:
     side: Side
     premium: float
     quantity: int = 1
+    bid: float | None = None
+    ask: float | None = None
 
 
 @dataclass(slots=True)
@@ -35,6 +37,9 @@ class CandidateMetrics:
     max_loss: float
     score: float
     mc_paths: int | None = None
+    entry_cash: float | None = None
+    expected_exit_cost: float | None = None
+    commission: float | None = None
 
 
 @dataclass(slots=True)
