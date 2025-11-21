@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
+import logging
 import time
 from typing import Any
-
-from qse.utils.logging import Logger
 
 
 class StrategyOptimizer:
@@ -16,7 +15,7 @@ class StrategyOptimizer:
     Tasks: T013 (Phase 3), T014-T018 (Phase 4)
     """
 
-    def __init__(self, config: dict[str, Any], data_provider: Any, logger: Logger):
+    def __init__(self, config: dict[str, Any], data_provider: Any, logger: logging.Logger):
         """
         Initialize optimizer with config and data provider.
 
