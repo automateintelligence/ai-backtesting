@@ -2943,6 +2943,40 @@ Git Workflow - Feature Branch Development
   Phase 3 provides the complete CLI interface and stub optimizer. Phase 4 will implement
    the actual candidate filtering logic that populates the top10 and top100 results.
 
+Current Branch Structure:
+  main (includes 001 changes)
+    └─ 009-option-optimizer (rebased onto main, includes all 001 + all 009 changes)
+
+  Combined Features:
+  - ✅ From 001: GARCH-t distributions, grid runner (US2), replay CLI (US8), macro
+  alignment (US3), py_vollib/QuantLib pricers (US4)
+  - ✅ From 009: Option optimizer (US1), monitoring (US8), scorers (US5), cost modeling
+  (US6), adaptive CI (US7), comprehensive test suite (T045-T048)
+
+  CLI Commands Available (9 total):
+  1. fetch - Data fetching
+  2. compare - Compare strategies
+  3. grid - Grid parameter exploration (from 001)
+  4. monitor - Live position monitoring (from 009)
+  5. optimize-strategy - Option strategy optimizer (from 009)
+  6. replay - Replay simulations (from 001)
+  7. screen - Screen strategies
+  8. conditional - Conditional strategies
+  9. audit-distributions - Distribution auditing
+
+  Test Coverage:
+  - 81 files changed in 009 vs main
+  - 7,941 insertions, 108 deletions
+  - Contract tests (16), resilience tests (14), property tests (15) all integrated
+  - Grid tests (from 001) verified passing
+
+  Next Steps
+
+  You can now:
+  1. Create PR from 009 → main: Since 009 is fully rebased and includes all 001 changes
+  2. Continue development on 009: All conflicts resolved, clean working tree
+  3. Delete 001 branch: No longer needed since all changes are in main and 009
 
 TESTING:
 No integration test exercising end-to-end grid CLI yet; run_meta/artifact integration for grid outputs is minimal (JSON only, no run_meta fields recorded). Distribution fitting in CLI uses a synthetic laplace fit (placeholder) rather than sourcing returns—good enough for scaffolding but not production-ready with data loading. Budget enforcement is warning-based (no hard timeout stop). If you need spec-level replay/provenance for grids, additional run_meta wiring is still pending.
+

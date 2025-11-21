@@ -11,3 +11,15 @@ implementation."
 /speckit.implement "Be sure to follow the workflow in '.codex/speckit.implement.md'.  Implement incomplete tasks in priority order. Run the tests after each stage of development. Be sure to commit with a detailed message after each phase is completed.  Be sure to mark completed tasks in tasks.md."
 
 /speckit.implement "Be sure to follow the workflow in '.codex/speckit.implement.md'.  Implement incomplete Phase 3 tasks in priority order. When you are finished a) Ask yourself, "Does this code meet the intent of 'planning/Option_Spead_Candiate_Optimizer.md'?"  b) Run the tests after each stage of development. c) Be sure to mark completed tasks in tasks.md.  d) Be sure to commit with a detailed message after each phase is completed."
+
+/sc:analyze [target] [--focus quality|security|performance|architecture] [--depth quick|deep] [--format text|json|report]
+
+/sc.improve [target] [--type quality|performance|maintainability|style] [--safe] [--interactive]
+
+/sc.document  --type user-guide|api|technical --format markdown|html
+
+/sc.spawn [complex-task] [--strategy sequential|parallel|adaptive] [--depth normal|deep]
+
+/sc.recommend
+
+
