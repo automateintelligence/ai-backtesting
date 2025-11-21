@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from qse.exceptions import ConfigValidationError
 
 
@@ -63,3 +65,32 @@ def validate_grid_inputs(
         raise ConfigValidationError("grid definitions are required")
     if max_workers is not None and max_workers <= 0:
         raise ConfigValidationError("max_workers must be > 0")
+
+
+def validate_grid_request(cfg: dict[str, Any]) -> None:
+    required_fields = ["symbol", "paths", "steps", "seed", "distribution", "grid"]
+    for field in required_fields:
+        if field not in cfg:
+            raise ConfigValidationError(f"{field} is required for grid runs")
+    require_positive("paths", cfg["paths"])
+    require_positive("steps", cfg["steps"])
+    if cfg.get("seed") is None:
+        raise ConfigValidationError("seed is required for reproducibility")
+
+    grid_entries = cfg.get("grid") or []
+    if not isinstance(grid_entries, list) or not grid_entries:
+        raise ConfigValidationError("grid must be a non-empty list of strategies")
+
+    kinds = {entry.get("kind") for entry in grid_entries}
+    if "stock" not in kinds or "option" not in kinds:
+        raise ConfigValidationError("grid must include both stock and option strategies")
+
+    for entry in grid_entries:
+        if not entry.get("name"):
+            raise ConfigValidationError("each grid entry requires a name")
+        if entry.get("kind") not in {"stock", "option"}:
+            raise ConfigValidationError("strategy kind must be 'stock' or 'option'")
+        if not isinstance(entry.get("grid"), dict):
+            raise ConfigValidationError("grid entry must include parameter ranges")
+        if entry.get("kind") == "option" and not (entry.get("shared") or {}).get("option_spec"):
+            raise ConfigValidationError("option strategies require shared.option_spec")

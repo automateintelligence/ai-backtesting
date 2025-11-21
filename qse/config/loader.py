@@ -41,7 +41,15 @@ def load_config_with_precedence(
     defaults: dict[str, Any],
     casters: dict[str, Callable[[Any], Any]],
 ) -> dict[str, Any]:
-    """Merge config values with precedence CLI > ENV > YAML > defaults."""
+    """
+    Merge config values with precedence CLI > ENV > YAML > defaults.
+
+    Supports nested overrides via dot-notation (e.g., "mc.num_paths" -> {"mc": {"num_paths": value}}).
+    CLI values from optimize command are pre-parsed into nested dicts.
+
+    Spec: FR-003, FR-056, FR-058 (--override flag support)
+    Tasks: T012
+    """
 
     file_values: dict[str, Any] = {}
     if config_path:
@@ -53,18 +61,32 @@ def load_config_with_precedence(
         if env_key in os.environ:
             env_values[key] = _coerce(os.environ[env_key], caster)
 
-    merged: dict[str, Any] = {}
-    for key, default in defaults.items():
-        cli_val = cli_values.get(key)
-        if cli_val is not None:
-            merged[key] = cli_val
-            continue
-        if key in env_values:
-            merged[key] = env_values[key]
-            continue
-        if key in file_values:
-            merged[key] = file_values[key]
-            continue
-        merged[key] = default
+    # Deep merge with precedence: CLI > ENV > YAML > defaults
+    # Use deep_merge to handle nested dicts from CLI overrides
+    merged = _deep_merge(defaults, file_values)
+    merged = _deep_merge(merged, env_values)
+    merged = _deep_merge(merged, cli_values)
 
     return merged
+
+
+def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+    """
+    Deep merge two dictionaries, with override taking precedence.
+
+    Recursively merges nested dicts. Non-dict values in override replace base values.
+
+    Example:
+        base = {"mc": {"num_paths": 5000, "max_paths": 20000}}
+        override = {"mc": {"num_paths": 10000}}
+        result = {"mc": {"num_paths": 10000, "max_paths": 20000}}
+    """
+    result = base.copy()
+    for key, value in override.items():
+        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            # Recursively merge nested dicts
+            result[key] = _deep_merge(result[key], value)
+        else:
+            # Override non-dict values or add new keys
+            result[key] = value
+    return result

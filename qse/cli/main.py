@@ -10,6 +10,8 @@ from qse.cli.commands.audit_distributions import audit_distributions
 from qse.cli.commands.compare import compare
 from qse.cli.commands.fetch import fetch
 from qse.cli.commands.grid import grid
+from qse.cli.commands.monitor import monitor
+from qse.cli.commands.optimize import optimize_strategy
 from qse.cli.commands.replay import replay
 from qse.cli.commands.screen import screen
 from qse.cli.commands.conditional import conditional
@@ -26,10 +28,12 @@ app = typer.Typer(help="Quant Scenario Engine CLI")
 
 app.command()(fetch)
 app.command()(compare)
+app.command()(grid)
+app.command()(monitor)
+app.command()(optimize_strategy)
+app.command()(replay)
 app.command()(screen)
 app.command()(conditional)
-app.command()(grid)
-app.command()(replay)
 app.command()(audit_distributions)
 
 
