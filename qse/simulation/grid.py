@@ -77,7 +77,8 @@ def _clamp_workers(max_workers: int | None) -> int:
     cpu_count = os.cpu_count() or 1
     if max_workers is None:
         return min(6, cpu_count)
-    return max(1, min(max_workers, max(cpu_count - 2, 1)))
+    capped_cpu = min(6, max(cpu_count - 2, 1))
+    return max(1, min(max_workers, capped_cpu))
 
 
 def _detect_total_ram_gb() -> float:
@@ -154,8 +155,17 @@ def expand_strategy_grid(strategy: StrategyGridDefinition) -> list[StrategyParam
         values.append(value if isinstance(value, Sequence) and not isinstance(value, (str, bytes)) else [value])
 
     if not values:
-        values = [()]  # single combination when no explicit grid values provided
-        keys = []
+        # Single combination using only shared/base parameters when grid is empty
+        return [
+            StrategyParams(
+                name=strategy.name,
+                kind=strategy.kind,
+                params=base_params,
+                position_sizing=shared.get("position_sizing", "fixed_notional"),
+                fees=float(shared.get("fees", 0.0005)),
+                slippage=float(shared.get("slippage", 0.65)),
+            )
+        ]
 
     combinations: list[StrategyParams] = []
     for combo in product(*values):
