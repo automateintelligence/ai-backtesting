@@ -5,6 +5,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import List, Sequence
 
+from qse.optimizers.costs import (
+    CostAssumptions,
+    apply_costs,
+    compute_commission,
+    compute_entry_cash,
+    compute_expected_exit_cost,
+)
 from qse.optimizers.models import CandidateMetrics, CandidateStructure
 
 
@@ -24,8 +31,9 @@ class Stage3Config:
 class Prefilter:
     """Apply analytic prefiltering and enforce hard constraints (Stage 3)."""
 
-    def __init__(self, config: Stage3Config | None = None) -> None:
+    def __init__(self, config: Stage3Config | None = None, cost_assumptions: CostAssumptions | None = None) -> None:
         self.config = config or Stage3Config()
+        self.cost_assumptions = cost_assumptions or CostAssumptions()
 
     def evaluate(self, candidates: Sequence[CandidateStructure], spot: float) -> List[CandidateStructure]:
         scored: List[CandidateStructure] = []
@@ -34,6 +42,7 @@ class Prefilter:
             if not self._passes_constraints(metrics):
                 continue
             candidate.metrics = metrics
+            candidate = apply_costs(candidate, self.cost_assumptions)
             scored.append(candidate)
 
         return self._top_k(scored)
@@ -48,8 +57,12 @@ class Prefilter:
 
         pop_breakeven = min(0.95, 0.55 + distance)
         pop_target = min(0.99, pop_breakeven + 0.05)
-        expected_pnl = max(net_credit * 0.8, width * 20.0)
-        max_loss = max(capital - net_credit, capital * (1.0 - pop_breakeven))
+        entry_cash = compute_entry_cash(candidate.legs, self.cost_assumptions)
+        exit_cost = compute_expected_exit_cost(candidate.legs, self.cost_assumptions)
+        commission = compute_commission(candidate.legs, self.cost_assumptions)
+        gross_expected = max(entry_cash * 0.8, width * 20.0)
+        expected_pnl = gross_expected - exit_cost - commission
+        max_loss = max(capital - entry_cash, capital * (1.0 - pop_breakeven))
         score = expected_pnl / capital if capital > 0 else 0.0
 
         return CandidateMetrics(
@@ -59,6 +72,9 @@ class Prefilter:
             capital=capital,
             max_loss=max_loss,
             score=score,
+            entry_cash=entry_cash,
+            expected_exit_cost=exit_cost,
+            commission=commission,
         )
 
     def _passes_constraints(self, metrics: CandidateMetrics) -> bool:

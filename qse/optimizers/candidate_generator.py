@@ -76,6 +76,8 @@ class CandidateGenerator:
                             expiry=short.expiry,
                             side="sell",
                             premium=float(short.mid),
+                            bid=float(getattr(short, "bid", None)) if hasattr(short, "bid") else None,
+                            ask=float(getattr(short, "ask", None)) if hasattr(short, "ask") else None,
                         ),
                         Leg(
                             option_type=option_type,
@@ -83,6 +85,8 @@ class CandidateGenerator:
                             expiry=long.expiry,
                             side="buy",
                             premium=float(long.mid),
+                            bid=float(getattr(long, "bid", None)) if hasattr(long, "bid") else None,
+                            ask=float(getattr(long, "ask", None)) if hasattr(long, "ask") else None,
                         ),
                     ]
                     candidates.append(
@@ -121,6 +125,8 @@ class CandidateGenerator:
                 expiry=short_put.expiry,
                 side="sell",
                 premium=float(short_put.mid),
+                bid=float(getattr(short_put, "bid", None)) if hasattr(short_put, "bid") else None,
+                ask=float(getattr(short_put, "ask", None)) if hasattr(short_put, "ask") else None,
             ),
             Leg(
                 option_type="put",
@@ -128,6 +134,8 @@ class CandidateGenerator:
                 expiry=long_put.expiry,
                 side="buy",
                 premium=float(long_put.mid),
+                bid=float(getattr(long_put, "bid", None)) if hasattr(long_put, "bid") else None,
+                ask=float(getattr(long_put, "ask", None)) if hasattr(long_put, "ask") else None,
             ),
             Leg(
                 option_type="call",
@@ -135,6 +143,8 @@ class CandidateGenerator:
                 expiry=short_call.expiry,
                 side="sell",
                 premium=float(short_call.mid),
+                bid=float(getattr(short_call, "bid", None)) if hasattr(short_call, "bid") else None,
+                ask=float(getattr(short_call, "ask", None)) if hasattr(short_call, "ask") else None,
             ),
             Leg(
                 option_type="call",
@@ -142,6 +152,8 @@ class CandidateGenerator:
                 expiry=long_call.expiry,
                 side="buy",
                 premium=float(long_call.mid),
+                bid=float(getattr(long_call, "bid", None)) if hasattr(long_call, "bid") else None,
+                ask=float(getattr(long_call, "ask", None)) if hasattr(long_call, "ask") else None,
             ),
         ]
         return CandidateStructure(
@@ -167,6 +179,8 @@ class CandidateGenerator:
                 expiry=call_row.expiry,
                 side="buy",
                 premium=float(call_row.mid),
+                bid=float(getattr(call_row, "bid", None)) if hasattr(call_row, "bid") else None,
+                ask=float(getattr(call_row, "ask", None)) if hasattr(call_row, "ask") else None,
             ),
             Leg(
                 option_type="put",
@@ -174,6 +188,8 @@ class CandidateGenerator:
                 expiry=put_row.expiry,
                 side="buy",
                 premium=float(put_row.mid),
+                bid=float(getattr(put_row, "bid", None)) if hasattr(put_row, "bid") else None,
+                ask=float(getattr(put_row, "ask", None)) if hasattr(put_row, "ask") else None,
             ),
         ]
         return CandidateStructure(
@@ -201,6 +217,8 @@ class CandidateGenerator:
                 expiry=call_leg.expiry,
                 side="buy",
                 premium=float(call_leg.mid),
+                bid=float(getattr(call_leg, "bid", None)) if hasattr(call_leg, "bid") else None,
+                ask=float(getattr(call_leg, "ask", None)) if hasattr(call_leg, "ask") else None,
             ),
             Leg(
                 option_type="put",
@@ -208,6 +226,8 @@ class CandidateGenerator:
                 expiry=put_leg.expiry,
                 side="buy",
                 premium=float(put_leg.mid),
+                bid=float(getattr(put_leg, "bid", None)) if hasattr(put_leg, "bid") else None,
+                ask=float(getattr(put_leg, "ask", None)) if hasattr(put_leg, "ask") else None,
             ),
         ]
         return CandidateStructure(

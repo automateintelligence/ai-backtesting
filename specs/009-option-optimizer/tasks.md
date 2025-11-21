@@ -91,9 +91,9 @@
 **Goal**: Apply pay-spread fills + $0.65/contract commissions; filters/scoring on net P&L.
 **Independent Test**: Iron Condor example computes entry/exit costs and net E[PnL].
 
-- [ ] T030 [US6] Implement pay-spread fill and commission model applied at entry/exit in `src/qse/optimizers/costs.py` (spec FR-042–FR-044)
-- [ ] T031 [P] [US6] Wire cost model into prefilter and full MC metrics in `src/qse/optimizers/prefilter.py` and `src/qse/optimizers/strategy_optimizer.py` (spec FR-045/FR-046)
-- [ ] T032 [US6] Add tests for cost application and overrides in `tests/unit/optimizers/test_costs.py` (spec FR-047)
+- [X] T030 [US6] Implement pay-spread fill and commission model applied at entry/exit in `src/qse/optimizers/costs.py` (spec FR-042–FR-044)
+- [X] T031 [P] [US6] Wire cost model into prefilter and full MC metrics in `src/qse/optimizers/prefilter.py` and `src/qse/optimizers/strategy_optimizer.py` (spec FR-045/FR-046)
+- [X] T032 [US6] Add tests for cost application and overrides in `tests/unit/optimizers/test_costs.py` (spec FR-047)
 
 ---
 
